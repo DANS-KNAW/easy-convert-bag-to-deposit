@@ -15,7 +15,14 @@
  */
 package nl.knaw.dans.easy.v2ip
 
-import org.rogach.scallop.{ScallopConf, ScallopOption, Subcommand, singleArgConverter}
+import java.nio.file.{ Path, Paths }
+import java.util.UUID
+
+import nl.knaw.dans.easy.v2ip.IdType.IdType
+import better.files.File
+import org.rogach.scallop.{ ScallopConf, ScallopOption, ValueConverter, singleArgConverter }
+
+import scala.xml.Properties
 
 class CommandLineOptions(args: Array[String], configuration: Configuration) extends ScallopConf(args) {
   appendDefaultToDescription = true
@@ -26,8 +33,8 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   val description: String = s"""Export bags from the Vault as information packages"""
   val synopsis: String =
     s"""
-       |  $printedName (synopsis of command line parameters)
-       |  $printedName (... possibly multiple lines for subcommands)""".stripMargin
+       |  $printedName { -u <id> | -i <input-file> } -o <staged-IP-dir> -t [ URN | DOI ] [-l <log-file>]
+       |""".stripMargin
 
   version(s"$printedName v${ configuration.version }")
   banner(
@@ -40,7 +47,33 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
        |
        |Options:
        |""".stripMargin)
-  //val url = opt[String]("someOption", noshort = true, descr = "Description of the option", default = app.someProperty)
+
+  implicit val uuidConverter: ValueConverter[UUID] = singleArgConverter(UUID.fromString)
+  implicit val fileConverter: ValueConverter[File] = singleArgConverter(File(_))
+  implicit val idTypeConverter: ValueConverter[IdType] = singleArgConverter(IdType.withName)
+
+  val uuid: ScallopOption[UUID] = opt[UUID]("UUID", short = 'u',
+    descr = "the id of the bag to be exported")
+  val uuidFile: ScallopOption[File] = opt[Path]("input-file", short = 'i',
+    descr = "File containing a newline-separated list of ids of the bags to be exported").map(File(_))
+  val idType: ScallopOption[IdType] = opt[IdType]("dataverse-identifier-type", short = 't', required = true,
+    descr = "the field to be used as Dataverse identifier, either doi or urn:nbn")
+
+  val logFile: ScallopOption[File] = opt(name = "log-file", short = 'l',
+    descr = s"The name of the logfile in csv format. If not provided a file $printedName-<timestamp>.csv will be created in the home-dir of the user.",
+    default = Some(Paths.get(Properties.userHome).resolve(s"$printedName-$now.csv")))
+  val outputDir: ScallopOption[File] = opt(name = "output-dir", short = 'o', required = true,
+    descr = "Empty directory in which to stage the created IPs.")
+
+  requireOne(uuid, uuidFile)
+
+  validateFileDoesNotExist(logFile.map(_.toJava))
+  validateFileIsDirectory(outputDir.map(_.toJava))
+  validate(outputDir)(dir => {
+    if (dir.nonEmpty) Left(s"outputDir $dir is not empty")
+    else if (!dir.isWriteable) Left(s"outputDir $dir not writeable")
+         else Right(())
+  })
 
   footer("")
 }

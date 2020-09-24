@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy
-import org.joda.time.format.{ DateTimeFormatter, ISODateTimeFormat }
-import org.joda.time.{ DateTime, DateTimeZone }
+package nl.knaw.dans.easy.v2ip.Fixture
 
-package object v2ip {
+import org.joda.time.{ DateTime, DateTimeUtils }
 
-  val dateTimeFormatter: DateTimeFormatter = ISODateTimeFormat.dateTime()
+trait FixedCurrentDateTimeSupport {
 
-  def now: String = DateTime.now(DateTimeZone.UTC).toString(dateTimeFormatter)
-
+  val nowYMD = "2020-02-02"
+  val nowUTC = s"${ nowYMD }T20:20:02.000Z"
+  /** Causes DateTime.now() to return a predefined value. */
+  DateTimeUtils.setCurrentMillisFixed(new DateTime(nowUTC).getMillis)
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.v2ip
+package nl.knaw.dans.easy.v2ip.Fixture
 
 import better.files.File
 import org.scalatest.matchers.{ MatchResult, Matcher }

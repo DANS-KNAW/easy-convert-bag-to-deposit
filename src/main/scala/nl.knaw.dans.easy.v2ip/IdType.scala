@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy
-import org.joda.time.format.{ DateTimeFormatter, ISODateTimeFormat }
-import org.joda.time.{ DateTime, DateTimeZone }
+package nl.knaw.dans.easy.v2ip
 
-package object v2ip {
+object IdType extends Enumeration {
+  type IdType = Value
 
-  val dateTimeFormatter: DateTimeFormatter = ISODateTimeFormat.dateTime()
-
-  def now: String = DateTime.now(DateTimeZone.UTC).toString(dateTimeFormatter)
-
+  val URN: IdType = Value("URN")
+  val DOI: IdType = Value("DOI")
 }

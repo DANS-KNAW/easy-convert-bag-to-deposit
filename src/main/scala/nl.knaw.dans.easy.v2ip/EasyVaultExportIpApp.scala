@@ -15,10 +15,18 @@
  */
 package nl.knaw.dans.easy.v2ip
 
+import java.util.UUID
+
+import better.files.File
+import nl.knaw.dans.easy.v2ip.Command.FeedBackMessage
+import nl.knaw.dans.easy.v2ip.IdType.IdType
+
 import scala.util.{ Success, Try }
 
 class EasyVaultExportIpApp(configuration: Configuration)  {
 
-
+  def createSips(ids: Iterator[UUID], idType: IdType, logFile: File): Try[FeedBackMessage] = {
+    ???
+  }
 
 }
