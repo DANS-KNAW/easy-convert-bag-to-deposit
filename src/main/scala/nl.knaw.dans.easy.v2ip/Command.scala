@@ -46,20 +46,4 @@ object Command extends App with DebugEnhancedLogging {
       }
       .getOrElse(Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }")))
   }
-
-  private def runAsService(app: EasyVaultExportIpApp): Try[FeedBackMessage] = Try {
-    val service = new EasyVaultExportIpService(configuration.serverPort, Map(
-      "/" -> new EasyVaultExportIpServlet(app, configuration.version),
-    ))
-    Runtime.getRuntime.addShutdownHook(new Thread("service-shutdown") {
-      override def run(): Unit = {
-        service.stop()
-        service.destroy()
-      }
-    })
-
-    service.start()
-    Thread.currentThread.join()
-    "Service terminated normally."
-  }
 }

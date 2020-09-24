@@ -25,9 +25,6 @@ ARGUMENTS
 
        -h, --help      Show help message
        -v, --version   Show version of this program
-
-    Subcommand: run-service - Starts EASY Vault Export Ip as a daemon that services HTTP requests
-       -h, --help   Show help message
     ---
 
 EXAMPLES

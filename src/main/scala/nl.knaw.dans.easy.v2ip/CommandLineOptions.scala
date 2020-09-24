@@ -42,12 +42,5 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
        |""".stripMargin)
   //val url = opt[String]("someOption", noshort = true, descr = "Description of the option", default = app.someProperty)
 
-  val runService = new Subcommand("run-service") {
-    descr(
-      "Starts EASY Vault Export Ip as a daemon that services HTTP requests")
-    footer(SUBCOMMAND_SEPARATOR)
-  }
-  addSubcommand(runService)
-
   footer("")
 }

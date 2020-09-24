@@ -41,7 +41,6 @@
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>easy-vault-export-ip</include>
-                <include>easy-vault-export-ip-service-start</include>
                 <include>easy-vault-export-ip-initd.sh</include>
             </includes>
             <fileMode>0755</fileMode>
