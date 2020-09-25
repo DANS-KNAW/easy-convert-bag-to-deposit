@@ -15,18 +15,47 @@
  */
 package nl.knaw.dans.easy.v2ip
 
+import java.nio.file.Paths
 import java.util.UUID
 
 import better.files.File
+import nl.knaw.dans.easy.bagstore.component._
+import nl.knaw.dans.easy.bagstore.{ BagFacadeComponent, BagId, BaseDir }
 import nl.knaw.dans.easy.v2ip.Command.FeedBackMessage
 import nl.knaw.dans.easy.v2ip.IdType.IdType
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
-import scala.util.{ Success, Try }
+import scala.collection.JavaConverters._
+import scala.util.Try
 
-class EasyVaultExportIpApp(configuration: Configuration)  {
+class EasyVaultExportIpApp(configuration: Configuration) {
 
-  def createSips(ids: Iterator[UUID], idType: IdType, logFile: File): Try[FeedBackMessage] = {
-    ???
+  val wired: BagStoresComponent = new BagStoresComponent
+    with FileSystemComponent
+    with BagProcessingComponent
+    with BagStoreComponent
+    with BagFacadeComponent
+    with DebugEnhancedLogging {
+
+    override lazy val fileSystem: FileSystem = ???
+    override lazy val bagProcessing: BagProcessing = ???
+    override lazy val bagFacade: BagFacade = ???
+    override lazy val bagStores: BagStores = new BagStores {
+      override def storeShortnames: Map[String, BaseDir] = {
+        val stores = configuration.stores
+        stores.getKeys.asScala
+          .map(name => name -> Paths.get(stores.getString(name)).toAbsolutePath)
+          .toMap
+      }
+    }
   }
 
+  def createSips(ids: Iterator[UUID], idType: IdType, outDir: File, logFile: File): Try[FeedBackMessage] = {
+    ids.map { uuid =>
+      val sipDir = outDir / uuid.toString
+      wired.bagStores.copyToDirectory(BagId(uuid), sipDir.path)
+      // TODO create (sipDir / "deposit.properties")
+    }
+    ???
+  }
 }

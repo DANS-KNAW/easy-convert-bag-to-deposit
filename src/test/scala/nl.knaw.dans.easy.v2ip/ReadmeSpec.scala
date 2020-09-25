@@ -26,7 +26,8 @@ class ReadmeSpec extends AnyFlatSpec with Matchers with CustomMatchers with Fixe
 
   private val configuration = Configuration(
     version = "my-version",
-    serverPort = 12345,
+    stagingDir = null,
+    stores = null,
   )
   private val clo = new CommandLineOptions(Array[String](), configuration) {
     // avoids System.exit() in case of invalid arguments or "--help"

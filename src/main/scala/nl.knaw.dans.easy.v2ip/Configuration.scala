@@ -21,8 +21,8 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration
 
 case class Configuration(version: String,
-                         serverPort: Int,
-                         // other configuration properties defined in application.properties
+                         stagingDir: File,
+                         stores: PropertiesConfiguration,
                         )
 
 object Configuration extends DebugEnhancedLogging {
@@ -44,8 +44,8 @@ object Configuration extends DebugEnhancedLogging {
 
     new Configuration(
       version,
-      serverPort = properties.getInt("daemon.http.port"),
-      // read other properties defined in application.properties
+      File(properties.getString("staging.dir")),
+      new PropertiesConfiguration((cfgPath / "stores.properties").toJava)
     )
   }
 }

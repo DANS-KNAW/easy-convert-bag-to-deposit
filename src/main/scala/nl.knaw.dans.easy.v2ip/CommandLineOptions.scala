@@ -18,8 +18,8 @@ package nl.knaw.dans.easy.v2ip
 import java.nio.file.{ Path, Paths }
 import java.util.UUID
 
-import nl.knaw.dans.easy.v2ip.IdType.IdType
 import better.files.File
+import nl.knaw.dans.easy.v2ip.IdType.IdType
 import org.rogach.scallop.{ ScallopConf, ScallopOption, ValueConverter, singleArgConverter }
 
 import scala.xml.Properties
@@ -69,11 +69,11 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
 
   validateFileDoesNotExist(logFile.map(_.toJava))
   validateFileIsDirectory(outputDir.map(_.toJava))
-  validate(outputDir)(dir => {
+  validate(outputDir) { dir =>
     if (dir.nonEmpty) Left(s"outputDir $dir is not empty")
     else if (!dir.isWriteable) Left(s"outputDir $dir not writeable")
          else Right(())
-  })
+  }
 
   footer("")
 }
