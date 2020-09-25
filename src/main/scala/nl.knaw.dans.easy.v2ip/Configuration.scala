@@ -17,12 +17,13 @@ package nl.knaw.dans.easy.v2ip
 
 import better.files.File
 import better.files.File.root
+import nl.knaw.dans.easy.bagstore.component.BagStoresComponent
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration
 
 case class Configuration(version: String,
                          stagingDir: File,
-                         stores: PropertiesConfiguration,
+                         storesComponent: BagStoresComponent,
                         )
 
 object Configuration extends DebugEnhancedLogging {
@@ -45,7 +46,7 @@ object Configuration extends DebugEnhancedLogging {
     new Configuration(
       version,
       File(properties.getString("staging.dir")),
-      new PropertiesConfiguration((cfgPath / "stores.properties").toJava)
+      BagStoresWiring(home),
     )
   }
 }

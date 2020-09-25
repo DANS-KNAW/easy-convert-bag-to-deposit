@@ -15,47 +15,28 @@
  */
 package nl.knaw.dans.easy.v2ip
 
-import java.nio.file.Paths
 import java.util.UUID
 
 import better.files.File
-import nl.knaw.dans.easy.bagstore.component._
-import nl.knaw.dans.easy.bagstore.{ BagFacadeComponent, BagId, BaseDir }
+import better.files.File.CopyOptions
+import nl.knaw.dans.easy.bagstore.BagId
 import nl.knaw.dans.easy.v2ip.Command.FeedBackMessage
 import nl.knaw.dans.easy.v2ip.IdType.IdType
-import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
-import scala.collection.JavaConverters._
-import scala.util.Try
+import scala.util.{ Failure, Try }
 
 class EasyVaultExportIpApp(configuration: Configuration) {
-
-  val wired: BagStoresComponent = new BagStoresComponent
-    with FileSystemComponent
-    with BagProcessingComponent
-    with BagStoreComponent
-    with BagFacadeComponent
-    with DebugEnhancedLogging {
-
-    override lazy val fileSystem: FileSystem = ???
-    override lazy val bagProcessing: BagProcessing = ???
-    override lazy val bagFacade: BagFacade = ???
-    override lazy val bagStores: BagStores = new BagStores {
-      override def storeShortnames: Map[String, BaseDir] = {
-        val stores = configuration.stores
-        stores.getKeys.asScala
-          .map(name => name -> Paths.get(stores.getString(name)).toAbsolutePath)
-          .toMap
-      }
+  private val stores = configuration.storesComponent.bagStores
+  def createSips(ids: Iterator[UUID], idType: IdType, outputDir: File, logFile: File): Try[FeedBackMessage] = {
+    val array = ids.toArray
+    array.map { uuid =>
+      val sipDir = configuration.stagingDir / uuid.toString
+      for {
+        (path, store) <- stores.copyToDirectory(BagId(uuid), sipDir.path)
+        // TODO create sipDir/application.properties
+        _ = sipDir.moveTo(outputDir / sipDir.name)(CopyOptions.atomically)
+      } yield ()
     }
-  }
-
-  def createSips(ids: Iterator[UUID], idType: IdType, outDir: File, logFile: File): Try[FeedBackMessage] = {
-    ids.map { uuid =>
-      val sipDir = outDir / uuid.toString
-      wired.bagStores.copyToDirectory(BagId(uuid), sipDir.path)
-      // TODO create (sipDir / "deposit.properties")
-    }
-    ???
+    Failure(new NotImplementedError(s"$outputDir/*/application.properties"))
   }
 }
