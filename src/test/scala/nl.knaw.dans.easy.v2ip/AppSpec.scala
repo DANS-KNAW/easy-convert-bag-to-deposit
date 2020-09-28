@@ -1,11 +1,26 @@
+/**
+ * Copyright (C) 2020 DANS - Data Archiving and Networked Services (info@dans.knaw.nl)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package nl.knaw.dans.easy.v2ip
 
-import java.nio.file.Paths
+import java.nio.file.{ Path, Paths }
 import java.util.UUID
 
 import better.files.File
-import nl.knaw.dans.easy.bagstore.{ BagFacadeComponent, BaseDir, ConfigurationComponent }
-import nl.knaw.dans.easy.bagstore.component.{ BagProcessingComponent, BagStoreComponent, BagStoreWiring, BagStoresComponent, FileSystemComponent }
+import nl.knaw.dans.easy.bagstore.component._
+import nl.knaw.dans.easy.bagstore.{ BagFacadeComponent, BagId, BaseDir, ItemId }
 import nl.knaw.dans.easy.v2ip.Fixture.FileSystemSupport
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalamock.scalatest.MockFactory
@@ -16,12 +31,18 @@ import scala.util.Success
 
 class AppSpec extends AnyFlatSpec with Matchers with FileSystemSupport with MockFactory {
   "createSips" should "" in {
-    File("src/test/resources/bags").children.toSeq.foreach(_.copyTo((testDir / "vault" / UUID.randomUUID().toString).createDirectories()))
-    val uuids = (testDir / "vault").children.map(f => UUID.fromString(f.name))
-    val bagStores = mockedBagStoreComponent
-    //bagStores.copyToDirectory()
-    newApp(bagStores)
-      .createSips(uuids, IdType.DOI, testDir / "output", testDir / "log.csv") shouldBe Success("blabla")
+    val bags = File("src/test/resources/bags").children.toArray.map { testBag =>
+      testBag.copyTo(
+        (testDir / "staging" / UUID.randomUUID().toString / UUID.randomUUID().toString).createDirectories()
+      )
+    }
+    newApp(mockedBagStoreComponent).createSips(
+      bags.map(f => UUID.fromString(f.name)).toIterator,
+      IdType.DOI,
+      testDir / "output",
+      testDir / "log.csv"
+    ) shouldBe Success("no fatal errors")
+    bags.map(_.parent).map(_ / "deposit.properties").foreach(_ should exist)
   }
 
   private def newApp(bagStoresComponent: BagStoresComponent) = {
@@ -29,8 +50,9 @@ class AppSpec extends AnyFlatSpec with Matchers with FileSystemSupport with Mock
     new EasyVaultExportIpApp(configuration)
   }
 
+  /** expecting copyToDirectory calls for each testDir/staging */
   private def mockedBagStoreComponent: BagStoresComponent = {
-    new BagStoresComponent
+    val bagStoresComponent: BagStoresComponent = new BagStoresComponent
       with FileSystemComponent
       with BagProcessingComponent
       with BagStoreComponent
@@ -42,5 +64,15 @@ class AppSpec extends AnyFlatSpec with Matchers with FileSystemSupport with Mock
       override lazy val bagFacade: BagFacade = ???
       override lazy val bagStores: BagStores = mock[BagStores]
     }
+    (testDir / "staging").children.foreach { sipDir: File =>
+      val bagDir = sipDir.children.toSeq.head
+      val bagId = BagId(UUID.fromString(bagDir.name))
+      (bagStoresComponent.bagStores.copyToDirectory(
+        _: ItemId, _: Path, _: Boolean, _: Option[BaseDir], _: Boolean
+      )) expects(*, *, *, *, *) onCall { (bagId, output, _,_,_) =>
+        Success(bagDir.path, Paths.get("store-name"))
+      }
+    }
+    bagStoresComponent
   }
 }

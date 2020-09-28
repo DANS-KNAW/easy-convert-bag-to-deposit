@@ -22,21 +22,25 @@ import better.files.File.CopyOptions
 import nl.knaw.dans.easy.bagstore.BagId
 import nl.knaw.dans.easy.v2ip.Command.FeedBackMessage
 import nl.knaw.dans.easy.v2ip.IdType.IdType
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
-import scala.util.{ Failure, Try }
+import scala.util.{ Failure, Success, Try }
 
-class EasyVaultExportIpApp(configuration: Configuration) {
+class EasyVaultExportIpApp(configuration: Configuration) extends DebugEnhancedLogging {
   private val stores = configuration.storesComponent.bagStores
-  def createSips(ids: Iterator[UUID], idType: IdType, outputDir: File, logFile: File): Try[FeedBackMessage] = {
-    val array = ids.toArray
-    array.map { uuid =>
-      val sipDir = configuration.stagingDir / uuid.toString
+  def createSips(bagIds: Iterator[UUID], idType: IdType, outputDir: File, logFile: File): Try[FeedBackMessage] = {
+    logger.info(s"creating SIPs: $idType, $outputDir, $logFile")
+    bagIds.foreach { bagUuid =>
+      val sipDir = configuration.stagingDir / UUID.randomUUID().toString
+      val bagCopyDir = (sipDir / bagUuid.toString).path
       for {
-        (path, store) <- stores.copyToDirectory(BagId(uuid), sipDir.path)
-        // TODO create sipDir/application.properties
+        (path, store) <- stores.copyToDirectory(BagId(bagUuid), bagCopyDir)
+        _ = logger.info(s"creating deposit.properties for $path")
+        _ = (File(path.getParent) / "deposit.properties").writeText("")
+        _ = logger.info(s"moving to $path")
         _ = sipDir.moveTo(outputDir / sipDir.name)(CopyOptions.atomically)
       } yield ()
     }
-    Failure(new NotImplementedError(s"$outputDir/*/application.properties"))
+    Success("no fatal errors")
   }
 }
