@@ -17,14 +17,10 @@ package nl.knaw.dans.easy.v2ip
 
 import better.files.File
 import better.files.File.root
-import nl.knaw.dans.easy.bagstore.component.BagStoresComponent
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration
 
-case class Configuration(version: String,
-                         stagingDir: File,
-                         storesComponent: BagStoresComponent,
-                        )
+case class Configuration(version: String)
 
 object Configuration extends DebugEnhancedLogging {
 
@@ -39,14 +35,10 @@ object Configuration extends DebugEnhancedLogging {
       load((cfgPath / "application.properties").toJava)
     }
     val version = (home / "bin" / "version").contentAsString.stripLineEnd
-    val agent = properties.getString("http.agent",s"easy-vault-export-ip/$version")
+    val agent = properties.getString("http.agent", s"easy-vault-export-ip/$version")
     logger.info(s"setting http.agent to $agent")
     System.setProperty("http.agent", agent)
 
-    new Configuration(
-      version,
-      File(properties.getString("staging.dir")),
-      BagStoresWiring(home),
-    )
+    new Configuration(version)
   }
 }

@@ -32,7 +32,7 @@
 
     <name>EASY Vault Export Ip</name>
     <url>https://github.com/DANS-KNAW/easy-vault-export-ip</url>
-    <description>Export bags from the Vault as information packages</description>
+    <description>Add deposit.properties to directories(s) with a bag</description>
     <inceptionYear>2020</inceptionYear>
 
     <properties>
@@ -75,11 +75,6 @@
         <dependency>
             <groupId>nl.knaw.dans.lib</groupId>
             <artifactId>dans-scala-lib_2.12</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>nl.knaw.dans.easy</groupId>
-            <artifactId>easy-bag-store</artifactId>
-            <version>1.6.2-SNAPSHOT</version>
         </dependency>
 
         <!-- joda time -->

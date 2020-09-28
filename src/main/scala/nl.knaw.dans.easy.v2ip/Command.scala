@@ -15,8 +15,6 @@
  */
 package nl.knaw.dans.easy.v2ip
 
-import java.util.UUID
-
 import better.files.File
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
@@ -29,14 +27,15 @@ object Command extends App with DebugEnhancedLogging {
   val commandLine: CommandLineOptions = new CommandLineOptions(args, configuration) {
     verify()
   }
-  val uuids = commandLine.uuid.map(Iterator(_))
-    .getOrElse(commandLine.uuidFile.map(
-      _.lineIterator
-      .filterNot(_.startsWith("#"))
-      .map(UUID.fromString)
-    ).getOrElse(Iterator.empty))
+  val sipDirs = commandLine.sipDir.map(Iterator(_))
+    .getOrElse(commandLine.sipDirs.map(_.children)
+      .getOrElse(Iterator.empty))
 
   new EasyVaultExportIpApp(configuration)
-    .createSips(uuids, commandLine.idType(), commandLine.outputDir(), commandLine.logFile())
-    .map(msg => s"$msg, for details see ${ commandLine.logFile().toJava.getAbsolutePath }")
+    .addPropsToSips(
+      sipDirs,
+      commandLine.idType(),
+      commandLine.outputDir(),
+      commandLine.logFile(),
+    ).map(msg => s"$msg, for details see ${ commandLine.logFile().toJava.getAbsolutePath }")
 }

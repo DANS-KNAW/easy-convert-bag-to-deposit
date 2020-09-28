@@ -15,32 +15,41 @@
  */
 package nl.knaw.dans.easy.v2ip
 
-import java.util.UUID
-
 import better.files.File
 import better.files.File.CopyOptions
-import nl.knaw.dans.easy.bagstore.BagId
 import nl.knaw.dans.easy.v2ip.Command.FeedBackMessage
 import nl.knaw.dans.easy.v2ip.IdType.IdType
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.util.{ Failure, Success, Try }
+import scala.xml.XML
 
 class EasyVaultExportIpApp(configuration: Configuration) extends DebugEnhancedLogging {
-  private val stores = configuration.storesComponent.bagStores
-  def createSips(bagIds: Iterator[UUID], idType: IdType, outputDir: File, logFile: File): Try[FeedBackMessage] = {
-    logger.info(s"creating SIPs: $idType, $outputDir, $logFile")
-    bagIds.foreach { bagUuid =>
-      val sipDir = configuration.stagingDir / UUID.randomUUID().toString
-      val bagCopyDir = (sipDir / bagUuid.toString).path
+
+  def addPropsToSips(sipDirs: Iterator[File], idType: IdType, outputDir: File, logFile: File): Try[FeedBackMessage] = {
+    logger.info(s"creating SIPs ${ configuration.version }: $idType, $sipDirs, $logFile")
+    sipDirs.foreach { sipDir =>
       for {
-        (path, store) <- stores.copyToDirectory(BagId(bagUuid), bagCopyDir)
-        _ = logger.info(s"creating deposit.properties for $path")
-        _ = (File(path.getParent) / "deposit.properties").writeText("")
-        _ = logger.info(s"moving to $path")
-        _ = sipDir.moveTo(outputDir / sipDir.name)(CopyOptions.atomically)
+        metadataDir <- getMetadataDir(sipDir)
+        bagInfo <- BagInfo(metadataDir / "bag-info.txt")
+        ddm = XML.loadFile((metadataDir / "datasetxml").toJava)
+        props <- DepositProperties(bagInfo, ddm)
+        _ = props.save((sipDir / "deposit.properties").toJava)
+        target = outputDir / sipDir.name
+        _ = logger.info(s"moving $sipDir to $target")
+        _ = sipDir.moveTo(target)(CopyOptions.atomically)
       } yield ()
     }
     Success("no fatal errors")
+  }
+
+  private def getMetadataDir(sipDir: File): Try[File] = {
+    def fail(prefix: String) = Failure(new IllegalArgumentException(
+      s"$prefix */metadata directory found in ${ sipDir.toJava.getAbsolutePath }")
+    )
+
+    val dirs = sipDir.children.flatMap(_.children.filter(dir => dir.isDirectory && dir.name == "metadata")).toList
+    if (dirs.size > 1) fail("more than one")
+    else dirs.map(Success(_)).headOption.getOrElse(fail("no"))
   }
 }

@@ -16,7 +16,6 @@
 package nl.knaw.dans.easy.v2ip
 
 import java.nio.file.{ Path, Paths }
-import java.util.UUID
 
 import better.files.File
 import nl.knaw.dans.easy.v2ip.IdType.IdType
@@ -30,7 +29,7 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   printedName = "easy-vault-export-ip"
   version(configuration.version)
   private val SUBCOMMAND_SEPARATOR = "---\n"
-  val description: String = s"""Export bags from the Vault as information packages"""
+  val description: String = s"""Add deposit.properties to directories(s) with a bag"""
   val synopsis: String =
     s"""
        |  $printedName { -u <id> | -i <input-file> } -o <staged-IP-dir> -t [ URN | DOI ] [-l <log-file>]
@@ -48,32 +47,23 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
        |Options:
        |""".stripMargin)
 
-  implicit val uuidConverter: ValueConverter[UUID] = singleArgConverter(UUID.fromString)
   implicit val fileConverter: ValueConverter[File] = singleArgConverter(File(_))
   implicit val idTypeConverter: ValueConverter[IdType] = singleArgConverter(IdType.withName)
 
-  val uuid: ScallopOption[UUID] = opt[UUID]("UUID", short = 'u',
-    descr = "the id of the bag to be exported")
-  val uuidFile: ScallopOption[File] = opt[Path]("input-file", short = 'i',
-    descr = "File containing a newline-separated list of ids of the bags to be exported").map(File(_))
+  val sipDir: ScallopOption[File] = opt[Path]("sip-dir", noshort = true,
+    descr = "A directory containing nothing but a bag").map(File(_))
+  val sipDirs: ScallopOption[File] = opt[Path]("sip-dirs", noshort = true,
+    descr = "A directory with directories containing nothing but a bag").map(File(_))
   val idType: ScallopOption[IdType] = opt[IdType]("dataverse-identifier-type", short = 't', required = true,
     descr = "the field to be used as Dataverse identifier, either doi or urn:nbn")
-
   val logFile: ScallopOption[File] = opt(name = "log-file", short = 'l',
     descr = s"The name of the logfile in csv format. If not provided a file $printedName-<timestamp>.csv will be created in the home-dir of the user.",
     default = Some(Paths.get(Properties.userHome).resolve(s"$printedName-$now.csv")))
   val outputDir: ScallopOption[File] = opt(name = "output-dir", short = 'o', required = true,
-    descr = "Empty directory in which to stage the created IPs.")
+    descr = "Empty directory that will receive completed SIPs with atomic moves.")
 
-  requireOne(uuid, uuidFile)
-
+  requireOne(sipDir, sipDirs)
   validateFileDoesNotExist(logFile.map(_.toJava))
-  validateFileIsDirectory(outputDir.map(_.toJava))
-  validate(outputDir) { dir =>
-    if (dir.nonEmpty) Left(s"outputDir $dir is not empty")
-    else if (!dir.isWriteable) Left(s"outputDir $dir not writeable")
-         else Right(())
-  }
 
   footer("")
 }

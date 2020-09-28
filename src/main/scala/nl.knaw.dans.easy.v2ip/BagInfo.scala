@@ -16,16 +16,21 @@
 package nl.knaw.dans.easy.v2ip
 
 import better.files.File
-import nl.knaw.dans.easy.bagstore.component.{ BagStoreWiring, BagStoresComponent }
-import nl.knaw.dans.easy.bagstore.{ BagFacadeComponent, ConfigurationComponent }
-import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import org.apache.commons.configuration.PropertiesConfiguration
 
-object BagStoresWiring {
-  def apply(home: File): BagStoresComponent = new BagStoreWiring
-    with ConfigurationComponent
-    with BagFacadeComponent
-    with DebugEnhancedLogging {
-    override lazy val bagFacade: BagFacade = new BagFacade {}
-    override lazy val configuration: Configuration = Configuration(home.path)
+import scala.util.Try
+
+case class BagInfo(userId: String, versionOf: Option[String])
+
+object BagInfo {
+  def apply(bagInfo: File): Try[BagInfo] = Try {
+    val properties = new PropertiesConfiguration() {
+      setDelimiterParsingDisabled(true)
+      load(bagInfo.toJava)
+    }
+    BagInfo(
+      properties.getString("EASY-User-Account"),
+      Option(properties.getString("Is-Version-Of", null)),
+    )
   }
 }

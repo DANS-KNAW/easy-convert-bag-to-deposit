@@ -14,7 +14,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Export bags from the Vault as information packages
+Add deposit.properties to directories(s) with a bag
 
 
 ARGUMENTS

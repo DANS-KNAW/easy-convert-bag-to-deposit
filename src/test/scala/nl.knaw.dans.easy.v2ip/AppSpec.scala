@@ -15,14 +15,8 @@
  */
 package nl.knaw.dans.easy.v2ip
 
-import java.nio.file.{ Path, Paths }
-import java.util.UUID
-
 import better.files.File
-import nl.knaw.dans.easy.bagstore.component._
-import nl.knaw.dans.easy.bagstore.{ BagFacadeComponent, BagId, BaseDir, ItemId }
 import nl.knaw.dans.easy.v2ip.Fixture.FileSystemSupport
-import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -30,49 +24,19 @@ import org.scalatest.matchers.should.Matchers
 import scala.util.Success
 
 class AppSpec extends AnyFlatSpec with Matchers with FileSystemSupport with MockFactory {
+  private val app = new EasyVaultExportIpApp(new Configuration("testVersion"))
   "createSips" should "" in {
-    val bags = File("src/test/resources/bags").children.toArray.map { testBag =>
+    val bags = File("src/test/resources/bags/01").children.toArray.map { testBag =>
       testBag.copyTo(
-        (testDir / "staging" / UUID.randomUUID().toString / UUID.randomUUID().toString).createDirectories()
+        (testDir / "exports" / testBag.name).createDirectories()
       )
     }
-    newApp(mockedBagStoreComponent).createSips(
-      bags.map(f => UUID.fromString(f.name)).toIterator,
+    app.addPropsToSips(
+      (testDir / "exports").children,
       IdType.DOI,
       testDir / "output",
       testDir / "log.csv"
     ) shouldBe Success("no fatal errors")
     bags.map(_.parent).map(_ / "deposit.properties").foreach(_ should exist)
-  }
-
-  private def newApp(bagStoresComponent: BagStoresComponent) = {
-    val configuration = new Configuration("testVersion", testDir / "staging", bagStoresComponent)
-    new EasyVaultExportIpApp(configuration)
-  }
-
-  /** expecting copyToDirectory calls for each testDir/staging */
-  private def mockedBagStoreComponent: BagStoresComponent = {
-    val bagStoresComponent: BagStoresComponent = new BagStoresComponent
-      with FileSystemComponent
-      with BagProcessingComponent
-      with BagStoreComponent
-      with BagFacadeComponent
-      with DebugEnhancedLogging {
-
-      override lazy val fileSystem: FileSystem = ???
-      override lazy val bagProcessing: BagProcessing = ???
-      override lazy val bagFacade: BagFacade = ???
-      override lazy val bagStores: BagStores = mock[BagStores]
-    }
-    (testDir / "staging").children.foreach { sipDir: File =>
-      val bagDir = sipDir.children.toSeq.head
-      val bagId = BagId(UUID.fromString(bagDir.name))
-      (bagStoresComponent.bagStores.copyToDirectory(
-        _: ItemId, _: Path, _: Boolean, _: Option[BaseDir], _: Boolean
-      )) expects(*, *, *, *, *) onCall { (bagId, output, _,_,_) =>
-        Success(bagDir.path, Paths.get("store-name"))
-      }
-    }
-    bagStoresComponent
   }
 }
