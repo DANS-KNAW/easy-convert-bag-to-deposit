@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package nl.knaw.dans.easy
+
 import org.joda.time.format.{ DateTimeFormatter, ISODateTimeFormat }
 import org.joda.time.{ DateTime, DateTimeZone }
 
@@ -22,5 +23,7 @@ package object v2ip {
   val dateTimeFormatter: DateTimeFormatter = ISODateTimeFormat.dateTime()
 
   def now: String = DateTime.now(DateTimeZone.UTC).toString(dateTimeFormatter)
+
+  case class InvalidBagException(msg: String) extends Exception()
 
 }

@@ -15,13 +15,11 @@
  */
 package nl.knaw.dans.easy.v2ip
 
-import java.nio.file.{ Path, Paths }
+import java.nio.file.Path
 
 import better.files.File
 import nl.knaw.dans.easy.v2ip.IdType.IdType
 import org.rogach.scallop.{ ScallopConf, ScallopOption, ValueConverter, singleArgConverter }
-
-import scala.xml.Properties
 
 class CommandLineOptions(args: Array[String], configuration: Configuration) extends ScallopConf(args) {
   appendDefaultToDescription = true

@@ -32,7 +32,7 @@ object BagInfo {
     def getOptional(key: String) = Option(properties.getString(key, null))
 
     def getMandatory(key: String) = getOptional(key)
-      .getOrElse(throw new IllegalArgumentException(s"No $key in $bagInfo"))
+      .getOrElse(throw new InvalidBagException(s"No $key in $bagInfo"))
 
     BagInfo(
       getMandatory("EASY-User-Account"),

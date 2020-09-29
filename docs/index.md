@@ -34,7 +34,12 @@ ARGUMENTS
 EXAMPLES
 --------
 
-    easy-vault-export-ip -o value
+    easy-bag-store -d 04e638eb-3af1-44fb-985d-36af12fccb2d 04e638eb-3af1-44fb-985d-36af12fccb2d
+    easy-vault-export-ip --sip 04e638eb-3af1-44fb-985d-36af12fccb2d -t DOI
+
+    easy-bag-store -d xyz/04e638eb-3af1-44fb-985d-36af12fccb2d 04e638eb-3af1-44fb-985d-36af12fccb2d
+    easy-bag-store -d xyz/b55abcfa-ec6b-4290-af6b-e93f35aefd20 b55abcfa-ec6b-4290-af6b-e93f35aefd20
+    easy-vault-export-ip --sips xyz -t DOI
 
 INSTALLATION AND CONFIGURATION
 ------------------------------

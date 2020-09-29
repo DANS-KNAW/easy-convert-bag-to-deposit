@@ -32,10 +32,10 @@ object Command extends App with DebugEnhancedLogging {
       .getOrElse(Iterator.empty))
 
   new EasyVaultExportIpApp(configuration)
-      .addPropsToSips(
-        sipDirs,
-        commandLine.idType(),
-        commandLine.outputDir.toOption,
-        DepositProperties.default()
-      )
+    .addPropsToSips(
+      sipDirs,
+      commandLine.idType(),
+      commandLine.outputDir.toOption,
+      DepositProperties.default()
+    )
 }
