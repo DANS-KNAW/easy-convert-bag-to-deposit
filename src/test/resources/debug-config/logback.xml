@@ -6,9 +6,9 @@
         </encoder>
     </appender>
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>data/easy-vault-export-ip.log</file>
+        <file>data/easy-convert-bag-to-deposit.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>data/easy-vault-export-ip.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>data/easy-convert-bag-to-deposit.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>

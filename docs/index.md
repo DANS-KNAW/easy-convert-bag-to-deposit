@@ -1,6 +1,6 @@
-easy-vault-export-ip
+easy-convert-bag-to-deposit
 ===========
-[![Build Status](https://travis-ci.org/DANS-KNAW/easy-vault-export-ip.png?branch=master)](https://travis-ci.org/DANS-KNAW/easy-vault-export-ip)
+[![Build Status](https://travis-ci.org/DANS-KNAW/easy-convert-bag-to-deposit.png?branch=master)](https://travis-ci.org/DANS-KNAW/easy-convert-bag-to-deposit)
 
 <!-- Remove this comment and extend the descriptions below -->
 
@@ -8,7 +8,7 @@ easy-vault-export-ip
 SYNOPSIS
 --------
 
-    easy-vault-export-ip { -u <id> | -i <input-file> } -o <staged-IP-dir> -t [ URN | DOI ] [-l <log-file>]
+    easy-convert-bag-to-deposit { -u <id> | -i <input-file> } -o <staged-IP-dir> -t [ URN | DOI ] [-l <log-file>]
 
 
 DESCRIPTION
@@ -35,16 +35,16 @@ EXAMPLES
 --------
 
     easy-bag-store -d 04e638eb-3af1-44fb-985d-36af12fccb2d 04e638eb-3af1-44fb-985d-36af12fccb2d
-    easy-vault-export-ip --sip 04e638eb-3af1-44fb-985d-36af12fccb2d -t DOI
+    easy-convert-bag-to-deposit --sip 04e638eb-3af1-44fb-985d-36af12fccb2d -t DOI
 
     easy-bag-store -d xyz/04e638eb-3af1-44fb-985d-36af12fccb2d 04e638eb-3af1-44fb-985d-36af12fccb2d
     easy-bag-store -d xyz/b55abcfa-ec6b-4290-af6b-e93f35aefd20 b55abcfa-ec6b-4290-af6b-e93f35aefd20
-    easy-vault-export-ip --sips xyz -t DOI
+    easy-convert-bag-to-deposit --sips xyz -t DOI
 
 INSTALLATION AND CONFIGURATION
 ------------------------------
 Currently this project is built as an RPM package for RHEL7/CentOS7 and later. The RPM will install the binaries to
-`/opt/dans.knaw.nl/easy-vault-export-ip` and the configuration files to `/etc/opt/dans.knaw.nl/easy-vault-export-ip`. 
+`/opt/dans.knaw.nl/easy-convert-bag-to-deposit` and the configuration files to `/etc/opt/dans.knaw.nl/easy-convert-bag-to-deposit`. 
 
 To install the module on systems that do not support RPM, you can copy and unarchive the tarball to the target host.
 You will have to take care of placing the files in the correct locations for your system yourself. For instructions
@@ -60,8 +60,8 @@ Prerequisites:
 
 Steps:
     
-    git clone https://github.com/DANS-KNAW/easy-vault-export-ip.git
-    cd easy-vault-export-ip 
+    git clone https://github.com/DANS-KNAW/easy-convert-bag-to-deposit.git
+    cd easy-convert-bag-to-deposit 
     mvn clean install
 
 If the `rpm` executable is found at `/usr/local/bin/rpm`, the build profile that includes the RPM 

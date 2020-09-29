@@ -24,7 +24,7 @@ import org.rogach.scallop.{ ScallopConf, ScallopOption, ValueConverter, singleAr
 class CommandLineOptions(args: Array[String], configuration: Configuration) extends ScallopConf(args) {
   appendDefaultToDescription = true
   editBuilder(_.setHelpWidth(110))
-  printedName = "easy-vault-export-ip"
+  printedName = "easy-convert-bag-to-deposit"
   version(configuration.version)
   private val SUBCOMMAND_SEPARATOR = "---\n"
   val description: String = s"""Add deposit.properties to directories(s) with a bag"""

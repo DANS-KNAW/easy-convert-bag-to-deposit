@@ -40,8 +40,8 @@
             <directory>${project.basedir}/src/main/assembly/dist/bin</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
-                <include>easy-vault-export-ip</include>
-                <include>easy-vault-export-ip-initd.sh</include>
+                <include>easy-convert-bag-to-deposit</include>
+                <include>easy-convert-bag-to-deposit-initd.sh</include>
             </includes>
             <fileMode>0755</fileMode>
         </fileSet>

@@ -26,7 +26,7 @@ object Configuration extends DebugEnhancedLogging {
 
   def apply(home: File): Configuration = {
     val cfgPath = Seq(
-      root / "etc" / "opt" / "dans.knaw.nl" / "easy-vault-export-ip",
+      root / "etc" / "opt" / "dans.knaw.nl" / "easy-convert-bag-to-deposit",
       home / "cfg")
       .find(_.exists)
       .getOrElse { throw new IllegalStateException("No configuration directory found") }
@@ -35,7 +35,7 @@ object Configuration extends DebugEnhancedLogging {
       load((cfgPath / "application.properties").toJava)
     }
     val version = (home / "bin" / "version").contentAsString.stripLineEnd
-    val agent = properties.getString("http.agent", s"easy-vault-export-ip/$version")
+    val agent = properties.getString("http.agent", s"easy-convert-bag-to-deposit/$version")
     logger.info(s"setting http.agent to $agent")
     System.setProperty("http.agent", agent)
 
