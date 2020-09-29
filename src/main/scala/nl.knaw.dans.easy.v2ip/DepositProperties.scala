@@ -25,6 +25,7 @@ class DepositProperties extends PropertiesConfiguration {
     val ddmIds: NodeSeq = ddm \ "dcmiMetadata" \ "identifier"
     val doi: Node = ddmIds.find(_.hasType("id-type:DOI")).getOrElse(throw InvalidBagException("no DOI"))
     val urn: Node = ddmIds.find(_.hasType("id-type:URN")).getOrElse(throw InvalidBagException("no URN"))
+    val fedoraId: Node = ddmIds.find(_.text.startsWith("easy-dataset")).getOrElse(throw InvalidBagException("no fedoraID"))
     new PropertiesConfiguration() {
       addProperty("creation.timestamp", bagInfo.created)
       addProperty("depositor.userId", bagInfo.userId)
@@ -32,7 +33,7 @@ class DepositProperties extends PropertiesConfiguration {
       addProperty("bag-store.bag-name", bagInfo.bagName)
       addProperty("identifier.doi", doi.text)
       addProperty("identifier.urn", urn.text)
-      //addProperty("identifier.fedora", csvRecord.easyDatasetId)
+      addProperty("identifier.fedora", fedoraId.text)
     }
   }
 }
