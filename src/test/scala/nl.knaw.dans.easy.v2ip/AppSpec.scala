@@ -34,9 +34,9 @@ class AppSpec extends AnyFlatSpec with Matchers with FileSystemSupport with Mock
     app.addPropsToSips(
       (testDir / "exports").children,
       IdType.DOI,
-      testDir / "output",
-      testDir / "log.csv"
-    ) shouldBe Success("no fatal errors")
-    bags.map(_.parent).map(_ / "deposit.properties").foreach(_ should exist)
+      None,
+      DepositProperties.default()
+    ) shouldBe Success("See logging")
+    bags.map(_ / "deposit.properties").foreach(_ should exist)
   }
 }

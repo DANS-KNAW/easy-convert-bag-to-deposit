@@ -19,6 +19,7 @@ import better.files.File
 import better.files.File.CopyOptions
 import nl.knaw.dans.easy.v2ip.Command.FeedBackMessage
 import nl.knaw.dans.easy.v2ip.IdType.IdType
+import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.util.{ Failure, Success, Try }
@@ -26,21 +27,35 @@ import scala.xml.XML
 
 class EasyVaultExportIpApp(configuration: Configuration) extends DebugEnhancedLogging {
 
-  def addPropsToSips(sipDirs: Iterator[File], idType: IdType, outputDir: File, logFile: File): Try[FeedBackMessage] = {
-    logger.info(s"creating SIPs ${ configuration.version }: $idType, $sipDirs, $logFile")
-    sipDirs.foreach { sipDir =>
-      for {
-        metadataDir <- getMetadataDir(sipDir)
-        bagInfo <- BagInfo(metadataDir / "bag-info.txt")
-        ddm = XML.loadFile((metadataDir / "datasetxml").toJava)
-        props <- DepositProperties(bagInfo, ddm)
-        _ = props.save((sipDir / "deposit.properties").toJava)
-        target = outputDir / sipDir.name
-        _ = logger.info(s"moving $sipDir to $target")
-        _ = sipDir.moveTo(target)(CopyOptions.atomically)
-      } yield ()
-    }
-    Success("no fatal errors")
+  def addPropsToSips(sipDirs: Iterator[File], idType: IdType, maybeOutputDir: Option[File], properties: DepositProperties): Try[FeedBackMessage] = {
+    sipDirs
+      .map(addProps(properties, idType, maybeOutputDir))
+      .collectFirst { case Failure(e) => Failure(e) }
+      .getOrElse(Success(s"See logging"))
+  }
+
+  private def addProps(properties: DepositProperties, idType: IdType, maybeOutputDir: Option[File])( sipDir: File) = {
+    logger.debug(s"creating application.properties for $sipDir")
+    for {
+      metadataDir <- getMetadataDir(sipDir)
+      bagInfo <- BagInfo(metadataDir / ".." / "bag-info.txt")
+      _ = logger.debug(s"$bagInfo")
+      ddm = XML.loadFile((metadataDir / "dataset.xml").toJava)
+      props <- properties.fill(bagInfo, ddm)
+      _ = props.save((sipDir / "deposit.properties").toJava)
+      _ = maybeOutputDir.foreach(move(sipDir))
+      _ = logger.info(s"OK $sipDir")
+    } yield ()
+  }.recoverWith {
+    case e: IllegalArgumentException =>
+      logger.error(s"$sipDir failed: ${e.getMessage}")
+      Success(())
+  }
+
+  private def move(sipDir: File)(outputDir: File) = {
+    val target = outputDir / sipDir.name
+    logger.info(s"moving SIP from $sipDir to $target")
+    sipDir.moveTo(target)(CopyOptions.atomically)
   }
 
   private def getMetadataDir(sipDir: File): Try[File] = {

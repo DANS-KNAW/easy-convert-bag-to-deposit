@@ -50,20 +50,28 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   implicit val fileConverter: ValueConverter[File] = singleArgConverter(File(_))
   implicit val idTypeConverter: ValueConverter[IdType] = singleArgConverter(IdType.withName)
 
-  val sipDir: ScallopOption[File] = opt[Path]("sip-dir", noshort = true,
+  val sipDir: ScallopOption[File] = opt[Path]("sip", noshort = true,
     descr = "A directory containing nothing but a bag").map(File(_))
-  val sipDirs: ScallopOption[File] = opt[Path]("sip-dirs", noshort = true,
+  val sipDirs: ScallopOption[File] = opt[Path]("sips", noshort = true,
     descr = "A directory with directories containing nothing but a bag").map(File(_))
   val idType: ScallopOption[IdType] = opt[IdType]("dataverse-identifier-type", short = 't', required = true,
     descr = "the field to be used as Dataverse identifier, either doi or urn:nbn")
-  val logFile: ScallopOption[File] = opt(name = "log-file", short = 'l',
-    descr = s"The name of the logfile in csv format. If not provided a file $printedName-<timestamp>.csv will be created in the home-dir of the user.",
-    default = Some(Paths.get(Properties.userHome).resolve(s"$printedName-$now.csv")))
-  val outputDir: ScallopOption[File] = opt(name = "output-dir", short = 'o', required = true,
-    descr = "Empty directory that will receive completed SIPs with atomic moves.")
+  val outputDir: ScallopOption[File] = opt(name = "output-dir", short = 'o', required = false,
+    descr = "Empty directory that will receive completed SIPs with atomic moves. It will be created if it does not exist.")
 
   requireOne(sipDir, sipDirs)
-  validateFileDoesNotExist(logFile.map(_.toJava))
+  validate(outputDir)(dir => {
+    if (dir.exists) {
+      if (!dir.isDirectory) Left(s"outputDir $dir does not reference a directory")
+      else if (dir.nonEmpty) Left(s"outputDir $dir exists but is not an empty directory")
+           else if (!dir.isWriteable) Left(s"outputDir $dir exists and is empty but is not writeable by the current user")
+                else Right(())
+    }
+    else {
+      dir.createDirectories()
+      Right(())
+    }
+  })
 
   footer("")
 }

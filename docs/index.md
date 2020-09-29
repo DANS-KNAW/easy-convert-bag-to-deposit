@@ -22,15 +22,11 @@ ARGUMENTS
 
     Options:
 
-       -t, --dataverse-identifier-type  <arg>   the field to be used as Dataverse identifier, either doi or urn:nbn
-         -i, --input-file  <arg>                  File containing a newline-separated list of ids of the bags to be
-                                                  exported
-         -l, --log-file  <arg>                    The name of the logfile in csv format. If not provided a file
-                                                  easy-vault-export-ip-<timestamp>.csv will be created in the
-                                                  home-dir of the user.
-                                                  (default = /Users/jokep/easy-vault-export-ip-2020-02-02T20:20:02.000Z.csv)
-         -o, --output-dir  <arg>                  Empty directory in which to stage the created IPs.
-         -u, --UUID  <arg>                        the id of the bag to be exported
+         -t, --dataverse-identifier-type  <arg>   the field to be used as Dataverse identifier, either doi or urn:nbn
+         -o, --output-dir  <arg>                  Empty directory that will receive completed SIPs with atomic moves.
+                                                  It will be created if it does not exist.
+             --sip  <arg>                         A directory containing nothing but a bag
+             --sips  <arg>                        A directory with directories containing nothing but a bag
          -h, --help                               Show help message
          -v, --version                            Show version of this program
     ---

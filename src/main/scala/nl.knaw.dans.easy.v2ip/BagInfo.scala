@@ -20,7 +20,7 @@ import org.apache.commons.configuration.PropertiesConfiguration
 
 import scala.util.Try
 
-case class BagInfo(userId: String, versionOf: Option[String])
+case class BagInfo(userId: String, versionOf: Option[String], created: String)
 
 object BagInfo {
   def apply(bagInfo: File): Try[BagInfo] = Try {
@@ -28,9 +28,16 @@ object BagInfo {
       setDelimiterParsingDisabled(true)
       load(bagInfo.toJava)
     }
+
+    def getOptional(key: String) = Option(properties.getString(key, null))
+
+    def getMandatory(key: String) = getOptional(key)
+      .getOrElse(throw new IllegalArgumentException(s"No $key in $bagInfo"))
+
     BagInfo(
-      properties.getString("EASY-User-Account"),
-      Option(properties.getString("Is-Version-Of", null)),
+      getMandatory("EASY-User-Account"),
+      getOptional("Is-Version-Of"),
+      getMandatory("Bagging-Date"),
     )
   }
 }

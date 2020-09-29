@@ -16,30 +16,29 @@
 package nl.knaw.dans.easy.v2ip
 
 import org.apache.commons.configuration.PropertiesConfiguration
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone.UTC
-import org.joda.time.format.ISODateTimeFormat
 
 import scala.util.Try
 import scala.xml.Elem
 
-object DepositProperties {
-  private val dateTimeFormatter = ISODateTimeFormat.dateTimeNoMillis()
-
-  def apply(bagInfo: BagInfo, ddm: Elem): Try[PropertiesConfiguration] = Try {
-    val nowWithoutMillis: String = {
-      val now = DateTime.now(UTC)
-      now.minusMillis(now.millisOfSecond().get())
-    }.toString(dateTimeFormatter)
-
+class DepositProperties extends PropertiesConfiguration {
+  def fill(bagInfo: BagInfo, ddm: Elem): Try[PropertiesConfiguration] = Try {
     new PropertiesConfiguration() {
-      addProperty("creation.timestamp", nowWithoutMillis)
-      addProperty("state.label", "SUBMITTED")
-      addProperty("state.description", "Deposit is valid and ready for post-submission processing")
+      addProperty("creation.timestamp", bagInfo.created)
       addProperty("depositor.userId", bagInfo.userId)
       //      addProperty("identifier.doi", csvRecord.doi)
       //      addProperty("identifier.fedora", csvRecord.easyDatasetId)
-      addProperty("deposit.origin", "easy-fedora2vault")
+    }
+  }
+}
+
+object DepositProperties {
+
+  def default(): DepositProperties = {
+
+    new DepositProperties() {
+      addProperty("state.label", "SUBMITTED")
+      addProperty("state.description", "This deposit was extracted from the vault and is ready for processing")
+      addProperty("deposit.origin", "vault")
     }
   }
 }
