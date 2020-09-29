@@ -15,23 +15,17 @@
  */
 package nl.knaw.dans.easy.v2ip
 
-import java.io.FileNotFoundException
 import java.util.UUID
 
 import better.files.File
 import org.apache.commons.configuration.{ ConfigurationException, PropertiesConfiguration }
 
-import scala.util.{ Failure, Success, Try }
+import scala.util.{ Failure, Try }
 
-case class BagInfo(userId: String,
-                   versionOf: Option[String],
-                   created: String,
-                   bagName: String,
-                   UUID: UUID,
-                  )
+case class BagInfo(userId: String, versionOf: Option[String], created: String, uuid: UUID, bagName: String)
 
 object BagInfo {
-  def apply(bagInfo: File): Try[BagInfo] = Try{
+  def apply(bagInfo: File): Try[BagInfo] = Try {
     val properties = new PropertiesConfiguration() {
       setDelimiterParsingDisabled(true)
       load(bagInfo.toJava)
@@ -46,13 +40,13 @@ object BagInfo {
       getMandatory("EASY-User-Account"),
       getOptional("Is-Version-Of"),
       getMandatory("Bagging-Date"),
-      bagInfo.parent.name,
       UUID.fromString(bagInfo.parent.parent.name),
+      bagInfo.parent.name,
     )
   }.recoverWith {
     case e: ConfigurationException =>
       Failure(InvalidBagException(e.getMessage))
     case e if e.isInstanceOf[IllegalArgumentException] =>
-      Failure(InvalidBagException(s"not a valid UUID: ${ e.getMessage }"))
+      Failure(InvalidBagException(e.getMessage))
   }
 }

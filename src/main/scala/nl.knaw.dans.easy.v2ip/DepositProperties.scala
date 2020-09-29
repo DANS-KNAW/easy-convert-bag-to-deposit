@@ -25,6 +25,8 @@ class DepositProperties extends PropertiesConfiguration {
     new PropertiesConfiguration() {
       addProperty("creation.timestamp", bagInfo.created)
       addProperty("depositor.userId", bagInfo.userId)
+      addProperty("bag-store.bag-id", bagInfo.uuid)
+      addProperty("bag-store.bag-name", bagInfo.bagName)
       //      addProperty("identifier.doi", csvRecord.doi)
       //      addProperty("identifier.fedora", csvRecord.easyDatasetId)
     }
