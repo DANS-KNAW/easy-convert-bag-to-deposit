@@ -26,7 +26,7 @@ import scala.util.Success
 class AppSpec extends AnyFlatSpec with Matchers with FileSystemSupport with MockFactory {
   private val app = new EasyVaultExportIpApp(new Configuration("testVersion"))
   "createSips" should "" in {
-    val bags = File("src/test/resources/bags/01").children.toArray.map { testBag =>
+    File("src/test/resources/bags/01").children.toArray.foreach { testBag =>
       testBag.copyTo(
         (testDir / "exports" / testBag.name).createDirectories()
       )
@@ -37,6 +37,6 @@ class AppSpec extends AnyFlatSpec with Matchers with FileSystemSupport with Mock
       None,
       DepositProperties.default()
     ) shouldBe Success("See logging")
-    bags.map(_ / "deposit.properties").foreach(_ should exist)
+    testDir / "exports" / "04e638eb-3af1-44fb-985d-36af12fccb2d" / "deposit.properties" should exist
   }
 }

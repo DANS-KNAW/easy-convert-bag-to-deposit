@@ -24,6 +24,6 @@ package object v2ip {
 
   def now: String = DateTime.now(DateTimeZone.UTC).toString(dateTimeFormatter)
 
-  case class InvalidBagException(msg: String) extends Exception()
+  case class InvalidBagException(msg: String) extends Exception(msg)
 
 }

@@ -15,15 +15,23 @@
  */
 package nl.knaw.dans.easy.v2ip
 
+import java.io.FileNotFoundException
+import java.util.UUID
+
 import better.files.File
-import org.apache.commons.configuration.PropertiesConfiguration
+import org.apache.commons.configuration.{ ConfigurationException, PropertiesConfiguration }
 
-import scala.util.Try
+import scala.util.{ Failure, Success, Try }
 
-case class BagInfo(userId: String, versionOf: Option[String], created: String)
+case class BagInfo(userId: String,
+                   versionOf: Option[String],
+                   created: String,
+                   bagName: String,
+                   UUID: UUID,
+                  )
 
 object BagInfo {
-  def apply(bagInfo: File): Try[BagInfo] = Try {
+  def apply(bagInfo: File): Try[BagInfo] = Try{
     val properties = new PropertiesConfiguration() {
       setDelimiterParsingDisabled(true)
       load(bagInfo.toJava)
@@ -32,12 +40,19 @@ object BagInfo {
     def getOptional(key: String) = Option(properties.getString(key, null))
 
     def getMandatory(key: String) = getOptional(key)
-      .getOrElse(throw new InvalidBagException(s"No $key in $bagInfo"))
+      .getOrElse(throw InvalidBagException(s"No $key in $bagInfo"))
 
     BagInfo(
       getMandatory("EASY-User-Account"),
       getOptional("Is-Version-Of"),
       getMandatory("Bagging-Date"),
+      bagInfo.parent.name,
+      UUID.fromString(bagInfo.parent.parent.name),
     )
+  }.recoverWith {
+    case e: ConfigurationException =>
+      Failure(InvalidBagException(e.getMessage))
+    case e if e.isInstanceOf[IllegalArgumentException] =>
+      Failure(InvalidBagException(s"not a valid UUID: ${ e.getMessage }"))
   }
 }

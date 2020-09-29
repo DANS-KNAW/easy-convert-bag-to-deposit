@@ -15,6 +15,9 @@
  */
 package nl.knaw.dans.easy.v2ip
 
+import java.io.FileNotFoundException
+import java.util.UUID
+
 import better.files.File
 import better.files.File.CopyOptions
 import nl.knaw.dans.easy.v2ip.Command.FeedBackMessage
@@ -46,9 +49,13 @@ class EasyVaultExportIpApp(configuration: Configuration) extends DebugEnhancedLo
       _ = maybeOutputDir.foreach(move(sipDir))
       _ = logger.info(s"OK $sipDir")
     } yield true
-  }.recoverWith { case e: InvalidBagException =>
-    logger.error(s"$sipDir failed: ${ e.getMessage }")
-    Success(false)
+  }.recoverWith {
+    case e: InvalidBagException =>
+      logger.error(s"$sipDir failed: ${ e.getMessage }")
+      Success(false)
+    case e: FileNotFoundException =>
+      logger.error(s"$sipDir failed: file not found ${ e.getMessage }")
+      Success(false)
   }
 
   private def move(sipDir: File)(outputDir: File) = {
@@ -58,7 +65,7 @@ class EasyVaultExportIpApp(configuration: Configuration) extends DebugEnhancedLo
   }
 
   private def getMetadataDir(sipDir: File): Try[File] = {
-    def fail(prefix: String) = Failure(new IllegalArgumentException(
+    def fail(prefix: String) = Failure(InvalidBagException(
       s"$prefix */metadata directory found in ${ sipDir.toJava.getAbsolutePath }")
     )
 
