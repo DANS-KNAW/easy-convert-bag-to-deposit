@@ -18,17 +18,21 @@ package nl.knaw.dans.easy.v2ip
 import org.apache.commons.configuration.PropertiesConfiguration
 
 import scala.util.Try
-import scala.xml.Elem
+import scala.xml.{ Elem, Node, NodeSeq }
 
 class DepositProperties extends PropertiesConfiguration {
   def fill(bagInfo: BagInfo, ddm: Elem): Try[PropertiesConfiguration] = Try {
+    val ddmIds: NodeSeq = ddm \ "dcmiMetadata" \ "identifier"
+    val doi: Node = ddmIds.find(_.hasType("id-type:DOI")).getOrElse(throw InvalidBagException("no DOI"))
+    val urn: Node = ddmIds.find(_.hasType("id-type:URN")).getOrElse(throw InvalidBagException("no URN"))
     new PropertiesConfiguration() {
       addProperty("creation.timestamp", bagInfo.created)
       addProperty("depositor.userId", bagInfo.userId)
       addProperty("bag-store.bag-id", bagInfo.uuid)
       addProperty("bag-store.bag-name", bagInfo.bagName)
-      //      addProperty("identifier.doi", csvRecord.doi)
-      //      addProperty("identifier.fedora", csvRecord.easyDatasetId)
+      addProperty("identifier.doi", doi.text)
+      addProperty("identifier.urn", urn.text)
+      //addProperty("identifier.fedora", csvRecord.easyDatasetId)
     }
   }
 }

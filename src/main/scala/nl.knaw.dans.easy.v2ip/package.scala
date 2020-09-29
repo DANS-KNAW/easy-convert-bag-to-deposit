@@ -18,6 +18,8 @@ package nl.knaw.dans.easy
 import org.joda.time.format.{ DateTimeFormatter, ISODateTimeFormat }
 import org.joda.time.{ DateTime, DateTimeZone }
 
+import scala.xml.Node
+
 package object v2ip {
 
   val dateTimeFormatter: DateTimeFormatter = ISODateTimeFormat.dateTime()
@@ -26,4 +28,14 @@ package object v2ip {
 
   case class InvalidBagException(msg: String) extends Exception(msg)
 
+  private val xsiURI = "http://www.w3.org/2001/XMLSchema-instance"
+
+  implicit class RichNode(val left: Node) extends AnyVal {
+
+    def hasType(t: String): Boolean = {
+      left.attribute(xsiURI, "type")
+        .map(_.text)
+        .contains(t)
+    }
+  }
 }
