@@ -8,8 +8,7 @@ easy-convert-bag-to-deposit
 SYNOPSIS
 --------
 
-    easy-convert-bag-to-deposit { -u <id> | -i <input-file> } -o <staged-IP-dir> -t [ URN | DOI ] [-l <log-file>]
-
+    easy-convert-bag-to-deposit { -sip | -sips } <directory> -t { URN | DOI } [ -o <staged-IP-dir> ]
 
 DESCRIPTION
 -----------

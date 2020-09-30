@@ -30,7 +30,7 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   val description: String = s"""Add deposit.properties to directories(s) with a bag"""
   val synopsis: String =
     s"""
-       |  $printedName { -u <id> | -i <input-file> } -o <staged-IP-dir> -t [ URN | DOI ] [-l <log-file>]
+       |  $printedName { -sip | -sips } <directory> -t { URN | DOI } [ -o <staged-IP-dir> ]
        |""".stripMargin
 
   version(s"$printedName v${ configuration.version }")
