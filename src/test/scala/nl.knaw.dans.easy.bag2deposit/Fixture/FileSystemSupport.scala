@@ -13,11 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.v2ip
+package nl.knaw.dans.easy.bag2deposit.Fixture
 
-object IdType extends Enumeration {
-  type IdType = Value
+import better.files.File
+import better.files.File.currentWorkingDirectory
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.enablers.Existence
+import org.scalatest.flatspec.AnyFlatSpec
 
-  val URN: IdType = Value("URN")
-  val DOI: IdType = Value("DOI")
+trait FileSystemSupport extends BeforeAndAfterEach {
+  this: AnyFlatSpec =>
+
+  implicit def existenceOfFile[FILE <: better.files.File]: Existence[FILE] = _.exists
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+
+    if (testDir.exists) testDir.delete()
+    testDir.createDirectories()
+  }
+
+  lazy val testDir: File = currentWorkingDirectory / "target" / "test" / getClass.getSimpleName
 }

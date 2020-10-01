@@ -36,7 +36,7 @@
     <inceptionYear>2020</inceptionYear>
 
     <properties>
-        <main-class>nl.knaw.dans.easy.v2ip.Command</main-class>
+        <main-class>nl.knaw.dans.easy.bag2deposit.Command</main-class>
     </properties>
 
     <scm>

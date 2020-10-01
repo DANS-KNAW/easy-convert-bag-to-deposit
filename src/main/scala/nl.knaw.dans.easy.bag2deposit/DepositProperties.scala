@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.v2ip
+package nl.knaw.dans.easy.bag2deposit
 
-import nl.knaw.dans.easy.v2ip.DepositProperties.getIdType
-import nl.knaw.dans.easy.v2ip.IdType._
+import nl.knaw.dans.easy.bag2deposit.DepositProperties.getIdType
+import nl.knaw.dans.easy.bag2deposit.IdType._
 import org.apache.commons.configuration.PropertiesConfiguration
 
 import scala.util.Try

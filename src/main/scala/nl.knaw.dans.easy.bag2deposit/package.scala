@@ -20,7 +20,7 @@ import org.joda.time.{ DateTime, DateTimeZone }
 
 import scala.xml.Node
 
-package object v2ip {
+package object bag2deposit {
 
   val dateTimeFormatter: DateTimeFormatter = ISODateTimeFormat.dateTime()
 

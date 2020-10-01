@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.v2ip
+package nl.knaw.dans.easy.bag2deposit
 
 import java.io.FileNotFoundException
 import java.util.UUID
 
 import better.files.File
 import better.files.File.CopyOptions
-import nl.knaw.dans.easy.v2ip.Command.FeedBackMessage
-import nl.knaw.dans.easy.v2ip.IdType.IdType
+import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
+import nl.knaw.dans.easy.bag2deposit.IdType.IdType
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.util.{ Failure, Success, Try }

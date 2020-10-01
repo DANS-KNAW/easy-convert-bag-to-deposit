@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.v2ip
+package nl.knaw.dans.easy.bag2deposit
 
 import java.nio.file.Path
 
 import better.files.File
-import nl.knaw.dans.easy.v2ip.IdType.IdType
+import nl.knaw.dans.easy.bag2deposit.IdType.IdType
 import org.rogach.scallop.{ ScallopConf, ScallopOption, ValueConverter, singleArgConverter }
 
 class CommandLineOptions(args: Array[String], configuration: Configuration) extends ScallopConf(args) {

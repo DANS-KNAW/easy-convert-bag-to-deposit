@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.v2ip.Fixture
+package nl.knaw.dans.easy.bag2deposit.Fixture
 
 import org.joda.time.{ DateTime, DateTimeUtils }
 

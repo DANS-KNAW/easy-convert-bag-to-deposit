@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.v2ip
+package nl.knaw.dans.easy.bag2deposit
 
 import java.io.ByteArrayOutputStream
 
 import better.files.File
-import nl.knaw.dans.easy.v2ip.Fixture.{ CustomMatchers, FixedCurrentDateTimeSupport }
+import nl.knaw.dans.easy.bag2deposit.Fixture.{ CustomMatchers, FixedCurrentDateTimeSupport }
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
