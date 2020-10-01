@@ -15,54 +15,55 @@
  */
 package nl.knaw.dans.easy.bag2deposit
 
-import nl.knaw.dans.easy.bag2deposit.DepositProperties.getIdType
+import java.util.UUID
+
 import nl.knaw.dans.easy.bag2deposit.IdType._
+import nl.knaw.dans.lib.error.TryExtensions
 import org.apache.commons.configuration.PropertiesConfiguration
 
 import scala.util.Try
-import scala.xml.{ Elem, Node, NodeSeq }
+import scala.xml.{ Elem, NodeSeq }
 
-class DepositProperties extends PropertiesConfiguration {
-  def fill(bagInfo: BagInfo, ddm: Elem, idType: IdType, dansDoiPrefixes: Seq[String]): Try[PropertiesConfiguration] = Try {
-    lazy val urnOfFirstBag = ??? // TODO use bag-index
+case class DepositPropertiesFactory(configuration: Configuration) {
+  def create(bagInfo: BagInfo, ddm: Elem, idType: IdType): Try[PropertiesConfiguration] = Try {
     val ddmIds: NodeSeq = ddm \ "dcmiMetadata" \ "identifier"
-    val doi = getIdType("DOI", ddmIds)
-    val urn = getIdType("URN", ddmIds)
-    val fedoraId: Node = ddmIds.find(_.text.startsWith("easy-dataset")).getOrElse(throw InvalidBagException("no fedoraID"))
+
+    def getBaseUrn(versionOf: UUID) = configuration.bagIndex.get(versionOf).map(_.urn).unsafeGetOrThrow
+
+    def getIdType(idType: String) = ddmIds
+      .find(_.hasType(s"id-type:$idType"))
+      .getOrElse(throw InvalidBagException(s"no $idType"))
+      .text
+
+    val fedoraId = ddmIds
+      .find(_.text.startsWith("easy-dataset"))
+      .getOrElse(throw InvalidBagException("no fedoraID"))
+      .text
+
+    val doi = getIdType("DOI")
+    val urn = getIdType("URN")
+
     new PropertiesConfiguration() {
+      addProperty("state.label", "SUBMITTED")
+      addProperty("state.description", "This deposit was extracted from the vault and is ready for processing")
+      addProperty("deposit.origin", "vault")
+      // TODO when needed: make constant values above configurable for other origins.
       addProperty("creation.timestamp", bagInfo.created)
       addProperty("depositor.userId", bagInfo.userId)
       addProperty("bag-store.bag-id", bagInfo.uuid)
       addProperty("bag-store.bag-name", bagInfo.bagName)
       addProperty("identifier.doi", doi)
       addProperty("identifier.urn", urn)
-      addProperty("identifier.fedora", fedoraId.text)
+      addProperty("identifier.fedora", fedoraId)
       addProperty("dataverse.bag-id", "urn:uuid:" + bagInfo.uuid)
       addProperty("dataverse.sword-token", "urn:uuid:" + bagInfo.versionOf.getOrElse(bagInfo.uuid))
-      addProperty("dataverse.nbn", "urn:uuid:" + bagInfo.versionOf.map(_ => urn).getOrElse(urnOfFirstBag))
-      if (!dansDoiPrefixes.contains(doi.replaceAll("/.*", "/")))
+      addProperty("dataverse.nbn", "urn:uuid:" + bagInfo.versionOf.map(getBaseUrn).getOrElse(urn))
+      if (!configuration.dansDoiPrefixes.contains(doi.replaceAll("/.*", "/")))
         addProperty("dataverse.other-id", doi)
       idType match {
         case DOI => addProperty("dataverse.identifier", doi)
         case URN => addProperty("dataverse.identifier", urn)
       }
-    }
-  }
-}
-
-object DepositProperties {
-
-  private def getIdType(idType: String, ddmIds: NodeSeq) = ddmIds
-    .find(_.hasType(s"id-type:$idType"))
-    .getOrElse(throw InvalidBagException(s"no $idType"))
-    .text
-
-  def default(): DepositProperties = {
-
-    new DepositProperties() {
-      addProperty("state.label", "SUBMITTED")
-      addProperty("state.description", "This deposit was extracted from the vault and is ready for processing")
-      addProperty("deposit.origin", "vault")
     }
   }
 }

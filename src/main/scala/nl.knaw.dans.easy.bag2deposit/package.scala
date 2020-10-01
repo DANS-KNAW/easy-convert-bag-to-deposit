@@ -18,7 +18,7 @@ package nl.knaw.dans.easy
 import org.joda.time.format.{ DateTimeFormatter, ISODateTimeFormat }
 import org.joda.time.{ DateTime, DateTimeZone }
 
-import scala.xml.Node
+import scala.xml.{ Node, PrettyPrinter, Utility }
 
 package object bag2deposit {
 
@@ -36,6 +36,15 @@ package object bag2deposit {
       left.attribute(xsiURI, "type")
         .map(_.text)
         .contains(t)
+    }
+  }
+  private val logPrinter = new PrettyPrinter(-1, 0)
+  val printer = new PrettyPrinter(160, 2)
+
+  implicit class XmlExtensions(val elem: Node) extends AnyVal {
+
+    def toOneLiner: String = {
+      logPrinter.format(Utility.trim(elem)).trim
     }
   }
 }

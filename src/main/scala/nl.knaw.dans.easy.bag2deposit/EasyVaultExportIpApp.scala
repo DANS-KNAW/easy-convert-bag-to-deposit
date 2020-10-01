@@ -29,14 +29,14 @@ import scala.xml.XML
 
 class EasyVaultExportIpApp(configuration: Configuration) extends DebugEnhancedLogging {
 
-  def addPropsToSips(sipDirs: Iterator[File], idType: IdType, maybeOutputDir: Option[File], properties: DepositProperties): Try[FeedBackMessage] = {
+  def addPropsToSips(sipDirs: Iterator[File], idType: IdType, maybeOutputDir: Option[File], properties: DepositPropertiesFactory): Try[FeedBackMessage] = {
     sipDirs
       .map(addProps(properties, idType, maybeOutputDir))
       .collectFirst { case Failure(e) => Failure(e) }
       .getOrElse(Success(s"See logging")) // TODO show number of false/true values
   }
 
-  private def addProps(properties: DepositProperties, idType: IdType, maybeOutputDir: Option[File])
+  private def addProps(properties: DepositPropertiesFactory, idType: IdType, maybeOutputDir: Option[File])
                       (sipDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $sipDir")
     for {
@@ -44,7 +44,7 @@ class EasyVaultExportIpApp(configuration: Configuration) extends DebugEnhancedLo
       bagInfo <- BagInfo(metadataDir / ".." / "bag-info.txt")
       _ = logger.debug(s"$bagInfo")
       ddm = XML.loadFile((metadataDir / "dataset.xml").toJava)
-      props <- properties.fill(bagInfo, ddm, idType, configuration.dansDoiPrefixes)
+      props <- properties.create(bagInfo, ddm, idType)
       _ = props.save((sipDir / "deposit.properties").toJava)
       _ = maybeOutputDir.foreach(move(sipDir))
       _ = logger.info(s"OK $sipDir")

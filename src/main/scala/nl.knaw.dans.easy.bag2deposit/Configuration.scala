@@ -15,6 +15,8 @@
  */
 package nl.knaw.dans.easy.bag2deposit
 
+import java.net.URI
+
 import better.files.File
 import better.files.File.root
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
@@ -22,6 +24,7 @@ import org.apache.commons.configuration.PropertiesConfiguration
 
 case class Configuration(version: String,
                          dansDoiPrefixes: Seq[String],
+                         bagIndex: BagIndex,
                         )
 
 object Configuration extends DebugEnhancedLogging {
@@ -41,10 +44,10 @@ object Configuration extends DebugEnhancedLogging {
     logger.info(s"setting http.agent to $agent")
     System.setProperty("http.agent", agent)
 
-    val dansDoiPrefixes = properties.getStringArray("dans-doi.prefixes")
-    if (dansDoiPrefixes.isEmpty)
-      throw new IllegalArgumentException("no dans-doi.prefixes configured")
-
-    new Configuration(version, dansDoiPrefixes)
+    new Configuration(
+      version,
+      dansDoiPrefixes = properties.getStringArray("dans-doi.prefixes"),
+      bagIndex = BagIndex(new URI(properties.getString("bag-index.uri")))
+    )
   }
 }

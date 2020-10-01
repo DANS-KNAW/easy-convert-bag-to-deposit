@@ -24,19 +24,27 @@ import org.scalatest.matchers.should.Matchers
 import scala.util.Success
 
 class AppSpec extends AnyFlatSpec with Matchers with FileSystemSupport with MockFactory {
-  private val app = new EasyVaultExportIpApp(new Configuration("testVersion", Seq("10.17026/","10.5072/")))
   "createSips" should "" in {
+    val appConfig = mockedConfig
     File("src/test/resources/bags/01").children.toArray.foreach { testBag =>
       testBag.copyTo(
         (testDir / "exports" / testBag.name).createDirectories()
       )
     }
-    app.addPropsToSips(
+    new EasyVaultExportIpApp(appConfig).addPropsToSips(
       (testDir / "exports").children,
       IdType.DOI,
       None,
-      DepositProperties.default()
+      DepositPropertiesFactory(appConfig)
     ) shouldBe Success("See logging")
     testDir / "exports" / "04e638eb-3af1-44fb-985d-36af12fccb2d" / "deposit.properties" should exist
+  }
+
+  private def mockedConfig = {
+    new Configuration(
+      version = "testVersion",
+      dansDoiPrefixes = Seq("10.17026/", "10.5072/"),
+      bagIndex = mock[BagIndex],
+    )
   }
 }

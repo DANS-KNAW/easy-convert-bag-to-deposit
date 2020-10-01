@@ -36,6 +36,6 @@ object Command extends App with DebugEnhancedLogging {
       sipDirs,
       commandLine.idType(),
       commandLine.outputDir.toOption,
-      DepositProperties.default()
+      DepositPropertiesFactory(configuration)
     )
 }

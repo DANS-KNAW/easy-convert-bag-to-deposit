@@ -22,7 +22,7 @@ import org.apache.commons.configuration.{ ConfigurationException, PropertiesConf
 
 import scala.util.{ Failure, Try }
 
-case class BagInfo(userId: String, versionOf: Option[String], created: String, uuid: UUID, bagName: String)
+case class BagInfo(userId: String, versionOf: Option[UUID], created: String, uuid: UUID, bagName: String)
 
 object BagInfo {
   def apply(bagInfo: File): Try[BagInfo] = Try {
@@ -38,7 +38,7 @@ object BagInfo {
 
     BagInfo(
       getMandatory("EASY-User-Account"),
-      getOptional("Is-Version-Of"),
+      getOptional("Is-Version-Of").map(UUID.fromString),
       getMandatory("Bagging-Date"),
       UUID.fromString(bagInfo.parent.parent.name),
       bagInfo.parent.name,
