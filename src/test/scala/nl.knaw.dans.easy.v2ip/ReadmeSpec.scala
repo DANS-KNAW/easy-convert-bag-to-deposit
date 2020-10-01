@@ -24,7 +24,7 @@ import org.scalatest.matchers.should.Matchers
 
 class ReadmeSpec extends AnyFlatSpec with Matchers with CustomMatchers with FixedCurrentDateTimeSupport {
 
-  private val configuration = Configuration(version = "my-version")
+  private val configuration = Configuration(version = "my-version", Seq.empty)
   private val clo = new CommandLineOptions(Array[String](), configuration) {
     // avoids System.exit() in case of invalid arguments or "--help"
     override def verify(): Unit = {}

@@ -44,7 +44,7 @@ class EasyVaultExportIpApp(configuration: Configuration) extends DebugEnhancedLo
       bagInfo <- BagInfo(metadataDir / ".." / "bag-info.txt")
       _ = logger.debug(s"$bagInfo")
       ddm = XML.loadFile((metadataDir / "dataset.xml").toJava)
-      props <- properties.fill(bagInfo, ddm)
+      props <- properties.fill(bagInfo, ddm, idType, configuration.dansDoiPrefixes)
       _ = props.save((sipDir / "deposit.properties").toJava)
       _ = maybeOutputDir.foreach(move(sipDir))
       _ = logger.info(s"OK $sipDir")

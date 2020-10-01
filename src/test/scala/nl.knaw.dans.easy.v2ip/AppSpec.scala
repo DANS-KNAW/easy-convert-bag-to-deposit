@@ -24,7 +24,7 @@ import org.scalatest.matchers.should.Matchers
 import scala.util.Success
 
 class AppSpec extends AnyFlatSpec with Matchers with FileSystemSupport with MockFactory {
-  private val app = new EasyVaultExportIpApp(new Configuration("testVersion"))
+  private val app = new EasyVaultExportIpApp(new Configuration("testVersion", Seq("10.17026/","10.5072/")))
   "createSips" should "" in {
     File("src/test/resources/bags/01").children.toArray.foreach { testBag =>
       testBag.copyTo(

@@ -15,30 +15,47 @@
  */
 package nl.knaw.dans.easy.v2ip
 
+import nl.knaw.dans.easy.v2ip.DepositProperties.getIdType
+import nl.knaw.dans.easy.v2ip.IdType._
 import org.apache.commons.configuration.PropertiesConfiguration
 
 import scala.util.Try
 import scala.xml.{ Elem, Node, NodeSeq }
 
 class DepositProperties extends PropertiesConfiguration {
-  def fill(bagInfo: BagInfo, ddm: Elem): Try[PropertiesConfiguration] = Try {
+  def fill(bagInfo: BagInfo, ddm: Elem, idType: IdType, dansDoiPrefixes: Seq[String]): Try[PropertiesConfiguration] = Try {
+    lazy val urnOfFirstBag = ??? // TODO use bag-index
     val ddmIds: NodeSeq = ddm \ "dcmiMetadata" \ "identifier"
-    val doi: Node = ddmIds.find(_.hasType("id-type:DOI")).getOrElse(throw InvalidBagException("no DOI"))
-    val urn: Node = ddmIds.find(_.hasType("id-type:URN")).getOrElse(throw InvalidBagException("no URN"))
+    val doi = getIdType("DOI", ddmIds)
+    val urn = getIdType("URN", ddmIds)
     val fedoraId: Node = ddmIds.find(_.text.startsWith("easy-dataset")).getOrElse(throw InvalidBagException("no fedoraID"))
     new PropertiesConfiguration() {
       addProperty("creation.timestamp", bagInfo.created)
       addProperty("depositor.userId", bagInfo.userId)
       addProperty("bag-store.bag-id", bagInfo.uuid)
       addProperty("bag-store.bag-name", bagInfo.bagName)
-      addProperty("identifier.doi", doi.text)
-      addProperty("identifier.urn", urn.text)
+      addProperty("identifier.doi", doi)
+      addProperty("identifier.urn", urn)
       addProperty("identifier.fedora", fedoraId.text)
+      addProperty("dataverse.bag-id", "urn:uuid:" + bagInfo.uuid)
+      addProperty("dataverse.sword-token", "urn:uuid:" + bagInfo.versionOf.getOrElse(bagInfo.uuid))
+      addProperty("dataverse.nbn", "urn:uuid:" + bagInfo.versionOf.map(_ => urn).getOrElse(urnOfFirstBag))
+      if (!dansDoiPrefixes.contains(doi.replaceAll("/.*", "/")))
+        addProperty("dataverse.other-id", doi)
+      idType match {
+        case DOI => addProperty("dataverse.identifier", doi)
+        case URN => addProperty("dataverse.identifier", urn)
+      }
     }
   }
 }
 
 object DepositProperties {
+
+  private def getIdType(idType: String, ddmIds: NodeSeq) = ddmIds
+    .find(_.hasType(s"id-type:$idType"))
+    .getOrElse(throw InvalidBagException(s"no $idType"))
+    .text
 
   def default(): DepositProperties = {
 

@@ -20,7 +20,9 @@ import better.files.File.root
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration
 
-case class Configuration(version: String)
+case class Configuration(version: String,
+                         dansDoiPrefixes: Seq[String],
+                        )
 
 object Configuration extends DebugEnhancedLogging {
 
@@ -39,6 +41,10 @@ object Configuration extends DebugEnhancedLogging {
     logger.info(s"setting http.agent to $agent")
     System.setProperty("http.agent", agent)
 
-    new Configuration(version)
+    val dansDoiPrefixes = properties.getStringArray("dans-doi.prefixes")
+    if (dansDoiPrefixes.isEmpty)
+      throw new IllegalArgumentException("no dans-doi.prefixes configured")
+
+    new Configuration(version, dansDoiPrefixes)
   }
 }
