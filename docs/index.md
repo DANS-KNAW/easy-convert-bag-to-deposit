@@ -2,8 +2,6 @@ easy-convert-bag-to-deposit
 ===========
 [![Build Status](https://travis-ci.org/DANS-KNAW/easy-convert-bag-to-deposit.png?branch=master)](https://travis-ci.org/DANS-KNAW/easy-convert-bag-to-deposit)
 
-<!-- Remove this comment and extend the descriptions below -->
-
 
 SYNOPSIS
 --------
@@ -13,7 +11,9 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Add deposit.properties to directories(s) with a bag
+Add deposit.properties to directories(s) with a bag.
+The bag in each directory should be a complete bag created with the `get` 
+subcommand of [easy-bag-store](https://dans-knaw.github.io/easy-bag-store/).
 
 
 ARGUMENTS
@@ -38,7 +38,8 @@ EXAMPLES
 
     easy-bag-store -d xyz/04e638eb-3af1-44fb-985d-36af12fccb2d 04e638eb-3af1-44fb-985d-36af12fccb2d
     easy-bag-store -d xyz/b55abcfa-ec6b-4290-af6b-e93f35aefd20 b55abcfa-ec6b-4290-af6b-e93f35aefd20
-    easy-convert-bag-to-deposit --sips xyz -t DOI
+    easy-convert-bag-to-deposit --sips xyz -t URN &
+    tail -F easy-convert-bag-to-deposit.log
 
 INSTALLATION AND CONFIGURATION
 ------------------------------

@@ -47,7 +47,7 @@ object Configuration extends DebugEnhancedLogging {
     new Configuration(
       version,
       dansDoiPrefixes = properties.getStringArray("dans-doi.prefixes"),
-      bagIndex = BagIndex(new URI(properties.getString("bag-index.uri")))
+      bagIndex = BagIndex(new URI(properties.getString("bag-index.url")))
     )
   }
 }
