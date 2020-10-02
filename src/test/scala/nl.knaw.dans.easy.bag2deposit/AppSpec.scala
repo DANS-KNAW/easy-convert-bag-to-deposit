@@ -16,15 +16,14 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.Fixture.FileSystemSupport
-import org.scalamock.scalatest.MockFactory
+import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, FileSystemSupport }
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.util.Success
 
-class AppSpec extends AnyFlatSpec with Matchers with FileSystemSupport with MockFactory {
-  "createSips" should "" in {
+class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileSystemSupport {
+  "createSips" should "log all kind of io errors" in {
     val appConfig = mockedConfig
     File("src/test/resources/bags/01").children.toArray.foreach { testBag =>
       testBag.copyTo(
@@ -38,13 +37,5 @@ class AppSpec extends AnyFlatSpec with Matchers with FileSystemSupport with Mock
       DepositPropertiesFactory(appConfig)
     ) shouldBe Success("See logging")
     testDir / "exports" / "04e638eb-3af1-44fb-985d-36af12fccb2d" / "deposit.properties" should exist
-  }
-
-  private def mockedConfig = {
-    new Configuration(
-      version = "testVersion",
-      dansDoiPrefixes = Seq("10.17026/", "10.5072/"),
-      bagIndex = mock[BagIndex],
-    )
   }
 }

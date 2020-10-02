@@ -53,7 +53,7 @@ class EasyVaultExportIpApp(configuration: Configuration) extends DebugEnhancedLo
       logger.error(s"$bagParentDir failed: ${ e.getMessage }")
       Success(false)
     case e: FileNotFoundException =>
-      logger.error(s"$bagParentDir failed: file not found ${ e.getMessage }")
+      logger.error(s"$bagParentDir failed: ${e.getMessage}")
       Success(false)
   }
 

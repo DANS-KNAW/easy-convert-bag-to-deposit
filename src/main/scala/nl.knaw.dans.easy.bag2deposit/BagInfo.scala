@@ -38,7 +38,7 @@ object BagInfo {
 
     BagInfo(
       getMandatory("EASY-User-Account"),
-      getOptional("Is-Version-Of").map(UUID.fromString),
+      getOptional("Is-Version-Of").map(s => UUID.fromString(s.replaceAll("urn:uuid:",""))),
       getMandatory("Bagging-Date"),
       UUID.fromString(bagInfo.parent.parent.name),
       bagInfo.parent.name,
@@ -47,6 +47,7 @@ object BagInfo {
     case e: ConfigurationException =>
       Failure(InvalidBagException(e.getMessage))
     case e if e.isInstanceOf[IllegalArgumentException] =>
+      // TODO need more detail about which "UUID string too large" see unit tests
       Failure(InvalidBagException(e.getMessage))
   }
 }
