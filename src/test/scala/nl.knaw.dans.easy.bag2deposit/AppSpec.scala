@@ -24,7 +24,7 @@ import scala.util.Success
 
 class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileSystemSupport {
   "createSips" should "log all kind of io errors" in {
-    val appConfig = mockedConfig
+    val appConfig = mockedConfig()
     File("src/test/resources/bags/01").children.toArray.foreach { testBag =>
       testBag.copyTo(
         (testDir / "exports" / testBag.name).createDirectories()
