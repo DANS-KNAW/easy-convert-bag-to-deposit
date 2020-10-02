@@ -26,7 +26,6 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   editBuilder(_.setHelpWidth(110))
   printedName = "easy-convert-bag-to-deposit"
   version(configuration.version)
-  private val SUBCOMMAND_SEPARATOR = "---\n"
   val description: String = s"""Add deposit.properties to directories(s) with a bag"""
   val synopsis: String =
     s"""
@@ -48,16 +47,16 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   implicit val fileConverter: ValueConverter[File] = singleArgConverter(File(_))
   implicit val idTypeConverter: ValueConverter[IdType] = singleArgConverter(IdType.withName)
 
-  val sipDir: ScallopOption[File] = opt[Path]("sip", noshort = true,
+  val bagParent: ScallopOption[File] = opt[Path]("sip", noshort = true,
     descr = "A directory containing nothing but a bag").map(File(_))
-  val sipDirs: ScallopOption[File] = opt[Path]("sips", noshort = true,
+  val bagGrandParentDir: ScallopOption[File] = opt[Path]("sips", noshort = true,
     descr = "A directory with directories containing nothing but a bag").map(File(_))
   val idType: ScallopOption[IdType] = opt[IdType]("dataverse-identifier-type", short = 't', required = true,
     descr = "the field to be used as Dataverse identifier, either doi or urn:nbn")
   val outputDir: ScallopOption[File] = opt(name = "output-dir", short = 'o', required = false,
     descr = "Empty directory that will receive completed SIPs with atomic moves. It will be created if it does not exist.")
 
-  requireOne(sipDir, sipDirs)
+  requireOne(bagParent, bagGrandParentDir)
   validate(outputDir)(dir => {
     if (dir.exists) {
       if (!dir.isDirectory) Left(s"outputDir $dir does not reference a directory")

@@ -37,7 +37,7 @@ case class BagIndex(bagIndexUri: URI) {
   }.recoverWith {
     case t: Throwable => Failure(BagIndexException(s"$uuid " + t.getMessage, t))
   }.map {
-    case response if response.code == 404 => throw BagIndexException(s"$uuid not found", null)
+    case response if response.code == 404 => throw InvalidBagException(s"$uuid not found in bag-index")
     case response if response.code == 200 => response.body
     case response => throw BagIndexException(
       s"Not expected response code from bag-index. $uuid, response: ${ response.code } - ${ response.body }",

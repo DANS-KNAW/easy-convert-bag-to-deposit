@@ -29,47 +29,47 @@ import scala.xml.XML
 
 class EasyVaultExportIpApp(configuration: Configuration) extends DebugEnhancedLogging {
 
-  def addPropsToSips(sipDirs: Iterator[File], idType: IdType, maybeOutputDir: Option[File], properties: DepositPropertiesFactory): Try[FeedBackMessage] = {
-    sipDirs
+  def addPropsToBags(bagParentDirs: Iterator[File], idType: IdType, maybeOutputDir: Option[File], properties: DepositPropertiesFactory): Try[FeedBackMessage] = {
+    bagParentDirs
       .map(addProps(properties, idType, maybeOutputDir))
       .collectFirst { case Failure(e) => Failure(e) }
       .getOrElse(Success(s"See logging")) // TODO show number of false/true values
   }
 
-  private def addProps(properties: DepositPropertiesFactory, idType: IdType, maybeOutputDir: Option[File])
-                      (sipDir: File): Try[Boolean] = {
-    logger.debug(s"creating application.properties for $sipDir")
+  private def addProps(factory: DepositPropertiesFactory, idType: IdType, maybeOutputDir: Option[File])
+                      (bagParentDir: File): Try[Boolean] = {
+    logger.debug(s"creating application.properties for $bagParentDir")
     for {
-      metadataDir <- getMetadataDir(sipDir)
+      metadataDir <- getMetadataDir(bagParentDir)
       bagInfo <- BagInfo(metadataDir / ".." / "bag-info.txt")
       _ = logger.debug(s"$bagInfo")
       ddm = XML.loadFile((metadataDir / "dataset.xml").toJava)
-      props <- properties.create(bagInfo, ddm, idType)
-      _ = props.save((sipDir / "deposit.properties").toJava)
-      _ = maybeOutputDir.foreach(move(sipDir))
-      _ = logger.info(s"OK $sipDir")
+      props <- factory.create(bagInfo, ddm, idType)
+      _ = props.save((bagParentDir / "deposit.properties").toJava)
+      _ = maybeOutputDir.foreach(move(bagParentDir))
+      _ = logger.info(s"OK $bagParentDir")
     } yield true
   }.recoverWith {
     case e: InvalidBagException =>
-      logger.error(s"$sipDir failed: ${ e.getMessage }")
+      logger.error(s"$bagParentDir failed: ${ e.getMessage }")
       Success(false)
     case e: FileNotFoundException =>
-      logger.error(s"$sipDir failed: file not found ${ e.getMessage }")
+      logger.error(s"$bagParentDir failed: file not found ${ e.getMessage }")
       Success(false)
   }
 
-  private def move(sipDir: File)(outputDir: File) = {
-    val target = outputDir / sipDir.name
-    logger.info(s"moving SIP from $sipDir to $target")
-    sipDir.moveTo(target)(CopyOptions.atomically)
+  private def move(bagParentDir: File)(outputDir: File) = {
+    val target = outputDir / bagParentDir.name
+    logger.info(s"moving bag-parent from $bagParentDir to $target")
+    bagParentDir.moveTo(target)(CopyOptions.atomically)
   }
 
-  private def getMetadataDir(sipDir: File): Try[File] = {
+  private def getMetadataDir(bagParentDir: File): Try[File] = {
     def fail(prefix: String) = Failure(InvalidBagException(
-      s"$prefix */metadata directory found in ${ sipDir.toJava.getAbsolutePath }")
+      s"$prefix */metadata directory found in ${ bagParentDir.toJava.getAbsolutePath }")
     )
 
-    val dirs = sipDir.children.flatMap(_.children.filter(dir => dir.isDirectory && dir.name == "metadata")).toList
+    val dirs = bagParentDir.children.flatMap(_.children.filter(dir => dir.isDirectory && dir.name == "metadata")).toList
     if (dirs.size > 1) fail("more than one")
     else dirs.map(Success(_)).headOption.getOrElse(fail("no"))
   }

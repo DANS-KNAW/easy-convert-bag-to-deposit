@@ -27,13 +27,13 @@ object Command extends App with DebugEnhancedLogging {
   val commandLine: CommandLineOptions = new CommandLineOptions(args, configuration) {
     verify()
   }
-  val sipDirs = commandLine.sipDir.map(Iterator(_))
-    .getOrElse(commandLine.sipDirs.map(_.children)
+  val bagParentDirs = commandLine.bagParent.map(Iterator(_))
+    .getOrElse(commandLine.bagGrandParentDir.map(_.children)
       .getOrElse(Iterator.empty))
 
   new EasyVaultExportIpApp(configuration)
-    .addPropsToSips(
-      sipDirs,
+    .addPropsToBags(
+      bagParentDirs,
       commandLine.idType(),
       commandLine.outputDir.toOption,
       DepositPropertiesFactory(configuration)

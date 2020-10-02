@@ -31,7 +31,7 @@ class AppSpec extends AnyFlatSpec with Matchers with FileSystemSupport with Mock
         (testDir / "exports" / testBag.name).createDirectories()
       )
     }
-    new EasyVaultExportIpApp(appConfig).addPropsToSips(
+    new EasyVaultExportIpApp(appConfig).addPropsToBags(
       (testDir / "exports").children,
       IdType.DOI,
       None,
