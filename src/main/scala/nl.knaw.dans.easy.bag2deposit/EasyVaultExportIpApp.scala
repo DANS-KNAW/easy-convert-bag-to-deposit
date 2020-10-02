@@ -15,8 +15,7 @@
  */
 package nl.knaw.dans.easy.bag2deposit
 
-import java.io.FileNotFoundException
-import java.util.UUID
+import java.io.{ FileNotFoundException, IOException }
 
 import better.files.File
 import better.files.File.CopyOptions
@@ -65,12 +64,15 @@ class EasyVaultExportIpApp(configuration: Configuration) extends DebugEnhancedLo
   }
 
   private def getMetadataDir(bagParentDir: File): Try[File] = {
-    def fail(prefix: String) = Failure(InvalidBagException(
-      s"$prefix */metadata directory found in ${ bagParentDir.toJava.getAbsolutePath }")
-    )
-
-    val dirs = bagParentDir.children.flatMap(_.children.filter(dir => dir.isDirectory && dir.name == "metadata")).toList
-    if (dirs.size > 1) fail("more than one")
-    else dirs.map(Success(_)).headOption.getOrElse(fail("no"))
+    val triedDir = for {
+      dirs <- Try { bagParentDir.children.flatMap(_.children.filter(dir => dir.isDirectory && dir.name == "metadata")).toList }
+      _ = if (dirs.size > 1) throw InvalidBagException(s"more than one */metadata")
+      dir = dirs.headOption.getOrElse(throw InvalidBagException(s"no */metadata"))
+    } yield dir
+    triedDir.recoverWith {
+      case e: IOException =>
+        // for example: java.nio.file.NotDirectoryException: /path/to/UUID/deposit.properties
+        Failure(InvalidBagException(s"could not look up */metadata: $e"))
+    }
   }
 }
