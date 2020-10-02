@@ -38,7 +38,7 @@ object BagInfo {
 
     BagInfo(
       getMandatory("EASY-User-Account"),
-      getOptional("Is-Version-Of").map(s => UUID.fromString(s.replaceAll("urn:uuid:",""))),
+      getOptional("Is-Version-Of").map(s => UUID.fromString(s.replaceAll("urn:uuid:", ""))),
       getMandatory("Bagging-Date"),
       UUID.fromString(bagInfo.parent.parent.name),
       bagInfo.parent.name,
