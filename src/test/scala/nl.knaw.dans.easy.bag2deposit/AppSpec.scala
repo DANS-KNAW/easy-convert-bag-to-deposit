@@ -38,4 +38,23 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     ) shouldBe Success("See logging")
     testDir / "exports" / "04e638eb-3af1-44fb-985d-36af12fccb2d" / "deposit.properties" should exist
   }
+  it should "move the completed deposit" in {
+    // valid test bag
+    val uuid = "04e638eb-3af1-44fb-985d-36af12fccb2d"
+
+    File("src/test/resources/bags/01/" + uuid).copyTo(
+    (testDir / "exports" / uuid).createDirectories()
+    )
+    val appConfig = mockedConfig()
+
+    new EasyVaultExportIpApp(appConfig).addPropsToBags(
+      (testDir / "exports").children,
+      IdType.DOI,
+      Some((testDir / "ingest-dir").createDirectories()),
+      DepositPropertiesFactory(appConfig)
+    ) shouldBe Success("See logging")
+
+    (testDir / "exports").children shouldBe empty
+    testDir / "ingest-dir" / uuid / "deposit.properties" should exist
+  }
 }
