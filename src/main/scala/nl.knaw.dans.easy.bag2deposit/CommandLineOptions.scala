@@ -29,7 +29,7 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   val description: String = s"""Add deposit.properties to directories(s) with a bag"""
   val synopsis: String =
     s"""
-       |  $printedName { -sip | -sips } <directory> -t { URN | DOI } [ -o <staged-IP-dir> ]
+       |  $printedName { -d | --dir } <directory> -t { URN | DOI } [ -o <staged-IP-dir> ]
        |""".stripMargin
 
   version(s"$printedName v${ configuration.version }")
@@ -47,27 +47,16 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   implicit val fileConverter: ValueConverter[File] = singleArgConverter(File(_))
   implicit val idTypeConverter: ValueConverter[IdType] = singleArgConverter(IdType.withName)
 
-  val bagParent: ScallopOption[File] = opt[Path]("sip", noshort = true,
-    descr = "A directory containing nothing but a bag").map(File(_))
-  val bagGrandParentDir: ScallopOption[File] = opt[Path]("sips", noshort = true,
-    descr = "A directory with directories containing nothing but a bag").map(File(_))
+  val bagGrandParentDir: ScallopOption[File] = opt[Path]("dir", short = 'd', required = true,
+    descr = "directory with the deposits. These deposit-dirs each MUST have the uuid of the bag as directory name, and have one bag-dir each").map(File(_))
   val idType: ScallopOption[IdType] = opt[IdType]("dataverse-identifier-type", short = 't', required = true,
     descr = "the field to be used as Dataverse identifier, either doi or urn:nbn")
   val outputDir: ScallopOption[File] = opt(name = "output-dir", short = 'o', required = false,
-    descr = "Empty directory that will receive completed SIPs with atomic moves. It will be created if it does not exist.")
+    descr = "Optional. Directory that will receive completed SIPs with atomic moves.")
 
-  requireOne(bagParent, bagGrandParentDir)
   validate(outputDir)(dir => {
-    if (dir.exists) {
-      if (!dir.isDirectory) Left(s"outputDir $dir does not reference a directory")
-      else if (dir.nonEmpty) Left(s"outputDir $dir exists but is not an empty directory")
-           else if (!dir.isWriteable) Left(s"outputDir $dir exists and is empty but is not writeable by the current user")
-                else Right(())
-    }
-    else {
-      dir.createDirectories()
-      Right(())
-    }
+    if (!dir.isDirectory) Left(s"outputDir $dir does not reference a directory")
+    else Right(())
   })
 
   footer("")

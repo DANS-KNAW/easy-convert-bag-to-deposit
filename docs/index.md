@@ -6,7 +6,7 @@ easy-convert-bag-to-deposit
 SYNOPSIS
 --------
 
-    easy-convert-bag-to-deposit { -sip | -sips } <directory> -t { URN | DOI } [ -o <staged-IP-dir> ]
+    easy-convert-bag-to-deposit { -d | --dir } <directory> -t { URN | DOI } [ -o <staged-IP-dir> ]
 
 DESCRIPTION
 -----------
@@ -22,10 +22,10 @@ ARGUMENTS
     Options:
 
          -t, --dataverse-identifier-type  <arg>   the field to be used as Dataverse identifier, either doi or urn:nbn
-         -o, --output-dir  <arg>                  Empty directory that will receive completed SIPs with atomic moves.
-                                                  It will be created if it does not exist.
-             --sip  <arg>                         A directory containing nothing but a bag
-             --sips  <arg>                        A directory with directories containing nothing but a bag
+         -d, --dir  <arg>                         directory with the deposits. These deposit-dirs each MUST have the
+                                                  uuid of the bag as directory name, and have one bag-dir each
+         -o, --output-dir  <arg>                  Optional. Directory that will receive completed SIPs with atomic
+                                                  moves.
          -h, --help                               Show help message
          -v, --version                            Show version of this program
     ---
