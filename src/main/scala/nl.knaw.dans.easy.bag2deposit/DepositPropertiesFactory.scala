@@ -28,7 +28,7 @@ case class DepositPropertiesFactory(configuration: Configuration) {
   def create(bagInfo: BagInfo, ddm: Elem, idType: IdType): Try[PropertiesConfiguration] = Try {
     val ddmIds: NodeSeq = ddm \ "dcmiMetadata" \ "identifier"
 
-    def getBaseUrn(versionOf: UUID) = configuration.bagIndex.get(versionOf).map(_.urn).unsafeGetOrThrow
+    def getBaseUrn(versionOf: UUID) = configuration.bagIndex.getURN(versionOf).unsafeGetOrThrow
 
     def getIdType(idType: String) = ddmIds
       .find(_.hasType(s"id-type:$idType"))

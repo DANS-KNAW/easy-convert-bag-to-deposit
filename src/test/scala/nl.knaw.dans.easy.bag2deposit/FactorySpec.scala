@@ -19,7 +19,7 @@ import java.io.{ StringWriter, Writer }
 import java.util.UUID
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.Fixture.AppConfigSupport
+import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, BagIndexSupport }
 import nl.knaw.dans.lib.error._
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.scalatest.flatspec.AnyFlatSpec
@@ -28,11 +28,11 @@ import org.scalatest.matchers.should.Matchers
 import scala.util.Success
 import scala.xml.XML
 
-class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport {
+class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with BagIndexSupport {
 
   "create" should "not call the bag-index" in {
     val bag = File("src/test/resources/bags/01") / "04e638eb-3af1-44fb-985d-36af12fccb2d" / "bag-revision-1"
-    DepositPropertiesFactory(mockedConfig())
+    DepositPropertiesFactory(mockedConfig(null))
       .create(
         BagInfo(bag / "bag-info.txt").unsafeGetOrThrow,
         ddm = XML.loadFile((bag / "metadata" / "dataset.xml").toJava),
@@ -55,10 +55,20 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport {
         |""".stripMargin
     )
   }
+
   it should "call the bag-index" in {
     val bagUUID = UUID.randomUUID()
     val baseUUID = UUID.randomUUID()
-    val bagIndexInfo = BagIndexInfo(bagUUID, baseUUID, doi = "", urn = "blabla")
+    val bagIndexBody =
+      """<result>
+        |    <bag-info>
+        |        <bag-id>38cb3ff1-d59d-4560-a423-6f761b237a56</bag-id>
+        |        <base-id>38cb3ff1-d59d-4560-a423-6f761b237a56</base-id>
+        |        <created>2016-11-13T00:41:11.000+01:00</created>
+        |        <doi>10.80270/test-28m-zann</doi>
+        |        <urn>urn:nbn:nl:ui:13-z4-f8cm</urn>
+        |    </bag-info>
+        |</result>""".stripMargin
     val bagInfo = BagInfo(
       uuid = bagUUID,
       versionOf = Some(baseUUID),
@@ -74,7 +84,7 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport {
                 </ddm:dcmiMetadata>
               </ddm:DDM>
 
-    DepositPropertiesFactory(mockedConfig(bagIndexInfo))
+    DepositPropertiesFactory(mockedConfig(mockBagIndexRespondsWith(bagIndexBody, 200)))
       .create(bagInfo, ddm, IdType.URN)
       .map(serialize) shouldBe Success(
       s"""state.label = SUBMITTED
@@ -89,7 +99,7 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport {
          |identifier.fedora = easy-dataset:162288
          |dataverse.bag-id = urn:uuid:$bagUUID
          |dataverse.sword-token = urn:uuid:$baseUUID
-         |dataverse.nbn = urn:uuid:blabla
+         |dataverse.nbn = urn:uuid:urn:nbn:nl:ui:13-z4-f8cm
          |dataverse.identifier = urn:nbn:nl:ui:13-00-3haq
          |""".stripMargin
     )
@@ -111,7 +121,7 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport {
                 </ddm:dcmiMetadata>
               </ddm:DDM>
 
-    DepositPropertiesFactory(mockedConfig())
+    DepositPropertiesFactory(mockedConfig(null))
       .create(bagInfo, ddm, IdType.URN)
       .map(serialize) shouldBe Success(
       s"""state.label = SUBMITTED

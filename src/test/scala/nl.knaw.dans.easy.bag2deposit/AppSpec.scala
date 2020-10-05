@@ -16,15 +16,15 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, FileSystemSupport }
+import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, BagIndexSupport, FileSystemSupport }
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.util.Success
 
-class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileSystemSupport {
+class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileSystemSupport with BagIndexSupport {
   "createSips" should "log all kind of io errors" in {
-    val appConfig = mockedConfig()
+    val appConfig = mockedConfig(null)
     File("src/test/resources/bags/01").children.toArray.foreach { testBag =>
       testBag.copyTo(
         (testDir / "exports" / testBag.name).createDirectories()
@@ -45,7 +45,7 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     File("src/test/resources/bags/01/" + uuid).copyTo(
     (testDir / "exports" / uuid).createDirectories()
     )
-    val appConfig = mockedConfig()
+    val appConfig = mockedConfig(null)
 
     new EasyVaultExportIpApp(appConfig).addPropsToBags(
       (testDir / "exports").children,

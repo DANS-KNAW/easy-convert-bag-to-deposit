@@ -19,20 +19,31 @@ import java.io.IOException
 import java.net.URI
 import java.util.UUID
 
+import better.files.StringExtensions
 import scalaj.http.{ Http, HttpResponse }
 
 import scala.util.{ Failure, Try }
+import scala.xml.XML
+
+case class BagIndexException(msg: String, cause: Throwable) extends IOException(msg, cause)
 
 case class BagIndex(bagIndexUri: URI) {
 
-  private case class BagIndexException(msg: String, cause: Throwable) extends IOException(msg, cause)
+  def getURN(uuid: UUID): Try[String] = for {
+    response <- find(uuid)
+    xml <- parse(response, uuid)
+    nodes = xml \\ "urn"
+    urn = nodes.theSeq.headOption.map(_.text)
+      .getOrElse(throw BagIndexException(s"$uuid: no URN in $response", null))
+  } yield urn
 
-  def get(uuid: UUID): Try[BagIndexInfo] = for {
-    response <- findBagInfo(uuid)
-    bagIndexInfo <- BagIndexInfo(response)
-  } yield bagIndexInfo
+  private def parse(response: String, uuid: UUID) = Try {
+    XML.load(response.inputStream)
+  }.recoverWith {
+    case t: Throwable => Failure(BagIndexException(s"$uuid: ${t.getMessage} RESPONSE: $response", t))
+  }
 
-  private def findBagInfo(uuid: UUID): Try[String] = Try {
+  private def find(uuid: UUID): Try[String] = Try {
     execute(uuid)
   }.recoverWith {
     case t: Throwable => Failure(BagIndexException(s"$uuid " + t.getMessage, t))
@@ -45,9 +56,9 @@ case class BagIndex(bagIndexUri: URI) {
     )
   }
 
-  protected def execute(uuid: UUID): HttpResponse[String] = {
-    Http(bagIndexUri.resolve(s"/$uuid").toString)
-      .header("Accept", "text/json")
+  protected[BagIndex] def execute(uuid: UUID): HttpResponse[String] = {
+    Http(bagIndexUri.resolve(s"/bags/$uuid").toString)
+      .header("Accept", "text/xml")
       .asString
   }
 }

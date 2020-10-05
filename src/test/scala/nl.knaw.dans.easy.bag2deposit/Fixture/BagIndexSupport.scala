@@ -15,15 +15,22 @@
  */
 package nl.knaw.dans.easy.bag2deposit.Fixture
 
-import nl.knaw.dans.easy.bag2deposit.{ BagIndex, Configuration }
-import org.scalamock.scalatest.MockFactory
+import java.net.URI
+import java.util.UUID
 
-trait AppConfigSupport extends MockFactory {
-  def mockedConfig(bagIndex: BagIndex): Configuration = {
-    new Configuration(
-      version = "testVersion",
-      dansDoiPrefixes = Seq("10.17026/", "10.5072/"),
-      bagIndex = bagIndex,
-    )
+import nl.knaw.dans.easy.bag2deposit.BagIndex
+import scalaj.http.HttpResponse
+
+trait BagIndexSupport {
+  /**
+   * Limited to test scenarios where the BagIndex service
+   * always gives the the same response
+   */
+  def mockBagIndexRespondsWith(body: String, code: Int): BagIndex = {
+    new BagIndex(new URI(s"https://does.not.exist.dans.knaw.nl:20120/bags/uuid")) {
+      override def execute(uuid: UUID): HttpResponse[String] = {
+        new HttpResponse[String](body, code, headers = Map.empty)
+      }
+    }
   }
 }
