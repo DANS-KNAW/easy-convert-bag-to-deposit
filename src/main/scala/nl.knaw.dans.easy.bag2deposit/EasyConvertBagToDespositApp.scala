@@ -26,7 +26,7 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import scala.util.{ Failure, Success, Try }
 import scala.xml.XML
 
-class EasyVaultExportIpApp(configuration: Configuration) extends DebugEnhancedLogging {
+class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnhancedLogging {
 
   def addPropsToBags(bagParentDirs: Iterator[File], idType: IdType, maybeOutputDir: Option[File], properties: DepositPropertiesFactory): Try[FeedBackMessage] = {
     bagParentDirs

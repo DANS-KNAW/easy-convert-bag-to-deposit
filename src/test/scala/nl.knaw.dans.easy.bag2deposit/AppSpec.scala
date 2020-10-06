@@ -30,7 +30,7 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
         (testDir / "exports" / testBag.name).createDirectories()
       )
     }
-    new EasyVaultExportIpApp(appConfig).addPropsToBags(
+    new EasyConvertBagToDespositApp(appConfig).addPropsToBags(
       (testDir / "exports").children,
       IdType.DOI,
       None,
@@ -47,7 +47,7 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     )
     val appConfig = mockedConfig(null)
 
-    new EasyVaultExportIpApp(appConfig).addPropsToBags(
+    new EasyConvertBagToDespositApp(appConfig).addPropsToBags(
       (testDir / "exports").children,
       IdType.DOI,
       Some((testDir / "ingest-dir").createDirectories()),

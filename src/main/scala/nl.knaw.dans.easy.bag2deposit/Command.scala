@@ -31,7 +31,7 @@ object Command extends App with DebugEnhancedLogging {
     .getOrElse(commandLine.bagGrandParentDir.map(_.children)
       .getOrElse(Iterator.empty))
 
-  new EasyVaultExportIpApp(configuration)
+  new EasyConvertBagToDespositApp(configuration)
     .addPropsToBags(
       bagParentDirs,
       commandLine.idType(),
