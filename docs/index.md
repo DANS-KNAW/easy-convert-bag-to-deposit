@@ -6,13 +6,13 @@ easy-convert-bag-to-deposit
 SYNOPSIS
 --------
 
-    easy-convert-bag-to-deposit { -d | --dir } <directory> -t { URN | DOI } [ -o <staged-IP-dir> ]
+    easy-convert-bag-to-deposit { --dir | --uuid } <directory> -t { URN | DOI } [ -o <staged-IP-dir> ]
 
 DESCRIPTION
 -----------
 
 Add deposit.properties to directories(s) with a bag.
-The bag in each directory should be a complete bag created with the `get` 
+The bag in each directory should be a bag created with the `get` 
 subcommand of [easy-bag-store](https://dans-knaw.github.io/easy-bag-store/).
 
 
@@ -24,8 +24,9 @@ ARGUMENTS
          -t, --dataverse-identifier-type  <arg>   the field to be used as Dataverse identifier, either doi or urn:nbn
          -d, --dir  <arg>                         directory with the deposits. These deposit-dirs each MUST have the
                                                   uuid of the bag as directory name, and have one bag-dir each
-         -o, --output-dir  <arg>                  Optional. Directory that will receive completed SIPs with atomic
-                                                  moves.
+         -o, --output-dir  <arg>                  Optional. Directory that will receive completed deposits with
+                                                  atomic moves.
+         -u, --uuid  <arg>                        directory with a bag. This directory each MUST be a uuid.
          -h, --help                               Show help message
          -v, --version                            Show version of this program
     ---
@@ -34,11 +35,11 @@ EXAMPLES
 --------
 
     easy-bag-store -d 04e638eb-3af1-44fb-985d-36af12fccb2d 04e638eb-3af1-44fb-985d-36af12fccb2d
-    easy-convert-bag-to-deposit --sip 04e638eb-3af1-44fb-985d-36af12fccb2d -t DOI
+    easy-convert-bag-to-deposit -u 04e638eb-3af1-44fb-985d-36af12fccb2d -t DOI
 
     easy-bag-store -d xyz/04e638eb-3af1-44fb-985d-36af12fccb2d 04e638eb-3af1-44fb-985d-36af12fccb2d
     easy-bag-store -d xyz/b55abcfa-ec6b-4290-af6b-e93f35aefd20 b55abcfa-ec6b-4290-af6b-e93f35aefd20
-    easy-convert-bag-to-deposit --sips xyz -t URN &
+    easy-convert-bag-to-deposit -d xyz -t URN &
     tail -F easy-convert-bag-to-deposit.log
 
 INSTALLATION AND CONFIGURATION

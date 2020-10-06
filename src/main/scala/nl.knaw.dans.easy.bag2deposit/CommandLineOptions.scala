@@ -29,7 +29,7 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   val description: String = s"""Add deposit.properties to directories(s) with a bag"""
   val synopsis: String =
     s"""
-       |  $printedName { -d | --dir } <directory> -t { URN | DOI } [ -o <staged-IP-dir> ]
+       |  $printedName { --dir | --uuid } <directory> -t { URN | DOI } [ -o <staged-IP-dir> ]
        |""".stripMargin
 
   version(s"$printedName v${ configuration.version }")
@@ -47,13 +47,16 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   implicit val fileConverter: ValueConverter[File] = singleArgConverter(File(_))
   implicit val idTypeConverter: ValueConverter[IdType] = singleArgConverter(IdType.withName)
 
-  val bagGrandParentDir: ScallopOption[File] = opt[Path]("dir", short = 'd', required = true,
+  val bagGrandParentDir: ScallopOption[File] = opt[Path]("dir", short = 'd',
     descr = "directory with the deposits. These deposit-dirs each MUST have the uuid of the bag as directory name, and have one bag-dir each").map(File(_))
+  val bagParentDir: ScallopOption[File] = opt[Path]("uuid", short = 'u',
+    descr = "directory with a bag. This directory each MUST be a uuid.").map(File(_))
   val idType: ScallopOption[IdType] = opt[IdType]("dataverse-identifier-type", short = 't', required = true,
     descr = "the field to be used as Dataverse identifier, either doi or urn:nbn")
   val outputDir: ScallopOption[File] = opt(name = "output-dir", short = 'o', required = false,
-    descr = "Optional. Directory that will receive completed SIPs with atomic moves.")
+    descr = "Optional. Directory that will receive completed deposits with atomic moves.")
 
+  requireOne(bagParentDir, bagGrandParentDir)
   validate(outputDir)(dir => {
     if (!dir.isDirectory) Left(s"outputDir $dir does not reference a directory")
     else Right(())

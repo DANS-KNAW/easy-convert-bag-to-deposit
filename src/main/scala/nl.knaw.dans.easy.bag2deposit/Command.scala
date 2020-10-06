@@ -27,9 +27,9 @@ object Command extends App with DebugEnhancedLogging {
   val commandLine: CommandLineOptions = new CommandLineOptions(args, configuration) {
     verify()
   }
-  val bagParentDirs = commandLine
-    .bagGrandParentDir.map(_.children)
-    .getOrElse(Iterator.empty)
+  val bagParentDirs = commandLine.bagParentDir.map(Iterator(_))
+    .getOrElse(commandLine.bagGrandParentDir.map(_.children)
+      .getOrElse(Iterator.empty))
 
   new EasyVaultExportIpApp(configuration)
     .addPropsToBags(
