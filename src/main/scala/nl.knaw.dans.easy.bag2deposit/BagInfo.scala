@@ -18,6 +18,7 @@ package nl.knaw.dans.easy.bag2deposit
 import java.util.UUID
 
 import better.files.File
+import nl.knaw.dans.lib.error._
 import org.apache.commons.configuration.{ ConfigurationException, PropertiesConfiguration }
 
 import scala.util.{ Failure, Try }
@@ -37,17 +38,28 @@ object BagInfo {
       .getOrElse(throw InvalidBagException(s"No $key in $bagInfo"))
 
     BagInfo(
-      getMandatory("EASY-User-Account"),
-      getOptional("Is-Version-Of").map(s => UUID.fromString(s.replaceAll("urn:uuid:", ""))),
-      getMandatory("Bagging-Date"),
-      UUID.fromString(bagInfo.parent.parent.name),
-      bagInfo.parent.name,
+      userId = getMandatory("EASY-User-Account"),
+      versionOf = getOptional("Is-Version-Of").map(uuidFromVerionOf),
+      created = getMandatory("Bagging-Date"),
+      uuid = uuidFromFile(bagInfo.parent.parent),
+      bagName = bagInfo.parent.name,
     )
   }.recoverWith {
     case e: ConfigurationException =>
       Failure(InvalidBagException(e.getMessage))
     case e if e.isInstanceOf[IllegalArgumentException] =>
-      // TODO need more detail about which "UUID string too large" see unit tests
       Failure(InvalidBagException(e.getMessage))
   }
+
+  private def uuidFromVerionOf(s: String): UUID = Try {
+    UUID.fromString(s.replaceAll("urn:uuid:", ""))
+  }.recoverWith {
+    case _ => throw InvalidBagException(s"Invalid UUID: Is-Version-Of: $s")
+  }.unsafeGetOrThrow
+
+  private def uuidFromFile(f: File): UUID = Try {
+    UUID.fromString(f.name)
+  }.recoverWith {
+    case _ => throw InvalidBagException(s"Invalid UUID: $f")
+  }.unsafeGetOrThrow
 }

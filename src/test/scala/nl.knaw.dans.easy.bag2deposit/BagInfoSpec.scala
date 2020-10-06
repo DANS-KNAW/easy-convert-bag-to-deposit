@@ -34,7 +34,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with F
   it should "complain about invalid uuid" in {
     val file = bags / "no-uuid" / "bag-name" / "bag-info.txt"
     BagInfo(file) shouldBe Failure(InvalidBagException(
-      "Invalid UUID string: no-uuid"
+      s"Invalid UUID: $bags/no-uuid"
     ))
   }
   it should "complain about not existing bag-info.txt" in {
@@ -64,23 +64,11 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with F
     val bag = (testDir / uuid.toString / "bag-name").createDirectories()
     val file = (bag / "bag-info.txt").write(
       s"""EASY-User-Account: user001
-         |Created: 2017-01-16T14:35:00.888+01:00
-         |Is-Version-Of: urn:uuid:0$uuid
-         |""".stripMargin)
-    BagInfo(file) shouldBe Failure(InvalidBagException(
-      "UUID string too large"
-    ))
-  }
-  it should "complain about too long uuid of bag" in {
-    val uuid = UUID.randomUUID()
-    val bag = (testDir / s"0$uuid" / "bag-name").createDirectories()
-    val file = (bag / "bag-info.txt").write(
-      s"""EASY-User-Account: user001
          |Bagging-Date: 2017-01-16T14:35:00.888+01:00
-         |Is-Version-Of: urn:uuid:$uuid
+         |Is-Version-Of: urn:uuid:123456789$uuid
          |""".stripMargin)
     BagInfo(file) shouldBe Failure(InvalidBagException(
-      "UUID string too large"
+      s"Invalid UUID: Is-Version-Of: urn:uuid:123456789$uuid"
     ))
   }
   it should "have no version-of" in {
