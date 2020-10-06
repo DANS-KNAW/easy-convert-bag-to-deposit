@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.easy.bag2deposit
 
+import java.io.IOException
 import java.util.UUID
 
 import nl.knaw.dans.easy.bag2deposit.Fixture.BagIndexSupport
@@ -23,7 +24,7 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.util.{ Failure, Success }
 
-class BagIndexSpec extends AnyFlatSpec with Matchers with BagIndexSupport{
+class BagIndexSpec extends AnyFlatSpec with Matchers with BagIndexSupport {
 
   "getURN" should "report not found" in {
     val uuid = UUID.randomUUID()
@@ -50,7 +51,7 @@ class BagIndexSpec extends AnyFlatSpec with Matchers with BagIndexSupport{
     val uuid = UUID.randomUUID()
     mockBagIndexRespondsWith(body =
       "<x/>".stripMargin, code = 200)
-      .getURN(uuid) shouldBe Failure(BagIndexException(s"$uuid: no URN in <x/>",null))
+      .getURN(uuid) shouldBe Failure(BagIndexException(s"$uuid: no URN in <x/>", null))
   }
 
   it should "report invalid XML" in {
@@ -59,6 +60,14 @@ class BagIndexSpec extends AnyFlatSpec with Matchers with BagIndexSupport{
       "{}".stripMargin, code = 200)
       .getURN(uuid) should matchPattern {
       case Failure(BagIndexException(msg, _)) if msg == s"$uuid: Content is not allowed in prolog. RESPONSE: {}" =>
+    }
+  }
+
+  it should "report io problem" in {
+    val uuid = UUID.randomUUID()
+    mockBagIndexThrows(new IOException("mocked"))
+      .getURN(uuid) should matchPattern {
+      case Failure(BagIndexException(msg, _)) if msg == s"$uuid mocked" =>
     }
   }
 

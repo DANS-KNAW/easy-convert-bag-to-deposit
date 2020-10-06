@@ -43,7 +43,7 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     val uuid = "04e638eb-3af1-44fb-985d-36af12fccb2d"
 
     File("src/test/resources/bags/01/" + uuid).copyTo(
-    (testDir / "exports" / uuid).createDirectories()
+      (testDir / "exports" / uuid).createDirectories()
     )
     val appConfig = mockedConfig(null)
 

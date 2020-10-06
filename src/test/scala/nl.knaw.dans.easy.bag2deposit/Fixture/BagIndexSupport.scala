@@ -33,4 +33,12 @@ trait BagIndexSupport {
       }
     }
   }
+
+  def mockBagIndexThrows(e: Exception): BagIndex = {
+    new BagIndex(new URI(s"https://does.not.exist.dans.knaw.nl:20120/bags/uuid")) {
+      override def execute(uuid: UUID): HttpResponse[String] = {
+        throw e
+      }
+    }
+  }
 }
