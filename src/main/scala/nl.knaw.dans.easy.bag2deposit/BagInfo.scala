@@ -44,10 +44,7 @@ object BagInfo {
       uuid = uuidFromFile(bagInfo.parent.parent),
       bagName = bagInfo.parent.name,
     )
-  }.recoverWith {
-    case e: ConfigurationException =>
-      Failure(InvalidBagException(e.getMessage))
-    case e if e.isInstanceOf[IllegalArgumentException] =>
+  }.recoverWith { case e: ConfigurationException =>
       Failure(InvalidBagException(e.getMessage))
   }
 
