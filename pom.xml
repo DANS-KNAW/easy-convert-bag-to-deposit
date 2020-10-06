@@ -45,6 +45,11 @@
     </scm>
 
     <dependencies>
+        <dependency>
+            <groupId>nl.knaw.dans.lib</groupId>
+            <artifactId>dans-bag-lib_2.12</artifactId>
+        </dependency>
+
         <!-- testing -->
         <dependency>
             <groupId>org.scalatest</groupId>
