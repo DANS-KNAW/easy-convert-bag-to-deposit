@@ -12,6 +12,7 @@ DESCRIPTION
 -----------
 
 Add deposit.properties to directories(s) with a bag.
+These [properties](depositproperties.md) are used in the processing of the deposit.
 The bag in each directory should be a bag created with the `get` 
 subcommand of [easy-bag-store](https://dans-knaw.github.io/easy-bag-store/).
 

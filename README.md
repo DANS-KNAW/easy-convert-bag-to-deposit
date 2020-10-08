@@ -1,4 +1,4 @@
-easy-vault-export-ip
+easy-convert-bag-to-deposit
 ===========
 
-For documentation see: https://dans-knaw.github.io/easy-vault-export-ip
+For documentation see: https://dans-knaw.github.io/easy-convert-bag-to-deposit.git
