@@ -15,9 +15,9 @@ The following properties exist
 |------|--------|---------|
 |creation.timestamp	|ISO 8601 datetime, including timezone and in ms precision	|Base this on the 'Created' in bag-info.txt|
 |state.label|A state label (see below)|`SUBMITTED`|
-|state.description|Text|`This deposit was extracted from the vault and is ready for processing`|  
+|state.description|Text, use the `--source` parameter to distinguish|`This deposit was extracted from [the vault or fedora] and is ready for processing`|  
 |depositor.userId|EASY User Account ID|from bag-info.txt|
-|deposit.origin|Deposit method.|Use the --source parameter|
+|deposit.origin|Deposit method.|Use the `--source` parameter|
 |identifier.doi|DOI|take from dataset.xml|
 |identifier.fedora|easy-dataset:id in Fedora|take from dataset.xml|
 |identifier.urn|URN-NBN|take from dataset.xml| 
