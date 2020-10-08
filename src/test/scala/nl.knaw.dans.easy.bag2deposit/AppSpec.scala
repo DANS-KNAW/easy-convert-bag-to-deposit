@@ -56,5 +56,6 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
 
     (testDir / "exports").children shouldBe empty
     testDir / "ingest-dir" / uuid / "deposit.properties" should exist
+    // TODO check manifest and user in bag-info.txt
   }
 }

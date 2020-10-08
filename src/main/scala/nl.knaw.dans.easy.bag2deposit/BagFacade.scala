@@ -26,13 +26,13 @@ object BagFacade {
     case cause: Exception => Failure(InvalidBagException(s"$bagDir, $cause"))
   }
 
-  def updateMetadata(bagDir: File, bag: Bag, metadata: Metadata): Try[Unit] = Try {
-    MetadataWriter.writeBagMetadata(metadata, bag.getVersion, bagDir.path, bag.getFileEncoding)
+  def updateMetadata(bag: Bag): Try[Unit] = Try {
+    MetadataWriter.writeBagMetadata(bag.getMetadata, bag.getVersion, bag.getRootDir, bag.getFileEncoding)
   }
 
-  def updateManifest(bagDir: File, bag: Bag): Try[Unit] = Try {
+  def updateManifest(bag: Bag): Try[Unit] = Try {
     def isTagManifest(path: Path): Boolean = {
-      bagDir.relativize(path).getNameCount == 1 && path.getFileName.toString.startsWith("tagmanifest-")
+      bag.getRootDir.relativize(path).getNameCount == 1 && path.getFileName.toString.startsWith("tagmanifest-")
     }
 
     val algorithms = bag.getTagManifests.asScala.map(_.getAlgorithm).asJava
@@ -43,7 +43,7 @@ object BagFacade {
         else super.visitFile(path, attrs)
       }
     }
-    val bagPath = bagDir.path
+    val bagPath = bag.getRootDir
     Files.walkFileTree(bagPath, tagVisitor)
     bag.getTagManifests.clear()
     bag.getTagManifests.addAll(tagFilesMap.keySet())
