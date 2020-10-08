@@ -41,16 +41,18 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
     logger.debug(s"creating application.properties for $bagParentDir")
     for {
       metadataDir <- getMetadataDir(bagParentDir)
-      // TODO fix detour, use bag.bagInfo
-      bagInfo <- BagInfo(metadataDir / ".." / "bag-info.txt")
+      bagDir = metadataDir.parent
+      bag <- BagFacade.getBag(bagDir)
+      bagInfoMap = bag.getMetadata
+      _ = bagInfoMap.remove(DansV0Bag.EASY_USER_ACCOUNT_KEY)
+      _ = bag.setMetadata(bagInfoMap)
+      bagInfo <- BagInfo(metadataDir / ".." / "bag-info.txt")// TODO fix detour, use bagInfoMap
       _ = logger.debug(s"$bagInfo")
       ddm = XML.loadFile((metadataDir / "dataset.xml").toJava)
       props <- factory.create(bagInfo, ddm, idType)
       _ = props.save((bagParentDir / "deposit.properties").toJava)
-      // TODO fix test data to move up reading the bag
-      bag <- DansV0Bag.read(metadataDir.parent)
-      _ = bag.removeBagInfo(DansV0Bag.EASY_USER_ACCOUNT_KEY)
-      _ <- bag.save() // TODO reduce sha calculation
+      _ <- BagFacade.updateMetadata(bagDir, bag, bagInfoMap)
+      _ <- BagFacade.updateManifest(bagDir, bag)
       _ = maybeOutputDir.foreach(move(bagParentDir))
       _ = logger.info(s"OK $bagParentDir")
     } yield true
