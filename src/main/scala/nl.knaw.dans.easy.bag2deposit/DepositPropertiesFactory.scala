@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.bag2deposit
 
 import java.util.UUID
 
+import nl.knaw.dans.easy.bag2deposit.BagSource.BagSource
 import nl.knaw.dans.easy.bag2deposit.IdType._
 import nl.knaw.dans.lib.error.TryExtensions
 import org.apache.commons.configuration.PropertiesConfiguration
@@ -24,8 +25,8 @@ import org.apache.commons.configuration.PropertiesConfiguration
 import scala.util.Try
 import scala.xml.{ Elem, NodeSeq }
 
-case class DepositPropertiesFactory(configuration: Configuration) {
-  def create(bagInfo: BagInfo, ddm: Elem, idType: IdType): Try[PropertiesConfiguration] = Try {
+case class DepositPropertiesFactory(configuration: Configuration, idType: IdType, bagSource: BagSource) {
+  def create(bagInfo: BagInfo, ddm: Elem): Try[PropertiesConfiguration] = Try {
     val ddmIds: NodeSeq = ddm \ "dcmiMetadata" \ "identifier"
 
     def getBaseUrn(versionOf: UUID) = configuration.bagIndex.getURN(versionOf).unsafeGetOrThrow
@@ -42,12 +43,15 @@ case class DepositPropertiesFactory(configuration: Configuration) {
 
     val doi = getIdType("DOI")
     val urn = getIdType("URN")
+    val src = bagSource match {
+      case BagSource.VAULT => "the vault"
+      case BagSource.FEDORA => "EASY-fedora"
+    }
 
     new PropertiesConfiguration() {
       addProperty("state.label", "SUBMITTED")
-      addProperty("state.description", "This deposit was extracted from the vault and is ready for processing")
-      addProperty("deposit.origin", "vault")
-      // TODO when needed: make constant values above configurable for other origins.
+      addProperty("state.description", s"This deposit was extracted from $src and is ready for processing")
+      addProperty("deposit.origin", bagSource)
       addProperty("creation.timestamp", bagInfo.created)
       addProperty("depositor.userId", bagInfo.userId)
       addProperty("bag-store.bag-id", bagInfo.uuid)

@@ -27,15 +27,19 @@ object Command extends App with DebugEnhancedLogging {
   val commandLine: CommandLineOptions = new CommandLineOptions(args, configuration) {
     verify()
   }
-  val bagParentDirs = commandLine.bagParentDir.map(Iterator(_))
+  private val bagParentDirs = commandLine.bagParentDir.map(Iterator(_))
     .getOrElse(commandLine.bagGrandParentDir.map(_.children)
       .getOrElse(Iterator.empty))
 
+  private val propertiesFactory = DepositPropertiesFactory(
+    configuration,
+    commandLine.idType(),
+    commandLine.bagSource()
+  )
   new EasyConvertBagToDespositApp(configuration)
     .addPropsToBags(
       bagParentDirs,
-      commandLine.idType(),
       commandLine.outputDir.toOption,
-      DepositPropertiesFactory(configuration)
+      propertiesFactory
     )
 }

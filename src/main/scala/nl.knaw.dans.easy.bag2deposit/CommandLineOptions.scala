@@ -18,6 +18,7 @@ package nl.knaw.dans.easy.bag2deposit
 import java.nio.file.Path
 
 import better.files.File
+import nl.knaw.dans.easy.bag2deposit.BagSource.BagSource
 import nl.knaw.dans.easy.bag2deposit.IdType.IdType
 import org.rogach.scallop.{ ScallopConf, ScallopOption, ValueConverter, singleArgConverter }
 
@@ -46,6 +47,7 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
 
   implicit val fileConverter: ValueConverter[File] = singleArgConverter(File(_))
   implicit val idTypeConverter: ValueConverter[IdType] = singleArgConverter(IdType.withName)
+  implicit val bagSourceConverter: ValueConverter[BagSource] = singleArgConverter(BagSource.withName)
 
   val bagGrandParentDir: ScallopOption[File] = opt[Path]("dir", short = 'd',
     descr = "directory with the deposits. These deposit-dirs each MUST have the uuid of the bag as directory name, and have one bag-dir each").map(File(_))
@@ -53,14 +55,21 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
     descr = "directory with a bag. This directory each MUST be a uuid.").map(File(_))
   val idType: ScallopOption[IdType] = opt[IdType]("dataverse-identifier-type", short = 't', required = true,
     descr = "the field to be used as Dataverse identifier, either doi or urn:nbn")
+  val bagSource: ScallopOption[BagSource] = opt[BagSource]("source", short = 's', required = true,
+    descr = "The source of the bags")
   val outputDir: ScallopOption[File] = opt(name = "output-dir", short = 'o', required = false,
     descr = "Optional. Directory that will receive completed deposits with atomic moves.")
 
   requireOne(bagParentDir, bagGrandParentDir)
-  validate(outputDir)(dir => {
+  validate(outputDir) { dir =>
     if (!dir.isDirectory) Left(s"outputDir $dir does not reference a directory")
     else Right(())
-  })
+  }
+  validate(bagSource) {
+    case BagSource.VAULT => Right(())
+    case BagSource.FEDORA if idType() != IdType.DOI => Left(s"source FEDORA requires dataverse-identifier-type=DOI")
+    case _ => Left(s"$bagSource is not yet implemented")
+  }
 
   footer("")
 }

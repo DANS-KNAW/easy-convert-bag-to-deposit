@@ -32,15 +32,14 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
 
   "create" should "not call the bag-index" in {
     val bag = File("src/test/resources/bags/01") / "04e638eb-3af1-44fb-985d-36af12fccb2d" / "bag-revision-1"
-    DepositPropertiesFactory(mockedConfig(null))
+    DepositPropertiesFactory(mockedConfig(null), IdType.DOI, BagSource.VAULT)
       .create(
         BagInfo(bag / "bag-info.txt").unsafeGetOrThrow,
         ddm = XML.loadFile((bag / "metadata" / "dataset.xml").toJava),
-        IdType.DOI,
       ).map(serialize) shouldBe Success(
       """state.label = SUBMITTED
         |state.description = This deposit was extracted from the vault and is ready for processing
-        |deposit.origin = vault
+        |deposit.origin = VAULT
         |creation.timestamp = 2016-06-07
         |depositor.userId = user001
         |bag-store.bag-id = 04e638eb-3af1-44fb-985d-36af12fccb2d
@@ -84,12 +83,12 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
                 </ddm:dcmiMetadata>
               </ddm:DDM>
 
-    DepositPropertiesFactory(mockedConfig(mockBagIndexRespondsWith(bagIndexBody, 200)))
-      .create(bagInfo, ddm, IdType.URN)
+    DepositPropertiesFactory(mockedConfig(mockBagIndexRespondsWith(bagIndexBody, 200)), IdType.URN, BagSource.VAULT)
+      .create(bagInfo, ddm)
       .map(serialize) shouldBe Success(
       s"""state.label = SUBMITTED
          |state.description = This deposit was extracted from the vault and is ready for processing
-         |deposit.origin = vault
+         |deposit.origin = VAULT
          |creation.timestamp = 2017-01-16T14:35:00.888+01:00
          |depositor.userId = user001
          |bag-store.bag-id = $bagUUID
@@ -121,12 +120,12 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
                 </ddm:dcmiMetadata>
               </ddm:DDM>
 
-    DepositPropertiesFactory(mockedConfig(null))
-      .create(bagInfo, ddm, IdType.URN)
+    DepositPropertiesFactory(mockedConfig(null), IdType.URN, BagSource.VAULT)
+      .create(bagInfo, ddm)
       .map(serialize) shouldBe Success(
       s"""state.label = SUBMITTED
          |state.description = This deposit was extracted from the vault and is ready for processing
-         |deposit.origin = vault
+         |deposit.origin = VAULT
          |creation.timestamp = 2017-01-16T14:35:00.888+01:00
          |depositor.userId = user001
          |bag-store.bag-id = $bagUUID

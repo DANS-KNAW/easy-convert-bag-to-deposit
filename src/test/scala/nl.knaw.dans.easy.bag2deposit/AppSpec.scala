@@ -32,9 +32,8 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     }
     new EasyConvertBagToDespositApp(appConfig).addPropsToBags(
       (testDir / "exports").children,
-      IdType.DOI,
       None,
-      DepositPropertiesFactory(appConfig)
+      DepositPropertiesFactory(appConfig, IdType.DOI, BagSource.VAULT)
     ) shouldBe Success("See logging")
     testDir / "exports" / "04e638eb-3af1-44fb-985d-36af12fccb2d" / "deposit.properties" should exist
   }
@@ -49,9 +48,8 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
 
     new EasyConvertBagToDespositApp(appConfig).addPropsToBags(
       (testDir / "exports").children,
-      IdType.DOI,
       Some((testDir / "ingest-dir").createDirectories()),
-      DepositPropertiesFactory(appConfig)
+      DepositPropertiesFactory(appConfig, IdType.DOI, BagSource.VAULT)
     ) shouldBe Success("See logging")
 
     (testDir / "exports").children shouldBe empty

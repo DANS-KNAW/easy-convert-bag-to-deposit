@@ -21,7 +21,6 @@ import better.files.File
 import better.files.File.CopyOptions
 import nl.knaw.dans.bag.v0.DansV0Bag
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
-import nl.knaw.dans.easy.bag2deposit.IdType.IdType
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.util.{ Failure, Success, Try }
@@ -29,14 +28,14 @@ import scala.xml.XML
 
 class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnhancedLogging {
 
-  def addPropsToBags(bagParentDirs: Iterator[File], idType: IdType, maybeOutputDir: Option[File], properties: DepositPropertiesFactory): Try[FeedBackMessage] = {
+  def addPropsToBags(bagParentDirs: Iterator[File], maybeOutputDir: Option[File], properties: DepositPropertiesFactory): Try[FeedBackMessage] = {
     bagParentDirs
-      .map(addProps(properties, idType, maybeOutputDir))
+      .map(addProps(properties, maybeOutputDir))
       .collectFirst { case Failure(e) => Failure(e) }
       .getOrElse(Success(s"See logging")) // TODO show number of false/true values
   }
 
-  private def addProps(factory: DepositPropertiesFactory, idType: IdType, maybeOutputDir: Option[File])
+  private def addProps(factory: DepositPropertiesFactory, maybeOutputDir: Option[File])
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
     for {
@@ -47,7 +46,7 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
       bagInfo <- BagInfo(bagDir / "bag-info.txt")// TODO detour: use bag.getMetadata
       _ = logger.debug(s"$bagInfo")
       ddm = XML.loadFile((metadataDir / "dataset.xml").toJava)
-      props <- factory.create(bagInfo, ddm, idType)
+      props <- factory.create(bagInfo, ddm)
       _ = props.save((bagParentDir / "deposit.properties").toJava)
       _ <- BagFacade.updateMetadata(bag)
       _ <- BagFacade.updateManifest(bag)

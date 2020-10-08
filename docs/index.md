@@ -27,6 +27,7 @@ ARGUMENTS
                                                   uuid of the bag as directory name, and have one bag-dir each
          -o, --output-dir  <arg>                  Optional. Directory that will receive completed deposits with
                                                   atomic moves.
+         -s, --source  <arg>                      The source of the bags
          -u, --uuid  <arg>                        directory with a bag. This directory each MUST be a uuid.
          -h, --help                               Show help message
          -v, --version                            Show version of this program
