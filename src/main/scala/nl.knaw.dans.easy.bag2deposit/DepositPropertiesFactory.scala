@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.bag2deposit
 
 import java.util.UUID
 
-import nl.knaw.dans.easy.bag2deposit.BagSource.BagSource
+import nl.knaw.dans.easy.bag2deposit.BagSource.{ BagSource, FEDORA, VAULT }
 import nl.knaw.dans.easy.bag2deposit.IdType._
 import nl.knaw.dans.lib.error.TryExtensions
 import org.apache.commons.configuration.PropertiesConfiguration
@@ -29,7 +29,12 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
   def create(bagInfo: BagInfo, ddm: Elem): Try[PropertiesConfiguration] = Try {
     val ddmIds: NodeSeq = ddm \ "dcmiMetadata" \ "identifier"
 
-    def getBaseUrn(versionOf: UUID) = configuration.bagIndex.getURN(versionOf).unsafeGetOrThrow
+    def getBaseUrn(versionOf: UUID) = {
+      bagSource match {
+        case VAULT => configuration.bagIndex.getURN(versionOf).unsafeGetOrThrow
+        case FEDORA => ??? // bagInfo.???
+      }
+    }
 
     def getIdType(idType: String) = ddmIds
       .find(_.hasType(s"id-type:$idType"))
@@ -54,13 +59,15 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
       addProperty("deposit.origin", bagSource)
       addProperty("creation.timestamp", bagInfo.created)
       addProperty("depositor.userId", bagInfo.userId)
-      addProperty("bag-store.bag-id", bagInfo.uuid)
       addProperty("bag-store.bag-name", bagInfo.bagName)
       addProperty("identifier.doi", doi)
       addProperty("identifier.urn", urn)
       addProperty("identifier.fedora", fedoraId)
+      if (bagSource == VAULT) {
+        addProperty("bag-store.bag-id", bagInfo.uuid)
+        addProperty("dataverse.sword-token", bagInfo.versionOf.getOrElse(bagInfo.uuid))
+      }
       addProperty("dataverse.bag-id", "urn:uuid:" + bagInfo.uuid)
-      addProperty("dataverse.sword-token", bagInfo.versionOf.getOrElse(bagInfo.uuid))
       addProperty("dataverse.nbn", bagInfo.versionOf.map(getBaseUrn).getOrElse(urn))
       if (!configuration.dansDoiPrefixes.contains(doi.replaceAll("/.*", "/")))
         addProperty("dataverse.other-id", "https://doi.org/"+doi)

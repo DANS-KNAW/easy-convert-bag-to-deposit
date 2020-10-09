@@ -66,9 +66,8 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
     else Right(())
   }
   validate(bagSource) {
-    case BagSource.VAULT => Right(())
     case BagSource.FEDORA if idType() != IdType.DOI => Left(s"source FEDORA requires dataverse-identifier-type=DOI")
-    case _ => Left(s"$bagSource is not yet implemented")
+    case _ => Right(())
   }
 
   footer("")
