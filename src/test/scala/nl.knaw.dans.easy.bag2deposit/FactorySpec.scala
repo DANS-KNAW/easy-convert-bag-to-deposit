@@ -37,7 +37,7 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
     val bagDir = File("src/test/resources/bags/01") / uuid / "bag-revision-1"
     DepositPropertiesFactory(mockedConfig(null), IdType.DOI, BagSource.VAULT)
       .create(
-        BagInfo(loadBag(bagDir)).unsafeGetOrThrow,
+        BagInfo(mockBag(bagDir)).unsafeGetOrThrow,
         ddm = XML.loadFile((bagDir / "metadata" / "dataset.xml").toJava),
       ).map(serialize) shouldBe Success(
       s"""state.label = SUBMITTED
@@ -54,7 +54,7 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
         |dataverse.bag-id = urn:uuid:$uuid
         |dataverse.nbn = urn:nbn:nl:ui:13-00-3haq
         |dataverse.id-protocol = doi
-        |dataverse.identifier = dans-2xg-umq8
+        |dataverse.id-identifier = dans-2xg-umq8
         |dataverse.id-authority = 10.80270
         |""".stripMargin
     )

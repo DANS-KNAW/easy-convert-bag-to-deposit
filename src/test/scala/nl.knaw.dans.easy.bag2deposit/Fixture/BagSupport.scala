@@ -1,23 +1,25 @@
 package nl.knaw.dans.easy.bag2deposit.Fixture
 
 import better.files.File
-import gov.loc.repository.bagit.domain.{ Bag, Metadata }
+import gov.loc.repository.bagit.domain.Bag
 import org.apache.commons.configuration.PropertiesConfiguration
 
 trait BagSupport {
-  def loadBag(file: File): Bag = {
+  /** @param bagRoot the bag-info.txt is loaded as Metadata
+   *                 the bagit.txt is required to recalculate the tagmanifest
+   */
+  def mockBag(bagRoot: File): Bag = {
     val props = new PropertiesConfiguration() {
       setDelimiterParsingDisabled(true)
-      load((file / "bag-info.txt").toJava)
+      load((bagRoot / "bag-info.txt").toJava)
     }
 
     val bag = new Bag()
-    bag.setRootDir(file.path)
-    bag.setMetadata(new Metadata() {
-      props.getKeys.forEachRemaining(key =>
-        add(key, props.getString(key))
-      )
-    })
+    bag.setRootDir(bagRoot.path)
+    val md = bag.getMetadata
+    props.getKeys.forEachRemaining(key =>
+      md.add(key, props.getString(key))
+    )
     bag
   }
 }

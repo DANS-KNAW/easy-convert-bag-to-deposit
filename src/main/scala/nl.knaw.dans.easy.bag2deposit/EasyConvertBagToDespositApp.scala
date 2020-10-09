@@ -39,15 +39,14 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
     for {
-      metadataDir <- getMetadataDir(bagParentDir)
-      bagDir = metadataDir.parent
+      bagDir <- getBagDir(bagParentDir)
       bag <- BagFacade.getBag(bagDir)
-      bagInfo <- BagInfo(bag)
-      _ = bag.getMetadata.remove(DansV0Bag.EASY_USER_ACCOUNT_KEY)
+      bagInfo <- BagInfo(bag) // before changing the metadata of the bag
       _ = logger.debug(s"$bagInfo")
       ddm = XML.loadFile((bagDir / "metadata" / "dataset.xml").toJava)
       props <- factory.create(bagInfo, ddm)
       _ = props.save((bagParentDir / "deposit.properties").toJava)
+      _ = bag.getMetadata.remove(DansV0Bag.EASY_USER_ACCOUNT_KEY)
       _ <- BagFacade.updateMetadata(bag)
       _ <- BagFacade.updateManifest(bag)
       _ = maybeOutputDir.foreach(move(bagParentDir))
@@ -55,10 +54,10 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
     } yield true
   }.recoverWith {
     case e: InvalidBagException =>
-      logger.error(s"$bagParentDir failed: ${ e.getMessage }")
+      logger.error(s"${bagParentDir.name} failed: ${ e.getMessage }")
       Success(false)
     case e: FileNotFoundException =>
-      logger.error(s"$bagParentDir failed: ${ e.getMessage }")
+      logger.error(s"${bagParentDir.name} failed: ${ e.getMessage }")
       Success(false)
   }
 
@@ -68,18 +67,16 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
     bagParentDir.moveTo(target)(CopyOptions.atomically)
   }
 
-  private def getMetadataDir(bagParentDir: File): Try[File] = {
-    val triedDir = for {
-      dirs <- Try { bagParentDir.children.flatMap(_.children.filter(dir => dir.isDirectory && dir.name == "metadata")).toList }
-      _ = if (dirs.size > 1) throw InvalidBagException(s"more than one */metadata")
-      dir = dirs.headOption.getOrElse(
-        throw InvalidBagException(s"no */metadata")
-      )
-    } yield dir
-    triedDir.recoverWith {
-      case e: IOException =>
-        // for example: java.nio.file.NotDirectoryException: /path/to/UUID/deposit.properties
-        Failure(InvalidBagException(s"could not look up */metadata: $e"))
-    }
+  private def getBagDir(bagParentDir: File): Try[File] = Try {
+    val children = bagParentDir.children.toList
+    if (children.size > 1)
+      throw InvalidBagException(s"more than just one item in $bagParentDir")
+    children.find(_.isDirectory).getOrElse(
+      throw InvalidBagException(s"could not find a directory in the deposit $bagParentDir")
+    )
+  }.recoverWith {
+    case e: IOException =>
+      // for example: java.nio.file.NotDirectoryException: /path/to/UUID/deposit.properties
+      Failure(InvalidBagException(s"could not look up a bag in the deposit: $e"))
   }
 }

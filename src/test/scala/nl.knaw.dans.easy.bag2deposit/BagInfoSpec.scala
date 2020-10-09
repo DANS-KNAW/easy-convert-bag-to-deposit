@@ -18,7 +18,6 @@ package nl.knaw.dans.easy.bag2deposit
 import java.util.UUID
 
 import better.files.File
-import gov.loc.repository.bagit.domain.Bag
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, BagSupport, FileSystemSupport }
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -30,19 +29,19 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
 
   "apply" should "succeed" in {
     val file = bags / "04e638eb-3af1-44fb-985d-36af12fccb2d" / "bag-revision-1" / "bag-info.txt"
-    BagInfo(loadBag(file.parent)) shouldBe a[Success[_]] // see also FactorySpec
+    BagInfo(mockBag(file.parent)) shouldBe a[Success[_]] // see also FactorySpec
   }
   it should "complain about invalid uuid" in {
-    val file = bags / "no-uuid" / "bag-name" / "bag-info.txt"
-    BagInfo(loadBag(file.parent)) shouldBe Failure(InvalidBagException(
-      s"Invalid UUID: $bags/no-uuid"
+    val file = bags / "not-a-uuid" / "bag-name" / "bag-info.txt"
+    BagInfo(mockBag(file.parent)) shouldBe Failure(InvalidBagException(
+      s"Invalid UUID: $bags/not-a-uuid"
     ))
   }
   it should "complain about missing created" in {
     val uuid = UUID.randomUUID()
     val bag = (testDir / s"0$uuid" / "bag-name").createDirectories()
     val file = (bag / "bag-info.txt").write("EASY-User-Account: user001")
-    BagInfo(loadBag(file.parent)) shouldBe Failure(InvalidBagException(
+    BagInfo(mockBag(file.parent)) shouldBe Failure(InvalidBagException(
       s"No Bagging-Date in $file"
     ))
   }
@@ -50,7 +49,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
     val uuid = UUID.randomUUID()
     val bag = (testDir / s"$uuid" / "bag-name").createDirectories()
     val file = (bag / "bag-info.txt").write("Created: 2017-01-16T14:35:00.888+01:00")
-    BagInfo(loadBag(file.parent)) shouldBe Failure(InvalidBagException(
+    BagInfo(mockBag(file.parent)) shouldBe Failure(InvalidBagException(
       s"No EASY-User-Account in $file"
     ))
   }
@@ -62,7 +61,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |Bagging-Date: 2017-01-16T14:35:00.888+01:00
          |Is-Version-Of: urn:uuid:123456789$uuid
          |""".stripMargin)
-    BagInfo(loadBag(file.parent)) shouldBe Failure(InvalidBagException(
+    BagInfo(mockBag(file.parent)) shouldBe Failure(InvalidBagException(
       s"Invalid UUID: Is-Version-Of: urn:uuid:123456789$uuid"
     ))
   }
@@ -74,7 +73,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
       s"""Bagging-Date: $dateTime
          |EASY-User-Account: user001
          |""".stripMargin)
-    BagInfo(loadBag(file.parent)) shouldBe Success(new BagInfo(
+    BagInfo(mockBag(file.parent)) shouldBe Success(new BagInfo(
       "user001", None, dateTime, uuid, "bag-name"
     ))
   }
@@ -88,7 +87,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |Is-Version-Of: $versionOfUuid
          |EASY-User-Account: user001
          |""".stripMargin)
-    BagInfo(loadBag(file.parent)) shouldBe Success(new BagInfo(
+    BagInfo(mockBag(file.parent)) shouldBe Success(new BagInfo(
       "user001", Some(versionOfUuid), dateTime, bagUuid, "bag-name"
     ))
   }
