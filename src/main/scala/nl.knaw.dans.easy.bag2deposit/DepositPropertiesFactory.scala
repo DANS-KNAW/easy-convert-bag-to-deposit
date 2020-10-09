@@ -68,7 +68,7 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
       idType match {
         case DOI =>
           addProperty("dataverse.identifier", doi.replaceAll(".*/", ""))
-          addProperty("dataverse.id-authority", "10.80270")
+          addProperty("dataverse.id-authority", configuration.dataverseIdAutority)
         case URN =>
           addProperty("dataverse.identifier", urn)
           addProperty("dataverse.id-authority", "nbn:nl:ui:13")

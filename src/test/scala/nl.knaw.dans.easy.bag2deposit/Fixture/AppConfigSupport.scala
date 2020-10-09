@@ -23,6 +23,7 @@ trait AppConfigSupport extends MockFactory {
     new Configuration(
       version = "testVersion",
       dansDoiPrefixes = Seq("10.17026/", "10.5072/"),
+      dataverseIdAutority = "10.80270",
       bagIndex = bagIndex,
     )
   }

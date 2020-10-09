@@ -24,6 +24,7 @@ import org.apache.commons.configuration.PropertiesConfiguration
 
 case class Configuration(version: String,
                          dansDoiPrefixes: Seq[String],
+                         dataverseIdAutority: String,
                          bagIndex: BagIndex,
                         )
 
@@ -47,6 +48,7 @@ object Configuration extends DebugEnhancedLogging {
     new Configuration(
       version,
       dansDoiPrefixes = properties.getStringArray("dans-doi.prefixes"),
+      dataverseIdAutority = properties.getString("dataverse.id-authority"),
       bagIndex = BagIndex(new URI(properties.getString("bag-index.url")))
     )
   }
