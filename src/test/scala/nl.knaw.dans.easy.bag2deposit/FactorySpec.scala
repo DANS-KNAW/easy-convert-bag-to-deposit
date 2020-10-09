@@ -19,24 +19,26 @@ import java.io.{ StringWriter, Writer }
 import java.util.UUID
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, BagIndexSupport }
+import gov.loc.repository.bagit.domain.Bag
+import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, BagIndexSupport, BagSupport }
 import nl.knaw.dans.lib.error._
 import org.apache.commons.configuration.PropertiesConfiguration
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.util.Success
 import scala.xml.XML
 
-class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with BagIndexSupport {
+class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with BagIndexSupport with BagSupport with MockFactory {
 
   "create" should "not call the bag-index" in {
     val uuid = "04e638eb-3af1-44fb-985d-36af12fccb2d"
-    val bag = File("src/test/resources/bags/01") / uuid / "bag-revision-1"
+    val bagDir = File("src/test/resources/bags/01") / uuid / "bag-revision-1"
     DepositPropertiesFactory(mockedConfig(null), IdType.DOI, BagSource.VAULT)
       .create(
-        BagInfo(bag / "bag-info.txt").unsafeGetOrThrow,
-        ddm = XML.loadFile((bag / "metadata" / "dataset.xml").toJava),
+        BagInfo(loadBag(bagDir)).unsafeGetOrThrow,
+        ddm = XML.loadFile((bagDir / "metadata" / "dataset.xml").toJava),
       ).map(serialize) shouldBe Success(
       s"""state.label = SUBMITTED
         |state.description = This deposit was extracted from the vault and is ready for processing

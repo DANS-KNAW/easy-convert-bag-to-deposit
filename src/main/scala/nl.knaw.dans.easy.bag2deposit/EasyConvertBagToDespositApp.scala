@@ -42,10 +42,10 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
       metadataDir <- getMetadataDir(bagParentDir)
       bagDir = metadataDir.parent
       bag <- BagFacade.getBag(bagDir)
+      bagInfo <- BagInfo(bag)
       _ = bag.getMetadata.remove(DansV0Bag.EASY_USER_ACCOUNT_KEY)
-      bagInfo <- BagInfo(bagDir / "bag-info.txt")// TODO detour: use bag.getMetadata
       _ = logger.debug(s"$bagInfo")
-      ddm = XML.loadFile((metadataDir / "dataset.xml").toJava)
+      ddm = XML.loadFile((bagDir / "metadata" / "dataset.xml").toJava)
       props <- factory.create(bagInfo, ddm)
       _ = props.save((bagParentDir / "deposit.properties").toJava)
       _ <- BagFacade.updateMetadata(bag)
@@ -72,7 +72,9 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
     val triedDir = for {
       dirs <- Try { bagParentDir.children.flatMap(_.children.filter(dir => dir.isDirectory && dir.name == "metadata")).toList }
       _ = if (dirs.size > 1) throw InvalidBagException(s"more than one */metadata")
-      dir = dirs.headOption.getOrElse(throw InvalidBagException(s"no */metadata"))
+      dir = dirs.headOption.getOrElse(
+        throw InvalidBagException(s"no */metadata")
+      )
     } yield dir
     triedDir.recoverWith {
       case e: IOException =>

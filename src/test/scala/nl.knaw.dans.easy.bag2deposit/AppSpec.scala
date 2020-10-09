@@ -23,7 +23,7 @@ import nl.knaw.dans.easy.bag2deposit.IdType.DOI
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.util.Success
+import scala.util.{ Failure, Success }
 
 class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileSystemSupport with BagIndexSupport {
   "addPropsToBags" should "log all kind of io errors" in {
@@ -68,4 +68,21 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     (ingestBagDir / "bag-info.txt").contentAsString shouldNot include(EASY_USER_ACCOUNT_KEY)
     (ingestBagDir / "tagmanifest-sha1.txt") should not be manifestContent
   }
+  it should "complain about not existing bag-info.txt" in {
+    val uuid = "42c8dcbe-df51-422e-9c7e-9bd7a0b1ecc0"
+    File("src/test/resources/bags/01/" + uuid).copyTo(
+      (testDir / "exports" / uuid).createDirectories()
+    )
+    val appConfig = mockedConfig(null)
+    new EasyConvertBagToDespositApp(appConfig).addPropsToBags(
+      (testDir / "exports").children,
+      maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
+      DepositPropertiesFactory(appConfig, DOI, FEDORA)
+    ) shouldBe Success("See logging")
+
+    (testDir / "exports" / uuid) should exist
+    (testDir / "ingest-dir").children shouldBe empty // deposit was not moved
+    // see logging manually: Error ... <uuid> failed ... NoSuchFileException ... bag-it.txt,
+  }
+
 }

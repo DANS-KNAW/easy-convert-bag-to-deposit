@@ -18,37 +18,42 @@ package nl.knaw.dans.easy.bag2deposit
 import java.util.UUID
 
 import better.files.File
+import gov.loc.repository.bagit.domain.Bag
+import nl.knaw.dans.bag.v0.DansV0Bag
 import nl.knaw.dans.lib.error._
-import org.apache.commons.configuration.{ ConfigurationException, PropertiesConfiguration }
+import org.apache.commons.configuration.ConfigurationException
 
+import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
 
 case class BagInfo(userId: String, versionOf: Option[UUID], created: String, uuid: UUID, bagName: String)
 
 object BagInfo {
-  def apply(bagInfo: File): Try[BagInfo] = Try {
-    val properties = new PropertiesConfiguration() {
-      setDelimiterParsingDisabled(true)
-      load(bagInfo.toJava)
+  def apply(bag: Bag): Try[BagInfo] = Try {
+    val bagDir = File(bag.getRootDir)
+    val bagInfo = bag.getMetadata
+
+    def getMaybe(key: String) = {
+      Option(bagInfo.get(key))
+        .flatMap(_.asScala.headOption)
     }
 
-    def getOptional(key: String) = Option(properties.getString(key, null))
-
-    def getMandatory(key: String) = getOptional(key)
-      .getOrElse(throw InvalidBagException(s"No $key in $bagInfo"))
+    def getMandatory(key: String) = {
+      getMaybe(key).getOrElse(throw InvalidBagException(s"No $key in $bagDir/bag-info.txt"))
+    }
 
     BagInfo(
-      userId = getMandatory("EASY-User-Account"),
-      versionOf = getOptional("Is-Version-Of").map(uuidFromVerionOf),
-      created = getMandatory("Bagging-Date"),
-      uuid = uuidFromFile(bagInfo.parent.parent),
-      bagName = bagInfo.parent.name,
+      userId = getMandatory(DansV0Bag.EASY_USER_ACCOUNT_KEY),
+      versionOf = getMaybe(DansV0Bag.IS_VERSION_OF_KEY).map(uuidFromVersionOf),
+      created = getMandatory("Bagging-Date"), // TODO difference with "created"?
+      uuid = uuidFromFile(bagDir.parent),
+      bagName = bagDir.name,
     )
   }.recoverWith { case e: ConfigurationException =>
-      Failure(InvalidBagException(e.getMessage))
+    Failure(InvalidBagException(e.getMessage))
   }
 
-  private def uuidFromVerionOf(s: String): UUID = Try {
+  private def uuidFromVersionOf(s: String): UUID = Try {
     UUID.fromString(s.replaceAll("urn:uuid:", ""))
   }.recoverWith {
     case _ => throw InvalidBagException(s"Invalid UUID: Is-Version-Of: $s")
