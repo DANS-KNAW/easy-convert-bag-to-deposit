@@ -31,28 +31,29 @@ import scala.xml.XML
 class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with BagIndexSupport {
 
   "create" should "not call the bag-index" in {
-    val bag = File("src/test/resources/bags/01") / "04e638eb-3af1-44fb-985d-36af12fccb2d" / "bag-revision-1"
+    val uuid = "04e638eb-3af1-44fb-985d-36af12fccb2d"
+    val bag = File("src/test/resources/bags/01") / uuid / "bag-revision-1"
     DepositPropertiesFactory(mockedConfig(null), IdType.DOI, BagSource.VAULT)
       .create(
         BagInfo(bag / "bag-info.txt").unsafeGetOrThrow,
         ddm = XML.loadFile((bag / "metadata" / "dataset.xml").toJava),
       ).map(serialize) shouldBe Success(
-      """state.label = SUBMITTED
+      s"""state.label = SUBMITTED
         |state.description = This deposit was extracted from the vault and is ready for processing
         |deposit.origin = VAULT
         |creation.timestamp = 2016-06-07
         |depositor.userId = user001
-        |bag-store.bag-id = 04e638eb-3af1-44fb-985d-36af12fccb2d
+        |bag-store.bag-id = $uuid
         |bag-store.bag-name = bag-revision-1
         |identifier.doi = 10.5072/dans-2xg-umq8
         |identifier.urn = urn:nbn:nl:ui:13-00-3haq
         |identifier.fedora = easy-dataset:162288
-        |dataverse.bag-id = urn:uuid:04e638eb-3af1-44fb-985d-36af12fccb2d
-        |dataverse.sword-token = ec1644a2-d1e4-490e-96ba-8f7079e5893e
-        |dataverse.nbn = urn:nbn:nl:ui:13-z4-f8cm
-        |dataverse.id-protocol = urn
-        |dataverse.identifier = urn:nbn:nl:ui:13-00-3haq
-        |dataverse.id-authority = nbn:nl:ui:13
+        |dataverse.bag-id = urn:uuid:$uuid
+        |dataverse.sword-token = $uuid
+        |dataverse.nbn = urn:nbn:nl:ui:13-00-3haq
+        |dataverse.id-protocol = doi
+        |dataverse.identifier = dans-2xg-umq8
+        |dataverse.id-authority = 10.80270
         |""".stripMargin
     )
   }
