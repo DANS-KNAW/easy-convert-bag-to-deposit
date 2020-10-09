@@ -16,14 +16,17 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
+import nl.knaw.dans.bag.v0.DansV0Bag.EASY_USER_ACCOUNT_KEY
+import nl.knaw.dans.easy.bag2deposit.BagSource._
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, BagIndexSupport, FileSystemSupport }
+import nl.knaw.dans.easy.bag2deposit.IdType.DOI
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.util.Success
 
 class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileSystemSupport with BagIndexSupport {
-  "createSips" should "log all kind of io errors" in {
+  "addPropsToBags" should "log all kind of io errors" in {
     val appConfig = mockedConfig(null)
     File("src/test/resources/bags/01").children.toArray.foreach { testBag =>
       testBag.copyTo(
@@ -33,7 +36,7 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     new EasyConvertBagToDespositApp(appConfig).addPropsToBags(
       (testDir / "exports").children,
       None,
-      DepositPropertiesFactory(appConfig, IdType.DOI, BagSource.VAULT)
+      DepositPropertiesFactory(appConfig, DOI, VAULT)
     ) shouldBe Success("See logging")
     testDir / "exports" / "04e638eb-3af1-44fb-985d-36af12fccb2d" / "deposit.properties" should exist
   }
@@ -44,16 +47,25 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     File("src/test/resources/bags/01/" + uuid).copyTo(
       (testDir / "exports" / uuid).createDirectories()
     )
-    val appConfig = mockedConfig(null)
+    val srcBagDir = testDir / "exports" / uuid / "bag-revision-1"
+    val ingestBagDir = testDir / "ingest-dir" / uuid / "bag-revision-1"
 
+    // preconditions
+    srcBagDir / ".." / "deposit.properties" shouldNot exist
+    (srcBagDir / "bag-info.txt").contentAsString should include(EASY_USER_ACCOUNT_KEY)
+    val manifestContent = (srcBagDir / "tagmanifest-sha1.txt").contentAsString
+
+    val appConfig = mockedConfig(null)
     new EasyConvertBagToDespositApp(appConfig).addPropsToBags(
       (testDir / "exports").children,
-      Some((testDir / "ingest-dir").createDirectories()),
-      DepositPropertiesFactory(appConfig, IdType.DOI, BagSource.VAULT)
+      maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
+      DepositPropertiesFactory(appConfig, DOI, FEDORA)
     ) shouldBe Success("See logging")
 
+    // post conditions
     (testDir / "exports").children shouldBe empty
-    testDir / "ingest-dir" / uuid / "deposit.properties" should exist
-    // TODO check manifest and user in bag-info.txt
+    ingestBagDir / ".." / "deposit.properties" should exist
+    (ingestBagDir / "bag-info.txt").contentAsString shouldNot include(EASY_USER_ACCOUNT_KEY)
+    (ingestBagDir / "tagmanifest-sha1.txt") should not be manifestContent
   }
 }
