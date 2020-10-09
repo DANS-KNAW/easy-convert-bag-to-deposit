@@ -48,9 +48,11 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
         |identifier.urn = urn:nbn:nl:ui:13-00-3haq
         |identifier.fedora = easy-dataset:162288
         |dataverse.bag-id = urn:uuid:04e638eb-3af1-44fb-985d-36af12fccb2d
-        |dataverse.sword-token = urn:uuid:04e638eb-3af1-44fb-985d-36af12fccb2d
-        |dataverse.nbn = urn:uuid:urn:nbn:nl:ui:13-00-3haq
-        |dataverse.identifier = 10.5072/dans-2xg-umq8
+        |dataverse.sword-token = ec1644a2-d1e4-490e-96ba-8f7079e5893e
+        |dataverse.nbn = urn:nbn:nl:ui:13-z4-f8cm
+        |dataverse.id-protocol = urn
+        |dataverse.identifier = urn:nbn:nl:ui:13-00-3haq
+        |dataverse.id-authority = nbn:nl:ui:13
         |""".stripMargin
     )
   }
@@ -97,9 +99,11 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |identifier.urn = urn:nbn:nl:ui:13-00-3haq
          |identifier.fedora = easy-dataset:162288
          |dataverse.bag-id = urn:uuid:$bagUUID
-         |dataverse.sword-token = urn:uuid:$baseUUID
-         |dataverse.nbn = urn:uuid:urn:nbn:nl:ui:13-z4-f8cm
+         |dataverse.sword-token = $baseUUID
+         |dataverse.nbn = urn:nbn:nl:ui:13-z4-f8cm
+         |dataverse.id-protocol = urn
          |dataverse.identifier = urn:nbn:nl:ui:13-00-3haq
+         |dataverse.id-authority = nbn:nl:ui:13
          |""".stripMargin
     )
   }
@@ -134,10 +138,12 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |identifier.urn = urn:nbn:nl:ui:13-00-3haq
          |identifier.fedora = easy-dataset:162288
          |dataverse.bag-id = urn:uuid:$bagUUID
-         |dataverse.sword-token = urn:uuid:$bagUUID
-         |dataverse.nbn = urn:uuid:urn:nbn:nl:ui:13-00-3haq
-         |dataverse.other-id = 10.12345/foo-bar
+         |dataverse.sword-token = $bagUUID
+         |dataverse.nbn = urn:nbn:nl:ui:13-00-3haq
+         |dataverse.other-id = https://doi.org/10.12345/foo-bar
+         |dataverse.id-protocol = urn
          |dataverse.identifier = urn:nbn:nl:ui:13-00-3haq
+         |dataverse.id-authority = nbn:nl:ui:13
          |""".stripMargin
     )
   }

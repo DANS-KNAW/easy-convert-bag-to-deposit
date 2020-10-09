@@ -60,13 +60,18 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
       addProperty("identifier.urn", urn)
       addProperty("identifier.fedora", fedoraId)
       addProperty("dataverse.bag-id", "urn:uuid:" + bagInfo.uuid)
-      addProperty("dataverse.sword-token", "urn:uuid:" + bagInfo.versionOf.getOrElse(bagInfo.uuid))
-      addProperty("dataverse.nbn", "urn:uuid:" + bagInfo.versionOf.map(getBaseUrn).getOrElse(urn))
+      addProperty("dataverse.sword-token", bagInfo.versionOf.getOrElse(bagInfo.uuid))
+      addProperty("dataverse.nbn", bagInfo.versionOf.map(getBaseUrn).getOrElse(urn))
       if (!configuration.dansDoiPrefixes.contains(doi.replaceAll("/.*", "/")))
-        addProperty("dataverse.other-id", doi)
+        addProperty("dataverse.other-id", "https://doi.org/"+doi)
+      addProperty("dataverse.id-protocol", idType.toString.toLowerCase)
       idType match {
-        case DOI => addProperty("dataverse.identifier", doi)
-        case URN => addProperty("dataverse.identifier", urn)
+        case DOI =>
+          addProperty("dataverse.identifier", doi.replaceAll(".*/", ""))
+          addProperty("dataverse.id-authority", "10.80270")
+        case URN =>
+          addProperty("dataverse.identifier", urn)
+          addProperty("dataverse.id-authority", "nbn:nl:ui:13")
       }
     }
   }
