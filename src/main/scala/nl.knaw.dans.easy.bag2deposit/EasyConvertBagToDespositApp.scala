@@ -41,7 +41,7 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
     for {
       bagDir <- getBagDir(bagParentDir)
       bag <- BagFacade.getBag(bagDir)
-      bagInfo <- BagInfo(bag) // before changing the metadata of the bag
+      bagInfo <- BagInfo(bag) // call before changing the mutable metadata of the bag object
       _ = logger.debug(s"$bagInfo")
       ddm = XML.loadFile((bagDir / "metadata" / "dataset.xml").toJava)
       props <- factory.create(bagInfo, ddm)

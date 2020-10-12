@@ -71,7 +71,7 @@ class BagIndexSpec extends AnyFlatSpec with Matchers with BagIndexSupport {
     }
   }
 
-  it should "" in {
+  it should "report not expected response code" in {
     val uuid = UUID.randomUUID()
     mockBagIndexRespondsWith(body = "", code = 300)
       .getURN(uuid) shouldBe Failure(BagIndexException(s"Not expected response code from bag-index. $uuid, response: 300 - ", null))
