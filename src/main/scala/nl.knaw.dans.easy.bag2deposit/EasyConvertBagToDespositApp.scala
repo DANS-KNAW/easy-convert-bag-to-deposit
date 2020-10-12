@@ -59,6 +59,9 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
     case e: FileNotFoundException =>
       logger.error(s"${bagParentDir.name} failed: ${ e.getMessage }")
       Success(false)
+    case e: Throwable =>
+      logger.error(s"${bagParentDir.name} failed with not expected error: ${e.getClass.getSimpleName} ${e.getMessage}")
+      Failure(e)
   }
 
   private def move(bagParentDir: File)(outputDir: File) = {

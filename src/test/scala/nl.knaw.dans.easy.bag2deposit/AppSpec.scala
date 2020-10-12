@@ -58,7 +58,7 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     // pre condition
     srcDir / ".." / "deposit.properties" shouldNot exist
 
-    val appConfig = mockedConfig(mockBagIndexThrows(InvalidBagException("mocked version-of not found")))
+    val appConfig = mockedConfig(mockBagIndexRespondsWith("",404)) // base bag not found
     new EasyConvertBagToDespositApp(appConfig).addPropsToBags(
       (testDir / "exports").children,
       maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
