@@ -17,9 +17,10 @@ package nl.knaw.dans.easy.bag2deposit
 
 import java.util.UUID
 
-import nl.knaw.dans.easy.bag2deposit.BagSource.{ BagSource, FEDORA, VAULT }
+import nl.knaw.dans.easy.bag2deposit.BagSource.{ BagSource, FEDORA, VAULT, submittedStateDescription }
 import nl.knaw.dans.easy.bag2deposit.IdType._
 import nl.knaw.dans.lib.error.TryExtensions
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration
 
 import scala.util.Try
@@ -32,7 +33,7 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
     def getBaseUrn(versionOf: UUID) = {
       bagSource match {
         case VAULT => configuration.bagIndex.getURN(versionOf).unsafeGetOrThrow
-        case FEDORA => ??? // bagInfo.???
+        case FEDORA => bagInfo.baseUrn.getOrElse(throw InvalidBagException("version-of without base-urn"))
       }
     }
 
@@ -48,15 +49,11 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
 
     val doi = getIdType("DOI")
     val urn = getIdType("URN")
-    val src = bagSource match {
-      case BagSource.VAULT => "the vault"
-      case BagSource.FEDORA => "EASY-fedora"
-    }
 
     new PropertiesConfiguration() {
       addProperty("state.label", "SUBMITTED")
-      addProperty("state.description", s"This deposit was extracted from $src and is ready for processing")
-      addProperty("deposit.origin", bagSource)
+      addProperty("state.description", submittedStateDescription(bagSource))
+      addProperty("deposit.origin", bagSource.toString)
       addProperty("creation.timestamp", bagInfo.created)
       addProperty("depositor.userId", bagInfo.userId)
       addProperty("bag-store.bag-name", bagInfo.bagName)
@@ -70,7 +67,7 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
       addProperty("dataverse.bag-id", "urn:uuid:" + bagInfo.uuid)
       addProperty("dataverse.nbn", bagInfo.versionOf.map(getBaseUrn).getOrElse(urn))
       if (!configuration.dansDoiPrefixes.contains(doi.replaceAll("/.*", "/")))
-        addProperty("dataverse.other-id", "https://doi.org/"+doi)
+        addProperty("dataverse.other-id", "https://doi.org/" + doi)
       addProperty("dataverse.id-protocol", idType.toString.toLowerCase)
       idType match {
         case DOI =>

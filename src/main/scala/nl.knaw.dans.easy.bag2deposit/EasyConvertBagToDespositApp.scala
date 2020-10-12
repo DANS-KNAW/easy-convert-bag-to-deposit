@@ -20,6 +20,7 @@ import java.io.{ FileNotFoundException, IOException }
 import better.files.File
 import better.files.File.CopyOptions
 import nl.knaw.dans.bag.v0.DansV0Bag
+import nl.knaw.dans.easy.bag2deposit.BagSource.VAULT
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
@@ -28,7 +29,10 @@ import scala.xml.XML
 
 class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnhancedLogging {
 
-  def addPropsToBags(bagParentDirs: Iterator[File], maybeOutputDir: Option[File], properties: DepositPropertiesFactory): Try[FeedBackMessage] = {
+  def addPropsToBags(bagParentDirs: Iterator[File],
+                     maybeOutputDir: Option[File],
+                     properties: DepositPropertiesFactory,
+                    ): Try[FeedBackMessage] = {
     bagParentDirs
       .map(addProps(properties, maybeOutputDir))
       .collectFirst { case Failure(e) => Failure(e) }
@@ -38,10 +42,11 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
   private def addProps(factory: DepositPropertiesFactory, maybeOutputDir: Option[File])
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
+    val requireBaseUrnWithVersionOf = factory.bagSource == VAULT // TODO less sneaky
     for {
       bagDir <- getBagDir(bagParentDir)
       bag <- BagFacade.getBag(bagDir)
-      bagInfo <- BagInfo(bag) // call before changing the mutable metadata of the bag object
+      bagInfo <- BagInfo(bag, requireBaseUrnWithVersionOf) // uses mutable metadata of the bag object
       _ = logger.debug(s"$bagInfo")
       ddm = XML.loadFile((bagDir / "metadata" / "dataset.xml").toJava)
       props <- factory.create(bagInfo, ddm)

@@ -26,29 +26,29 @@ import org.apache.commons.configuration.ConfigurationException
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
 
-case class BagInfo(userId: String, versionOf: Option[UUID], created: String, uuid: UUID, bagName: String)
+case class BagInfo(userId: String, created: String, uuid: UUID, bagName: String, versionOf: Option[UUID], baseUrn: Option[String] = None)
 
 object BagInfo {
-  def apply(bag: Bag): Try[BagInfo] = Try {
+  val baseUrnKey = "Base-Urn"
+
+  def apply(bag: Bag, requireBaseUrnWithVersionOf: Boolean): Try[BagInfo] = Try {
     val bagDir = File(bag.getRootDir)
     val bagInfo = bag.getMetadata
 
-    def getMaybe(key: String) = {
-      Option(bagInfo.get(key))
-        .flatMap(_.asScala.headOption)
-    }
+    def getMaybe(key: String) = Option(bagInfo.get(key))
+      .flatMap(_.asScala.headOption)
 
-    def getMandatory(key: String) = {
-      getMaybe(key).getOrElse(throw InvalidBagException(s"No $key in $bagDir/bag-info.txt"))
-    }
+    def notFound(key: String) = InvalidBagException(s"No $key in $bagDir/bag-info.txt")
 
-    BagInfo(
-      userId = getMandatory(DansV0Bag.EASY_USER_ACCOUNT_KEY),
-      versionOf = getMaybe(DansV0Bag.IS_VERSION_OF_KEY).map(uuidFromVersionOf),
-      created = getMandatory("Bagging-Date"), // TODO difference with "created"?
-      uuid = uuidFromFile(bagDir.parent),
-      bagName = bagDir.name,
-    )
+    def getMandatory(key: String) = getMaybe(key).getOrElse(throw notFound(key))
+
+    val maybeVersionOf = getMaybe(DansV0Bag.IS_VERSION_OF_KEY).map(uuidFromVersionOf)
+    val maybeBaseUrn = getMaybe(baseUrnKey)
+
+    if (maybeVersionOf.isDefined && requireBaseUrnWithVersionOf && maybeBaseUrn.isEmpty)
+      throw notFound(baseUrnKey)
+
+    new BagInfo(userId = getMandatory(DansV0Bag.EASY_USER_ACCOUNT_KEY), created = getMandatory("Bagging-Date"), uuid = uuidFromFile(bagDir.parent), bagName = bagDir.name, versionOf = maybeVersionOf, baseUrn = maybeBaseUrn)
   }.recoverWith { case e: ConfigurationException =>
     Failure(InvalidBagException(e.getMessage))
   }

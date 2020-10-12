@@ -19,7 +19,6 @@ import java.io.{ StringWriter, Writer }
 import java.util.UUID
 
 import better.files.File
-import gov.loc.repository.bagit.domain.Bag
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, BagIndexSupport, BagSupport }
 import nl.knaw.dans.lib.error._
 import org.apache.commons.configuration.PropertiesConfiguration
@@ -37,26 +36,26 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
     val bagDir = File("src/test/resources/bags/01") / uuid / "bag-revision-1"
     DepositPropertiesFactory(mockedConfig(null), IdType.DOI, BagSource.VAULT)
       .create(
-        BagInfo(mockBag(bagDir)).unsafeGetOrThrow,
+        BagInfo(mockBag(bagDir), requireBaseUrnWithVersionOf = false).unsafeGetOrThrow,
         ddm = XML.loadFile((bagDir / "metadata" / "dataset.xml").toJava),
       ).map(serialize) shouldBe Success(
       s"""state.label = SUBMITTED
-        |state.description = This deposit was extracted from the vault and is ready for processing
-        |deposit.origin = VAULT
-        |creation.timestamp = 2016-06-07
-        |depositor.userId = user001
-        |bag-store.bag-name = bag-revision-1
-        |identifier.doi = 10.5072/dans-2xg-umq8
-        |identifier.urn = urn:nbn:nl:ui:13-00-3haq
-        |identifier.fedora = easy-dataset:162288
-        |bag-store.bag-id = $uuid
-        |dataverse.sword-token = $uuid
-        |dataverse.bag-id = urn:uuid:$uuid
-        |dataverse.nbn = urn:nbn:nl:ui:13-00-3haq
-        |dataverse.id-protocol = doi
-        |dataverse.id-identifier = dans-2xg-umq8
-        |dataverse.id-authority = 10.80270
-        |""".stripMargin
+         |state.description = This deposit was extracted from the vault and is ready for processing
+         |deposit.origin = VAULT
+         |creation.timestamp = 2016-06-07
+         |depositor.userId = user001
+         |bag-store.bag-name = bag-revision-1
+         |identifier.doi = 10.5072/dans-2xg-umq8
+         |identifier.urn = urn:nbn:nl:ui:13-00-3haq
+         |identifier.fedora = easy-dataset:162288
+         |bag-store.bag-id = $uuid
+         |dataverse.sword-token = $uuid
+         |dataverse.bag-id = urn:uuid:$uuid
+         |dataverse.nbn = urn:nbn:nl:ui:13-00-3haq
+         |dataverse.id-protocol = doi
+         |dataverse.id-identifier = dans-2xg-umq8
+         |dataverse.id-authority = 10.80270
+         |""".stripMargin
     )
   }
 
@@ -73,13 +72,7 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
         |        <urn>urn:nbn:nl:ui:13-z4-f8cm</urn>
         |    </bag-info>
         |</result>""".stripMargin
-    val bagInfo = BagInfo(
-      uuid = bagUUID,
-      versionOf = Some(baseUUID),
-      userId = "user001",
-      created = "2017-01-16T14:35:00.888+01:00",
-      bagName = "bag-name",
-    )
+    val bagInfo = BagInfo(userId = "user001", created = "2017-01-16T14:35:00.888+01:00", uuid = bagUUID, bagName = "bag-name", versionOf = Some(baseUUID))
     val ddm = <ddm:DDM xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
                 <ddm:dcmiMetadata>
                   <dcterms:identifier xsi:type="id-type:DOI">10.5072/dans-2xg-umq8</dcterms:identifier>
@@ -110,15 +103,52 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |""".stripMargin
     )
   }
+
+  it should "call use base urn from bag-info.txt" in {
+    val bagUUID = UUID.randomUUID()
+    val baseUUID = UUID.randomUUID()
+    val bagIndexBody =
+      """<result>
+        |    <bag-info>
+        |        <bag-id>38cb3ff1-d59d-4560-a423-6f761b237a56</bag-id>
+        |        <base-id>38cb3ff1-d59d-4560-a423-6f761b237a56</base-id>
+        |        <created>2016-11-13T00:41:11.000+01:00</created>
+        |        <doi>10.80270/test-28m-zann</doi>
+        |        <urn>urn:nbn:nl:ui:13-z4-f8cm</urn>
+        |    </bag-info>
+        |</result>""".stripMargin
+    val bagInfo = BagInfo(userId = "user001", created = "2017-01-16T14:35:00.888+01:00", uuid = bagUUID, bagName = "bag-name", versionOf = Some(baseUUID), Some("rabarbera"))
+    val ddm = <ddm:DDM xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                <ddm:dcmiMetadata>
+                  <dcterms:identifier xsi:type="id-type:DOI">10.5072/dans-2xg-umq8</dcterms:identifier>
+                  <dcterms:identifier xsi:type="id-type:URN">urn:nbn:nl:ui:13-00-3haq</dcterms:identifier>
+                  <dcterms:identifier>easy-dataset:162288</dcterms:identifier>
+                </ddm:dcmiMetadata>
+              </ddm:DDM>
+
+    DepositPropertiesFactory(mockedConfig(null), IdType.URN, BagSource.FEDORA)
+      .create(bagInfo, ddm)
+      .map(serialize) shouldBe Success(
+      s"""state.label = SUBMITTED
+         |state.description = This deposit was extracted from EASY-fedora and is ready for processing
+         |deposit.origin = FEDORA
+         |creation.timestamp = 2017-01-16T14:35:00.888+01:00
+         |depositor.userId = user001
+         |bag-store.bag-name = bag-name
+         |identifier.doi = 10.5072/dans-2xg-umq8
+         |identifier.urn = urn:nbn:nl:ui:13-00-3haq
+         |identifier.fedora = easy-dataset:162288
+         |dataverse.bag-id = urn:uuid:$bagUUID
+         |dataverse.nbn = rabarbera
+         |dataverse.id-protocol = urn
+         |dataverse.id-identifier = urn:nbn:nl:ui:13-00-3haq
+         |dataverse.id-authority = nbn:nl:ui:13
+         |""".stripMargin
+    )
+  }
   it should "create dataverse.other-id" in {
     val bagUUID = UUID.randomUUID()
-    val bagInfo = BagInfo(
-      uuid = bagUUID,
-      versionOf = None,
-      userId = "user001",
-      created = "2017-01-16T14:35:00.888+01:00",
-      bagName = "bag-name",
-    )
+    val bagInfo = BagInfo(userId = "user001", created = "2017-01-16T14:35:00.888+01:00", uuid = bagUUID, bagName = "bag-name", versionOf = None)
     val ddm = <ddm:DDM xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
                 <ddm:dcmiMetadata>
                   <dcterms:identifier xsi:type="id-type:DOI">10.12345/foo-bar</dcterms:identifier>

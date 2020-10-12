@@ -19,5 +19,13 @@ object BagSource extends Enumeration {
   type BagSource = Value
 
   val VAULT: BagSource = Value("VAULT")
-  val FEDORA: BagSource = Value("VAULT")
+  val FEDORA: BagSource = Value("FEDORA")
+
+  def submittedStateDescription(bagSource: BagSource ): String = {
+    val s = bagSource match {
+      case BagSource.VAULT => "the vault"
+      case BagSource.FEDORA => "EASY-fedora"
+    }
+    s"This deposit was extracted from $s and is ready for processing"
+  }
 }
