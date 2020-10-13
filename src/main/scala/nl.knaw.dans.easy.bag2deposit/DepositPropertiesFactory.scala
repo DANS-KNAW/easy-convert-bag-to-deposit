@@ -15,8 +15,6 @@
  */
 package nl.knaw.dans.easy.bag2deposit
 
-import java.util.UUID
-
 import nl.knaw.dans.easy.bag2deposit.BagSource.{ BagSource, FEDORA, VAULT, submittedStateDescription }
 import nl.knaw.dans.easy.bag2deposit.IdType._
 import nl.knaw.dans.lib.error.TryExtensions
@@ -28,13 +26,6 @@ import scala.xml.{ Elem, NodeSeq }
 case class DepositPropertiesFactory(configuration: Configuration, idType: IdType, bagSource: BagSource) {
   def create(bagInfo: BagInfo, ddm: Elem): Try[PropertiesConfiguration] = Try {
     val ddmIds: NodeSeq = ddm \ "dcmiMetadata" \ "identifier"
-
-    def getBaseUrn(versionOf: UUID) = {
-      bagSource match {
-        case VAULT => configuration.bagIndex.getURN(versionOf).unsafeGetOrThrow
-        case FEDORA => bagInfo.baseUrn.getOrElse(throw InvalidBagException("version-of without base-urn"))
-      }
-    }
 
     def getIdType(idType: String) = ddmIds
       .find(_.hasType(s"id-type:$idType"))
@@ -54,16 +45,22 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
       addProperty("deposit.origin", bagSource.toString)
       addProperty("creation.timestamp", bagInfo.created)
       addProperty("depositor.userId", bagInfo.userId)
-      addProperty("bag-store.bag-name", bagInfo.bagName)
       addProperty("identifier.doi", doi)
       addProperty("identifier.urn", urn)
       addProperty("identifier.fedora", fedoraId)
-      if (bagSource == VAULT) {
-        addProperty("bag-store.bag-id", bagInfo.uuid)
-        addProperty("dataverse.sword-token", bagInfo.versionOf.getOrElse(bagInfo.uuid))
+      bagSource match {
+        case VAULT =>
+          addProperty("bag-store.bag-name", bagInfo.bagName)
+          addProperty("bag-store.bag-id", bagInfo.uuid)
+          addProperty("dataverse.sword-token", bagInfo.versionOf.getOrElse(bagInfo.uuid))
+          addProperty("dataverse.bag-id", "urn:uuid:" + bagInfo.uuid)
+          addProperty("dataverse.nbn", bagInfo.versionOf.map(
+            configuration.bagIndex.getURN(_).unsafeGetOrThrow
+          ).getOrElse(urn))
+        case FEDORA =>
+          addProperty("dataverse.nbn", bagInfo.baseUrn.getOrElse(urn))
+        case _ =>
       }
-      addProperty("dataverse.bag-id", "urn:uuid:" + bagInfo.uuid)
-      addProperty("dataverse.nbn", bagInfo.versionOf.map(getBaseUrn).getOrElse(urn))
       if (!configuration.dansDoiPrefixes.contains(doi.replaceAll("/.*", "/")))
         addProperty("dataverse.other-id", "https://doi.org/" + doi)
       addProperty("dataverse.id-protocol", idType.toString.toLowerCase)

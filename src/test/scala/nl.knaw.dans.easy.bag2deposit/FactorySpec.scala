@@ -44,10 +44,10 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |deposit.origin = VAULT
          |creation.timestamp = 2016-06-07
          |depositor.userId = user001
-         |bag-store.bag-name = bag-revision-1
          |identifier.doi = 10.5072/dans-2xg-umq8
          |identifier.urn = urn:nbn:nl:ui:13-00-3haq
          |identifier.fedora = easy-dataset:162288
+         |bag-store.bag-name = bag-revision-1
          |bag-store.bag-id = $uuid
          |dataverse.sword-token = $uuid
          |dataverse.bag-id = urn:uuid:$uuid
@@ -89,10 +89,10 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |deposit.origin = VAULT
          |creation.timestamp = 2017-01-16T14:35:00.888+01:00
          |depositor.userId = user001
-         |bag-store.bag-name = bag-name
          |identifier.doi = 10.5072/dans-2xg-umq8
          |identifier.urn = urn:nbn:nl:ui:13-00-3haq
          |identifier.fedora = easy-dataset:162288
+         |bag-store.bag-name = bag-name
          |bag-store.bag-id = $bagUUID
          |dataverse.sword-token = $baseUUID
          |dataverse.bag-id = urn:uuid:$bagUUID
@@ -104,7 +104,7 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
     )
   }
 
-  it should "call use base urn from bag-info.txt" in {
+  it should "use base urn from bag-info.txt" in {
     val bagUUID = UUID.randomUUID()
     val baseUUID = UUID.randomUUID()
     val bagIndexBody =
@@ -134,11 +134,9 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |deposit.origin = FEDORA
          |creation.timestamp = 2017-01-16T14:35:00.888+01:00
          |depositor.userId = user001
-         |bag-store.bag-name = bag-name
          |identifier.doi = 10.5072/dans-2xg-umq8
          |identifier.urn = urn:nbn:nl:ui:13-00-3haq
          |identifier.fedora = easy-dataset:162288
-         |dataverse.bag-id = urn:uuid:$bagUUID
          |dataverse.nbn = rabarbera
          |dataverse.id-protocol = urn
          |dataverse.id-identifier = urn:nbn:nl:ui:13-00-3haq
@@ -165,10 +163,10 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |deposit.origin = VAULT
          |creation.timestamp = 2017-01-16T14:35:00.888+01:00
          |depositor.userId = user001
-         |bag-store.bag-name = bag-name
          |identifier.doi = 10.12345/foo-bar
          |identifier.urn = urn:nbn:nl:ui:13-00-3haq
          |identifier.fedora = easy-dataset:162288
+         |bag-store.bag-name = bag-name
          |bag-store.bag-id = $bagUUID
          |dataverse.sword-token = $bagUUID
          |dataverse.bag-id = urn:uuid:$bagUUID
