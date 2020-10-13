@@ -43,7 +43,7 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
       (testDir / "exports").children,
       None,
       DepositPropertiesFactory(appConfig, URN, FEDORA)
-    ) shouldBe Success("See logging")
+    ) shouldBe Success("No fatal errors")
 
     // post conditions
     (testDir / "exports").children.toList.size shouldBe 1
@@ -63,7 +63,7 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
       (testDir / "exports").children,
       maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
       DepositPropertiesFactory(appConfig, DOI, VAULT)
-    ) shouldBe Success("See logging")
+    ) shouldBe Success("No fatal errors")
 
     // post condition
     targetDir / ".." / "deposit.properties" should exist
