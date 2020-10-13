@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.bag2deposit.Fixture
+package nl.knaw.dans.easy.bag2deposit.fixture
 
-import nl.knaw.dans.easy.bag2deposit.{ BagIndex, Configuration }
-import org.scalamock.scalatest.MockFactory
+import better.files.File
+import better.files.File.currentWorkingDirectory
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.enablers.Existence
+import org.scalatest.flatspec.AnyFlatSpec
 
-trait AppConfigSupport extends MockFactory {
-  def mockedConfig(bagIndex: BagIndex): Configuration = {
-    new Configuration(
-      version = "testVersion",
-      dansDoiPrefixes = Seq("10.17026/", "10.5072/"),
-      dataverseIdAutority = "10.80270",
-      bagIndex = bagIndex,
-    )
+trait FileSystemSupport extends BeforeAndAfterEach {
+  this: AnyFlatSpec =>
+
+  implicit def existenceOfFile[FILE <: better.files.File]: Existence[FILE] = _.exists
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+
+    if (testDir.exists) testDir.delete()
+    testDir.createDirectories()
   }
+
+  lazy val testDir: File = currentWorkingDirectory / "target" / "test" / getClass.getSimpleName
 }

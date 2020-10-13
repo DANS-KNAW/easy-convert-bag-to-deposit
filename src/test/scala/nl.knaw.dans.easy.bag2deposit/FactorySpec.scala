@@ -19,7 +19,7 @@ import java.io.{ StringWriter, Writer }
 import java.util.UUID
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, BagIndexSupport }
+import nl.knaw.dans.easy.bag2deposit.fixture.{ AppConfigSupport, BagIndexSupport }
 import nl.knaw.dans.lib.error._
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.scalatest.flatspec.AnyFlatSpec

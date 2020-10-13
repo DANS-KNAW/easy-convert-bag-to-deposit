@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.bag2deposit.Fixture
+package nl.knaw.dans.easy.bag2deposit.fixture
 
 import better.files.File
 import org.scalatest.matchers.{ MatchResult, Matcher }

@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.bag2deposit
 import java.io.IOException
 import java.util.UUID
 
-import nl.knaw.dans.easy.bag2deposit.Fixture.BagIndexSupport
+import nl.knaw.dans.easy.bag2deposit.fixture.BagIndexSupport
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

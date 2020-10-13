@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.bag2deposit
 import java.io.ByteArrayOutputStream
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.Fixture.{ CustomMatchers, FixedCurrentDateTimeSupport }
+import nl.knaw.dans.easy.bag2deposit.fixture.{ CustomMatchers, FixedCurrentDateTimeSupport }
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

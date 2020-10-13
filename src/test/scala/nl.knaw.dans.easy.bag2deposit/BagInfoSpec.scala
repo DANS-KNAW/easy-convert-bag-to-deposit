@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.bag2deposit
 import java.util.UUID
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, FileSystemSupport }
+import nl.knaw.dans.easy.bag2deposit.fixture.{ AppConfigSupport, FileSystemSupport }
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
