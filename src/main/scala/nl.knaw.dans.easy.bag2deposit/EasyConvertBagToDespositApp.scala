@@ -36,7 +36,7 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
     bagParentDirs
       .map(addProps(properties, maybeOutputDir))
       .collectFirst { case Failure(e) => Failure(e) }
-      .getOrElse(Success(s"See logging")) // TODO show number of false/true values
+      .getOrElse(Success(s"No fatal errors")) // TODO show number of false/true values
   }
 
   private def addProps(factory: DepositPropertiesFactory, maybeOutputDir: Option[File])
