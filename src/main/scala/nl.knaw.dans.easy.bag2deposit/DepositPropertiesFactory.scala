@@ -20,7 +20,6 @@ import java.util.UUID
 import nl.knaw.dans.easy.bag2deposit.BagSource.{ BagSource, FEDORA, VAULT, submittedStateDescription }
 import nl.knaw.dans.easy.bag2deposit.IdType._
 import nl.knaw.dans.lib.error.TryExtensions
-import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration
 
 import scala.util.Try
@@ -42,13 +41,12 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
       .getOrElse(throw InvalidBagException(s"no $idType"))
       .text
 
+    val doi = getIdType("DOI")
+    val urn = getIdType("URN")
     val fedoraId = ddmIds
       .find(_.text.startsWith("easy-dataset"))
       .getOrElse(throw InvalidBagException("no fedoraID"))
       .text
-
-    val doi = getIdType("DOI")
-    val urn = getIdType("URN")
 
     new PropertiesConfiguration() {
       addProperty("state.label", "SUBMITTED")

@@ -95,7 +95,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
     val file = (bag / "bag-info.txt").write(
       s"""Bagging-Date: $dateTime
          |Is-Version-Of: $versionOfUuid
-         |${BagInfo.baseUrnKey}: rabarbera
+         |${ BagInfo.baseUrnKey }: rabarbera
          |EASY-User-Account: user001
          |""".stripMargin)
     BagInfo(mockBag(file.parent), requireBaseUrnWithVersionOf = true) shouldBe Success(new BagInfo("user001", dateTime, bagUuid, "bag-name", Some(versionOfUuid), Some("rabarbera")))
