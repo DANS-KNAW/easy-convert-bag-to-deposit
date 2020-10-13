@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.bag2deposit
 import java.util.UUID
 
 import better.files.File
-import gov.loc.repository.bagit.domain.Bag
+import gov.loc.repository.bagit.domain.Metadata
 import nl.knaw.dans.bag.v0.DansV0Bag
 import nl.knaw.dans.lib.error._
 import org.apache.commons.configuration.ConfigurationException
@@ -31,10 +31,7 @@ case class BagInfo(userId: String, created: String, uuid: UUID, bagName: String,
 object BagInfo {
   val baseUrnKey = "Base-Urn"
 
-  def apply(bag: Bag, requireBaseUrnWithVersionOf: Boolean): Try[BagInfo] = Try {
-    val bagDir = File(bag.getRootDir)
-    val bagInfo = bag.getMetadata
-
+  def apply(bagDir: File, bagInfo: Metadata, requireBaseUrnWithVersionOf: Boolean): Try[BagInfo] = Try {
     def getMaybe(key: String) = Option(bagInfo.get(key))
       .flatMap(_.asScala.headOption)
 
@@ -48,7 +45,14 @@ object BagInfo {
     if (maybeVersionOf.isDefined && requireBaseUrnWithVersionOf && maybeBaseUrn.isEmpty)
       throw notFound(baseUrnKey)
 
-    new BagInfo(userId = getMandatory(DansV0Bag.EASY_USER_ACCOUNT_KEY), created = getMandatory("Bagging-Date"), uuid = uuidFromFile(bagDir.parent), bagName = bagDir.name, versionOf = maybeVersionOf, baseUrn = maybeBaseUrn)
+    new BagInfo(
+      userId = getMandatory(DansV0Bag.EASY_USER_ACCOUNT_KEY),
+      created = getMandatory("Bagging-Date"),
+      uuid = uuidFromFile(bagDir.parent),
+      bagName = bagDir.name,
+      versionOf = maybeVersionOf,
+      baseUrn = maybeBaseUrn,
+    )
   }.recoverWith { case e: ConfigurationException =>
     Failure(InvalidBagException(e.getMessage))
   }

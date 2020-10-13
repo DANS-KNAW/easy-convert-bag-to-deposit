@@ -43,15 +43,20 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
     val requireBaseUrnWithVersionOf = factory.bagSource == VAULT // TODO less sneaky
+    val bagInfoKeysToRemove = Seq(
+      DansV0Bag.EASY_USER_ACCOUNT_KEY,
+      BagInfo.baseUrnKey,
+    )
     for {
       bagDir <- getBagDir(bagParentDir)
       bag <- BagFacade.getBag(bagDir)
-      bagInfo <- BagInfo(bag, requireBaseUrnWithVersionOf) // uses mutable metadata of the bag object
+      mutableBagMetadata = bag.getMetadata
+      bagInfo <- BagInfo(bagDir, mutableBagMetadata, requireBaseUrnWithVersionOf)
       _ = logger.debug(s"$bagInfo")
       ddm = XML.loadFile((bagDir / "metadata" / "dataset.xml").toJava)
       props <- factory.create(bagInfo, ddm)
       _ = props.save((bagParentDir / "deposit.properties").toJava)
-      _ = bag.getMetadata.remove(DansV0Bag.EASY_USER_ACCOUNT_KEY)
+      _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ <- BagFacade.updateMetadata(bag)
       _ <- BagFacade.updateManifest(bag)
       _ = maybeOutputDir.foreach(move(bagParentDir))
@@ -59,13 +64,13 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
     } yield true
   }.recoverWith {
     case e: InvalidBagException =>
-      logger.error(s"${bagParentDir.name} failed: ${ e.getMessage }")
+      logger.error(s"${ bagParentDir.name } failed: ${ e.getMessage }")
       Success(false)
     case e: FileNotFoundException =>
-      logger.error(s"${bagParentDir.name} failed: ${ e.getMessage }")
+      logger.error(s"${ bagParentDir.name } failed: ${ e.getMessage }")
       Success(false)
     case e: Throwable =>
-      logger.error(s"${bagParentDir.name} failed with not expected error: ${e.getClass.getSimpleName} ${e.getMessage}")
+      logger.error(s"${ bagParentDir.name } failed with not expected error: ${ e.getClass.getSimpleName } ${ e.getMessage }")
       Failure(e)
   }
 

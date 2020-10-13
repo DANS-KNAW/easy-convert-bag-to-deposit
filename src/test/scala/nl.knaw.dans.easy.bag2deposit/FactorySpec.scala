@@ -36,7 +36,7 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
     val bagDir = File("src/test/resources/bags/01") / uuid / "bag-revision-1"
     DepositPropertiesFactory(mockedConfig(null), IdType.DOI, BagSource.VAULT)
       .create(
-        BagInfo(mockBag(bagDir), requireBaseUrnWithVersionOf = false).unsafeGetOrThrow,
+        BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = false).unsafeGetOrThrow,
         ddm = XML.loadFile((bagDir / "metadata" / "dataset.xml").toJava),
       ).map(serialize) shouldBe Success(
       s"""state.label = SUBMITTED
