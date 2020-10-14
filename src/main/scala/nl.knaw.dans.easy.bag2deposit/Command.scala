@@ -41,5 +41,5 @@ object Command extends App with DebugEnhancedLogging {
       bagParentDirs,
       commandLine.outputDir.toOption,
       propertiesFactory
-    )
+    ).map(msg => println(s"$msg, for details see logging"))
 }

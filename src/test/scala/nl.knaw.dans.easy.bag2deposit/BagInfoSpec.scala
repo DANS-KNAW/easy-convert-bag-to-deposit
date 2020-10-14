@@ -18,83 +18,100 @@ package nl.knaw.dans.easy.bag2deposit
 import java.util.UUID
 
 import better.files.File
+
 import nl.knaw.dans.easy.bag2deposit.fixture.{ AppConfigSupport, FileSystemSupport }
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.util.{ Failure, Success }
 
-class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileSystemSupport {
+class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with BagSupport with FileSystemSupport {
   val bags: File = File("src/test/resources/bags/01")
 
   "apply" should "succeed" in {
-    val file = bags / "04e638eb-3af1-44fb-985d-36af12fccb2d" / "bag-revision-1" / "bag-info.txt"
-    BagInfo(file) shouldBe a[Success[_]] // see also FactorySpec
+    val bagDir = bags / "04e638eb-3af1-44fb-985d-36af12fccb2d" / "bag-revision-1"
+    BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = false) shouldBe a[Success[_]] // see also FactorySpec
   }
   it should "complain about invalid uuid" in {
-    val file = bags / "no-uuid" / "bag-name" / "bag-info.txt"
-    BagInfo(file) shouldBe Failure(InvalidBagException(
-      s"Invalid UUID: $bags/no-uuid"
-    ))
-  }
-  it should "complain about not existing bag-info.txt" in {
-    val file = bags / "42c8dcbe-df51-422e-9c7e-9bd7a0b1ecc0" / "no-bag" / "bag-info.txt"
-    BagInfo(file) shouldBe Failure(InvalidBagException(
-      s"Unable to load the configuration from the URL file:$file"
+    val file = bags / "not-a-uuid" / "bag-name" / "bag-info.txt"
+    BagInfo(file.parent, mockBag(file.parent).getMetadata, requireBaseUrnWithVersionOf = false) shouldBe Failure(InvalidBagException(
+      s"Invalid UUID: $bags/not-a-uuid"
     ))
   }
   it should "complain about missing created" in {
     val uuid = UUID.randomUUID()
-    val bag = (testDir / s"0$uuid" / "bag-name").createDirectories()
-    val file = (bag / "bag-info.txt").write("EASY-User-Account: user001")
-    BagInfo(file) shouldBe Failure(InvalidBagException(
+    val bagDir = (testDir / s"0$uuid" / "bag-name").createDirectories()
+    val file = (bagDir / "bag-info.txt").write("EASY-User-Account: user001")
+    BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = false) shouldBe Failure(InvalidBagException(
       s"No Bagging-Date in $file"
     ))
   }
   it should "complain about missing user account" in {
     val uuid = UUID.randomUUID()
-    val bag = (testDir / s"$uuid" / "bag-name").createDirectories()
-    val file = (bag / "bag-info.txt").write("Created: 2017-01-16T14:35:00.888+01:00")
-    BagInfo(file) shouldBe Failure(InvalidBagException(
+    val bagDir = (testDir / s"$uuid" / "bag-name").createDirectories()
+    val file = (bagDir / "bag-info.txt").write("Created: 2017-01-16T14:35:00.888+01:00")
+    BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = false) shouldBe Failure(InvalidBagException(
       s"No EASY-User-Account in $file"
     ))
   }
   it should "complain about too long uuid in version-of" in {
     val uuid = UUID.randomUUID()
-    val bag = (testDir / uuid.toString / "bag-name").createDirectories()
-    val file = (bag / "bag-info.txt").write(
+    val bagDir = (testDir / uuid.toString / "bag-name").createDirectories()
+    (bagDir / "bag-info.txt").write(
       s"""EASY-User-Account: user001
          |Bagging-Date: 2017-01-16T14:35:00.888+01:00
          |Is-Version-Of: urn:uuid:123456789$uuid
          |""".stripMargin)
-    BagInfo(file) shouldBe Failure(InvalidBagException(
+    BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = false) shouldBe Failure(InvalidBagException(
       s"Invalid UUID: Is-Version-Of: urn:uuid:123456789$uuid"
     ))
   }
   it should "have no version-of" in {
     val uuid = UUID.randomUUID()
-    val bag = (testDir / s"$uuid" / "bag-name").createDirectories()
+    val bagDir = (testDir / s"$uuid" / "bag-name").createDirectories()
     val dateTime = """2017-01-16T14:35:00.888+01:00"""
-    val file = (bag / "bag-info.txt").write(
+    (bagDir / "bag-info.txt").write(
       s"""Bagging-Date: $dateTime
          |EASY-User-Account: user001
          |""".stripMargin)
-    BagInfo(file) shouldBe Success(new BagInfo(
-      "user001", None, dateTime, uuid, "bag-name"
-    ))
+    BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = false) shouldBe Success(new BagInfo("user001", dateTime, uuid, "bag-name", None, None))
   }
   it should "have a version-of" in {
     val bagUuid = UUID.randomUUID()
     val versionOfUuid = UUID.randomUUID()
-    val bag = (testDir / s"$bagUuid" / "bag-name").createDirectories()
+    val bagDir = (testDir / s"$bagUuid" / "bag-name").createDirectories()
     val dateTime = """2017-01-16T14:35:00.888+01:00"""
-    val file = (bag / "bag-info.txt").write(
+    (bagDir / "bag-info.txt").write(
       s"""Bagging-Date: $dateTime
          |Is-Version-Of: $versionOfUuid
          |EASY-User-Account: user001
          |""".stripMargin)
-    BagInfo(file) shouldBe Success(new BagInfo(
-      "user001", Some(versionOfUuid), dateTime, bagUuid, "bag-name"
+    BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = false) shouldBe Success(new BagInfo("user001", dateTime, bagUuid, "bag-name", Some(versionOfUuid), None))
+  }
+  it should "have a base-urn" in {
+    val bagUuid = UUID.randomUUID()
+    val versionOfUuid = UUID.randomUUID()
+    val bagDir = (testDir / s"$bagUuid" / "bag-name").createDirectories()
+    val dateTime = """2017-01-16T14:35:00.888+01:00"""
+    (bagDir / "bag-info.txt").write(
+      s"""Bagging-Date: $dateTime
+         |Is-Version-Of: $versionOfUuid
+         |${ BagInfo.baseUrnKey }: rabarbera
+         |EASY-User-Account: user001
+         |""".stripMargin)
+    BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = true) shouldBe Success(new BagInfo("user001", dateTime, bagUuid, "bag-name", Some(versionOfUuid), Some("rabarbera")))
+  }
+  it should "report missing base-urn" in {
+    val bagUuid = UUID.randomUUID()
+    val versionOfUuid = UUID.randomUUID()
+    val bagDir = (testDir / s"$bagUuid" / "bag-name").createDirectories()
+    (bagDir / "bag-info.txt").write(
+      s"""Bagging-Date: 2017-01-16T14:35:00.888+01:00
+         |Is-Version-Of: $versionOfUuid
+         |EASY-User-Account: user001
+         |""".stripMargin)
+    BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = true) shouldBe Failure(InvalidBagException(
+      s"No Base-Urn in $testDir/$bagUuid/bag-name/bag-info.txt"
     ))
   }
 }
