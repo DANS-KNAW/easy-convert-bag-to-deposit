@@ -28,7 +28,7 @@ trait BagIndexSupport {
    */
   def mockBagIndexRespondsWith(body: String, code: Int): BagIndex = {
     new BagIndex(new URI(s"https://does.not.exist.dans.knaw.nl:20120/bags/uuid")) {
-      override def execute(uuid: UUID): HttpResponse[String] = {
+      override def execute(q: String): HttpResponse[String] = {
         new HttpResponse[String](body, code, headers = Map.empty)
       }
     }
@@ -36,7 +36,7 @@ trait BagIndexSupport {
 
   def mockBagIndexThrows(e: Exception): BagIndex = {
     new BagIndex(new URI(s"https://does.not.exist.dans.knaw.nl:20120/bags/uuid")) {
-      override def execute(uuid: UUID): HttpResponse[String] = {
+      override def execute(q : String): HttpResponse[String] = {
         throw e
       }
     }

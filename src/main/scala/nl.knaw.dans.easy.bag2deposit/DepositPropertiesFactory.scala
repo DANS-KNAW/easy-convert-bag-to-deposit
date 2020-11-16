@@ -18,12 +18,13 @@ package nl.knaw.dans.easy.bag2deposit
 import nl.knaw.dans.easy.bag2deposit.BagSource.{ BagSource, FEDORA, VAULT, submittedStateDescription }
 import nl.knaw.dans.easy.bag2deposit.IdType._
 import nl.knaw.dans.lib.error.TryExtensions
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration
 
 import scala.util.Try
 import scala.xml.{ Node, NodeSeq }
 
-case class DepositPropertiesFactory(configuration: Configuration, idType: IdType, bagSource: BagSource) {
+case class DepositPropertiesFactory(configuration: Configuration, idType: IdType, bagSource: BagSource) extends DebugEnhancedLogging {
   def create(bagInfo: BagInfo, ddm: Node): Try[PropertiesConfiguration] = Try {
     val ddmIds: NodeSeq = ddm \ "dcmiMetadata" \ "identifier"
 
@@ -39,6 +40,21 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
       .getOrElse(throw InvalidBagException("no fedoraID"))
       .text
 
+    def nbn = bagInfo.versionOf.map(
+      configuration.bagIndex.getURN(_).unsafeGetOrThrow
+    ).getOrElse(urn)
+
+    def checkSequence(): Unit = {
+      val seqLength = configuration.bagIndex
+        .getSeqLength(bagInfo.uuid)
+        .getOrRecover {
+          case InvalidBagException(_) => 0 // not found
+          case t => throw t
+        }
+      if (seqLength > 1)
+        logger.warn(s"${ bagInfo.uuid } is part of a sequence")
+    }
+
     new PropertiesConfiguration() {
       addProperty("state.label", "SUBMITTED")
       addProperty("state.description", submittedStateDescription(bagSource))
@@ -50,13 +66,12 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
       addProperty("identifier.fedora", fedoraId)
       bagSource match {
         case VAULT =>
+          checkSequence()
           addProperty("bag-store.bag-name", bagInfo.bagName)
           addProperty("bag-store.bag-id", bagInfo.uuid)
           addProperty("dataverse.sword-token", bagInfo.versionOf.getOrElse(bagInfo.uuid))
           addProperty("dataverse.bag-id", "urn:uuid:" + bagInfo.uuid)
-          addProperty("dataverse.nbn", bagInfo.versionOf.map(
-            configuration.bagIndex.getURN(_).unsafeGetOrThrow
-          ).getOrElse(urn))
+          addProperty("dataverse.nbn", nbn)
         case FEDORA =>
           addProperty("dataverse.nbn", bagInfo.baseUrn.getOrElse(urn))
         case _ =>

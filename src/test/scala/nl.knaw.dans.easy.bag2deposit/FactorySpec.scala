@@ -31,10 +31,10 @@ import scala.xml.XML
 
 class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with BagIndexSupport with BagSupport with MockFactory {
 
-  "create" should "not call the bag-index" in {
+  "create" should "call the bag-index for the sequence only" in {
     val uuid = "04e638eb-3af1-44fb-985d-36af12fccb2d"
     val bagDir = File("src/test/resources/bags/01") / uuid / "bag-revision-1"
-    DepositPropertiesFactory(mockedConfig(null), IdType.DOI, BagSource.VAULT)
+    DepositPropertiesFactory(mockedConfig(mockBagIndexRespondsWith("123", 200)), IdType.DOI, BagSource.VAULT)
       .create(
         BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = false).unsafeGetOrThrow,
         ddm = XML.loadFile((bagDir / "metadata" / "dataset.xml").toJava),
@@ -107,16 +107,6 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
   it should "use base urn from bag-info.txt" in {
     val bagUUID = UUID.randomUUID()
     val baseUUID = UUID.randomUUID()
-    val bagIndexBody =
-      """<result>
-        |    <bag-info>
-        |        <bag-id>38cb3ff1-d59d-4560-a423-6f761b237a56</bag-id>
-        |        <base-id>38cb3ff1-d59d-4560-a423-6f761b237a56</base-id>
-        |        <created>2016-11-13T00:41:11.000+01:00</created>
-        |        <doi>10.80270/test-28m-zann</doi>
-        |        <urn>urn:nbn:nl:ui:13-z4-f8cm</urn>
-        |    </bag-info>
-        |</result>""".stripMargin
     val bagInfo = BagInfo(userId = "user001", created = "2017-01-16T14:35:00.888+01:00", uuid = bagUUID, bagName = "bag-name", versionOf = Some(baseUUID), Some("rabarbera"))
     val ddm = <ddm:DDM xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
                 <ddm:dcmiMetadata>
@@ -155,7 +145,7 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
                 </ddm:dcmiMetadata>
               </ddm:DDM>
 
-    DepositPropertiesFactory(mockedConfig(null), IdType.URN, BagSource.VAULT)
+    DepositPropertiesFactory(mockedConfig(mockBagIndexRespondsWith("123", 200)), IdType.URN, BagSource.VAULT)
       .create(bagInfo, ddm)
       .map(serialize) shouldBe Success(
       s"""state.label = SUBMITTED

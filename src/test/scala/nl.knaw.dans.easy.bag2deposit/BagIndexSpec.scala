@@ -26,10 +26,28 @@ import scala.util.{ Failure, Success }
 
 class BagIndexSpec extends AnyFlatSpec with Matchers with BagIndexSupport {
 
+
+  "getSeqLength" should "return 1" in {
+    val uuid = UUID.randomUUID()
+    mockBagIndexRespondsWith(body = uuid.toString, code = 200)
+      .getSeqLength(uuid) shouldBe Success(1)
+  }
+
+  it should "return 3" in {
+    val uuid = UUID.randomUUID()
+    mockBagIndexRespondsWith(body =
+      s"""c01d7876-8080-4597-81fe-9083b5463cc1
+        | $uuid
+        |
+        |ef5d6285-c835-4199-9ae8-72cf9407b81c
+        |""".stripMargin, code = 200)
+      .getSeqLength(uuid) shouldBe Success(3)
+  }
+
   "getURN" should "report not found" in {
     val uuid = UUID.randomUUID()
     mockBagIndexRespondsWith(body = "", code = 404)
-      .getURN(uuid) shouldBe Failure(InvalidBagException(s"$uuid not found in bag-index"))
+      .getURN(uuid) shouldBe Failure(InvalidBagException(s"/bags/$uuid returned not found in bag-index"))
   }
 
   it should "return URN" in {
@@ -67,13 +85,13 @@ class BagIndexSpec extends AnyFlatSpec with Matchers with BagIndexSupport {
     val uuid = UUID.randomUUID()
     mockBagIndexThrows(new IOException("mocked"))
       .getURN(uuid) should matchPattern {
-      case Failure(BagIndexException(msg, _)) if msg == s"$uuid mocked" =>
+      case Failure(BagIndexException(msg, _)) if msg == s"/bags/$uuid mocked" =>
     }
   }
 
   it should "report not expected response code" in {
     val uuid = UUID.randomUUID()
     mockBagIndexRespondsWith(body = "", code = 300)
-      .getURN(uuid) shouldBe Failure(BagIndexException(s"Not expected response code from bag-index. $uuid, response: 300 - ", null))
+      .getURN(uuid) shouldBe Failure(BagIndexException(s"Not expected response code from bag-index. /bags/$uuid, response: 300 - ", null))
   }
 }

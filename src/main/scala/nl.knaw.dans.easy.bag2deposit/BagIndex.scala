@@ -29,8 +29,11 @@ case class BagIndexException(msg: String, cause: Throwable) extends IOException(
 
 case class BagIndex(bagIndexUri: URI) {
 
+  def getSeqLength(uuid: UUID): Try[Int] = find(s"/bag-sequence?contains=$uuid")
+    .map(_.split("\n").map(_.trim).count(!_.isEmpty))
+
   def getURN(uuid: UUID): Try[String] = for {
-    response <- find(uuid)
+    response <- find(s"/bags/$uuid")
     xml <- parse(response, uuid)
     nodes = xml \\ "urn"
     urn = nodes.theSeq.headOption.map(_.text)
@@ -40,24 +43,24 @@ case class BagIndex(bagIndexUri: URI) {
   private def parse(response: String, uuid: UUID) = Try {
     XML.load(response.inputStream)
   }.recoverWith {
-    case t: Throwable => Failure(BagIndexException(s"$uuid: ${t.getMessage} RESPONSE: $response", t))
+    case t: Throwable => Failure(BagIndexException(s"$uuid: ${ t.getMessage } RESPONSE: $response", t))
   }
 
-  private def find(uuid: UUID): Try[String] = Try {
-    execute(uuid)
+  private def find(q: String): Try[String] = Try {
+    execute(q)
   }.recoverWith {
-    case t: Throwable => Failure(BagIndexException(s"$uuid " + t.getMessage, t))
+    case t: Throwable => Failure(BagIndexException(s"$q ${ t.getMessage }", t))
   }.map {
-    case response if response.code == 404 => throw InvalidBagException(s"$uuid not found in bag-index")
+    case response if response.code == 404 => throw InvalidBagException(s"$q returned not found in bag-index")
     case response if response.code == 200 => response.body
     case response => throw BagIndexException(
-      s"Not expected response code from bag-index. $uuid, response: ${ response.code } - ${ response.body }",
+      s"Not expected response code from bag-index. $q, response: ${ response.code } - ${ response.body }",
       null,
     )
   }
 
-  protected[BagIndex] def execute(uuid: UUID): HttpResponse[String] = {
-    Http(bagIndexUri.resolve(s"/bags/$uuid").toString)
+  def execute(q: String): HttpResponse[String] = {
+    Http(bagIndexUri.resolve(q).toString)
       .header("Accept", "text/xml")
       .asString
   }
