@@ -18,14 +18,15 @@ package nl.knaw.dans.easy.bag2deposit
 import better.files.File
 import nl.knaw.dans.bag.v0.DansV0Bag.EASY_USER_ACCOUNT_KEY
 import nl.knaw.dans.easy.bag2deposit.BagSource._
-import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, BagIndexSupport, FileSystemSupport }
+import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, FileSystemSupport }
 import nl.knaw.dans.easy.bag2deposit.IdType._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import scalaj.http.HttpResponse
 
 import scala.util.Success
 
-class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileSystemSupport with BagIndexSupport {
+class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileSystemSupport {
   private val validUUID = "04e638eb-3af1-44fb-985d-36af12fccb2d"
   private val srcDir = testDir / "exports" / validUUID / "bag-revision-1"
   private val targetDir = testDir / "ingest-dir" / validUUID / "bag-revision-1"
@@ -38,7 +39,7 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     (srcDir / "bag-info.txt").contentAsString should include(EASY_USER_ACCOUNT_KEY)
     val manifestContent = (srcDir / "tagmanifest-sha1.txt").contentAsString
 
-    val appConfig = mockedConfig(null)
+    val appConfig = testConfig(null)
     new EasyConvertBagToDespositApp(appConfig).addPropsToBags(
       (testDir / "exports").children,
       None,
@@ -58,7 +59,11 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     // pre condition
     srcDir / ".." / "deposit.properties" shouldNot exist
 
-    val appConfig = mockedConfig(mockBagIndexRespondsWith("", 404)) // base bag not found
+    val delegate = mock[MockBagIndex]
+    (delegate.execute(_: String)) expects s"/bag-sequence?contains=$validUUID" returning
+      new HttpResponse[String]("123", 200, Map.empty)
+    val appConfig = testConfig(delegatingBagIndex(delegate))
+
     new EasyConvertBagToDespositApp(appConfig).addPropsToBags(
       (testDir / "exports").children,
       maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),

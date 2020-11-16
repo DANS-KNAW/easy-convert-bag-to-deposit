@@ -17,12 +17,11 @@ package nl.knaw.dans.easy.bag2deposit.Fixture
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.{ AbrRewriteRule, BagIndex, Configuration }
-import org.scalamock.scalatest.MockFactory
 
 import scala.xml.transform.RuleTransformer
 
-trait AppConfigSupport extends MockFactory {
-  def mockedConfig(bagIndex: BagIndex): Configuration = {
+trait AppConfigSupport extends BagIndexSupport {
+  def testConfig(bagIndex: BagIndex): Configuration = {
     val cfgFile = File("src/main/assembly/dist/cfg")
     new Configuration(
       version = "testVersion",

@@ -25,6 +25,7 @@ import org.apache.commons.configuration.PropertiesConfiguration
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import scalaj.http.HttpResponse
 
 import scala.util.Success
 import scala.xml.XML
@@ -34,7 +35,13 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
   "create" should "call the bag-index for the sequence only" in {
     val uuid = "04e638eb-3af1-44fb-985d-36af12fccb2d"
     val bagDir = File("src/test/resources/bags/01") / uuid / "bag-revision-1"
-    DepositPropertiesFactory(mockedConfig(mockBagIndexRespondsWith("123", 200)), IdType.DOI, BagSource.VAULT)
+
+    val delegate = mock[MockBagIndex]
+    (delegate.execute(_: String)) expects s"/bag-sequence?contains=$uuid" returning
+      new HttpResponse[String](body = "123", code = 200, Map.empty)
+    val cfg = testConfig(delegatingBagIndex(delegate))
+
+    DepositPropertiesFactory(cfg, IdType.DOI, BagSource.VAULT)
       .create(
         BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = false).unsafeGetOrThrow,
         ddm = XML.loadFile((bagDir / "metadata" / "dataset.xml").toJava),
@@ -81,7 +88,14 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
                 </ddm:dcmiMetadata>
               </ddm:DDM>
 
-    DepositPropertiesFactory(mockedConfig(mockBagIndexRespondsWith(bagIndexBody, 200)), IdType.URN, BagSource.VAULT)
+    val delegate = mock[MockBagIndex]
+    (delegate.execute(_: String)) expects s"/bags/$baseUUID" returning
+      new HttpResponse[String](body = bagIndexBody, code = 200, Map.empty)
+    (delegate.execute(_: String)) expects s"/bag-sequence?contains=$bagUUID" returning
+      new HttpResponse[String](body = "123", code = 200, Map.empty)
+    val cfg = testConfig(delegatingBagIndex(delegate))
+
+    DepositPropertiesFactory(cfg, IdType.URN, BagSource.VAULT)
       .create(bagInfo, ddm)
       .map(serialize) shouldBe Success(
       s"""state.label = SUBMITTED
@@ -116,7 +130,9 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
                 </ddm:dcmiMetadata>
               </ddm:DDM>
 
-    DepositPropertiesFactory(mockedConfig(null), IdType.URN, BagSource.FEDORA)
+    val cfg = testConfig(delegatingBagIndex(mock[MockBagIndex]))
+
+    DepositPropertiesFactory(cfg, IdType.URN, BagSource.FEDORA)
       .create(bagInfo, ddm)
       .map(serialize) shouldBe Success(
       s"""state.label = SUBMITTED
@@ -145,7 +161,12 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
                 </ddm:dcmiMetadata>
               </ddm:DDM>
 
-    DepositPropertiesFactory(mockedConfig(mockBagIndexRespondsWith("123", 200)), IdType.URN, BagSource.VAULT)
+    val delegate = mock[MockBagIndex]
+    (delegate.execute(_: String)) expects s"/bag-sequence?contains=$bagUUID" returning
+      new HttpResponse[String](body = "123", code = 200, Map.empty)
+    val cfg = testConfig(delegatingBagIndex(delegate))
+
+    DepositPropertiesFactory(cfg, IdType.URN, BagSource.VAULT)
       .create(bagInfo, ddm)
       .map(serialize) shouldBe Success(
       s"""state.label = SUBMITTED

@@ -15,30 +15,17 @@
  */
 package nl.knaw.dans.easy.bag2deposit.Fixture
 
-import java.net.URI
-import java.util.UUID
-
 import nl.knaw.dans.easy.bag2deposit.BagIndex
+import org.scalamock.scalatest.MockFactory
 import scalaj.http.HttpResponse
 
-trait BagIndexSupport {
-  /**
-   * Limited to test scenarios where the BagIndex service
-   * always gives the the same response
-   */
-  def mockBagIndexRespondsWith(body: String, code: Int): BagIndex = {
-    new BagIndex(new URI(s"https://does.not.exist.dans.knaw.nl:20120/bags/uuid")) {
-      override def execute(q: String): HttpResponse[String] = {
-        new HttpResponse[String](body, code, headers = Map.empty)
-      }
-    }
-  }
+trait BagIndexSupport extends MockFactory {
 
-  def mockBagIndexThrows(e: Exception): BagIndex = {
-    new BagIndex(new URI(s"https://does.not.exist.dans.knaw.nl:20120/bags/uuid")) {
-      override def execute(q : String): HttpResponse[String] = {
-        throw e
-      }
-    }
+  // mock requires a constructor without parameters
+  class MockBagIndex() extends BagIndex(null)
+
+  // mock the HTTP-request execution to test the rest of the class and/or application
+  def delegatingBagIndex(delegate: BagIndex): BagIndex = new BagIndex(null) {
+    override def execute(q: String): HttpResponse[String] = delegate.execute(q)
   }
 }
