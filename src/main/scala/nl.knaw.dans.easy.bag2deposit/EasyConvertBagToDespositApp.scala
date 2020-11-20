@@ -41,7 +41,6 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
-    val requireBaseUrnWithVersionOf = depositPropertiesFactory.bagSource == VAULT // TODO less sneaky
     val bagInfoKeysToRemove = Seq(
       DansV0Bag.EASY_USER_ACCOUNT_KEY,
       BagInfo.baseUrnKey,
@@ -50,7 +49,7 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
       bagDir <- getBagDir(bagParentDir)
       bag <- BagFacade.getBag(bagDir)
       mutableBagMetadata = bag.getMetadata
-      bagInfo <- BagInfo(bagDir, mutableBagMetadata, requireBaseUrnWithVersionOf)
+      bagInfo <- BagInfo(bagDir, mutableBagMetadata)
       _ = logger.debug(s"$bagInfo")
       ddmFile = bagDir / "metadata" / "dataset.xml"
       ddmIn <- loadXml(ddmFile)

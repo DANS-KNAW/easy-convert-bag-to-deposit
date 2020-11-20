@@ -29,11 +29,11 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
 
   "apply" should "succeed" in {
     val bagDir = bags / "04e638eb-3af1-44fb-985d-36af12fccb2d" / "bag-revision-1"
-    BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = false) shouldBe a[Success[_]] // see also FactorySpec
+    BagInfo(bagDir, mockBag(bagDir).getMetadata) shouldBe a[Success[_]] // see also FactorySpec
   }
   it should "complain about invalid uuid" in {
     val file = bags / "not-a-uuid" / "bag-name" / "bag-info.txt"
-    BagInfo(file.parent, mockBag(file.parent).getMetadata, requireBaseUrnWithVersionOf = false) shouldBe Failure(InvalidBagException(
+    BagInfo(file.parent, mockBag(file.parent).getMetadata) shouldBe Failure(InvalidBagException(
       s"Invalid UUID: $bags/not-a-uuid"
     ))
   }
@@ -41,7 +41,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
     val uuid = UUID.randomUUID()
     val bagDir = (testDir / s"0$uuid" / "bag-name").createDirectories()
     val file = (bagDir / "bag-info.txt").write("EASY-User-Account: user001")
-    BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = false) shouldBe Failure(InvalidBagException(
+    BagInfo(bagDir, mockBag(bagDir).getMetadata) shouldBe Failure(InvalidBagException(
       s"No Bagging-Date in $file"
     ))
   }
@@ -49,7 +49,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
     val uuid = UUID.randomUUID()
     val bagDir = (testDir / s"$uuid" / "bag-name").createDirectories()
     val file = (bagDir / "bag-info.txt").write("Created: 2017-01-16T14:35:00.888+01:00")
-    BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = false) shouldBe Failure(InvalidBagException(
+    BagInfo(bagDir, mockBag(bagDir).getMetadata) shouldBe Failure(InvalidBagException(
       s"No EASY-User-Account in $file"
     ))
   }
@@ -61,7 +61,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |Bagging-Date: 2017-01-16T14:35:00.888+01:00
          |Is-Version-Of: urn:uuid:123456789$uuid
          |""".stripMargin)
-    BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = false) shouldBe Failure(InvalidBagException(
+    BagInfo(bagDir, mockBag(bagDir).getMetadata) shouldBe Failure(InvalidBagException(
       s"Invalid UUID: Is-Version-Of: urn:uuid:123456789$uuid"
     ))
   }
@@ -73,7 +73,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
       s"""Bagging-Date: $dateTime
          |EASY-User-Account: user001
          |""".stripMargin)
-    BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = false) shouldBe Success(new BagInfo("user001", dateTime, uuid, "bag-name", None, None))
+    BagInfo(bagDir, mockBag(bagDir).getMetadata) shouldBe Success(new BagInfo("user001", dateTime, uuid, "bag-name", None, None))
   }
   it should "have a version-of" in {
     val bagUuid = UUID.randomUUID()
@@ -85,7 +85,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |Is-Version-Of: $versionOfUuid
          |EASY-User-Account: user001
          |""".stripMargin)
-    BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = false) shouldBe Success(new BagInfo("user001", dateTime, bagUuid, "bag-name", Some(versionOfUuid), None))
+    BagInfo(bagDir, mockBag(bagDir).getMetadata) shouldBe Success(new BagInfo("user001", dateTime, bagUuid, "bag-name", Some(versionOfUuid), None))
   }
   it should "have a base-urn" in {
     val bagUuid = UUID.randomUUID()
@@ -98,19 +98,6 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |${ BagInfo.baseUrnKey }: rabarbera
          |EASY-User-Account: user001
          |""".stripMargin)
-    BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = true) shouldBe Success(new BagInfo("user001", dateTime, bagUuid, "bag-name", Some(versionOfUuid), Some("rabarbera")))
-  }
-  it should "report missing base-urn" in {
-    val bagUuid = UUID.randomUUID()
-    val versionOfUuid = UUID.randomUUID()
-    val bagDir = (testDir / s"$bagUuid" / "bag-name").createDirectories()
-    (bagDir / "bag-info.txt").write(
-      s"""Bagging-Date: 2017-01-16T14:35:00.888+01:00
-         |Is-Version-Of: $versionOfUuid
-         |EASY-User-Account: user001
-         |""".stripMargin)
-    BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = true) shouldBe Failure(InvalidBagException(
-      s"No Base-Urn in $testDir/$bagUuid/bag-name/bag-info.txt"
-    ))
+    BagInfo(bagDir, mockBag(bagDir).getMetadata) shouldBe Success(new BagInfo("user001", dateTime, bagUuid, "bag-name", Some(versionOfUuid), Some("rabarbera")))
   }
 }

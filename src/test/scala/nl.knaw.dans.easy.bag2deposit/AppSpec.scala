@@ -60,8 +60,13 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     srcDir / ".." / "deposit.properties" shouldNot exist
 
     val delegate = mock[MockBagIndex]
+    val noBaseBagUUID = "87151a3a-12ed-426a-94f2-97313c7ae1f2"
     (delegate.execute(_: String)) expects s"/bag-sequence?contains=$validUUID" returning
       new HttpResponse[String]("123", 200, Map.empty)
+    (delegate.execute(_: String)) expects s"/bag-sequence?contains=$noBaseBagUUID" returning
+      new HttpResponse[String]("123", 200, Map.empty)
+    (delegate.execute(_: String)) expects s"/bags/4722d09d-e431-4899-904c-0733cd773034" returning
+      new HttpResponse[String]("<result><bag-info><urn>urn:nbn:nl:ui:13-z4-f8cm</urn></bag-info></result>", 200, Map.empty)
     val appConfig = testConfig(delegatingBagIndex(delegate))
 
     new EasyConvertBagToDespositApp(appConfig).addPropsToBags(

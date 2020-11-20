@@ -31,7 +31,7 @@ case class BagInfo(userId: String, created: String, uuid: UUID, bagName: String,
 object BagInfo {
   val baseUrnKey = "Base-Urn"
 
-  def apply(bagDir: File, bagInfo: Metadata, requireBaseUrnWithVersionOf: Boolean): Try[BagInfo] = Try {
+  def apply(bagDir: File, bagInfo: Metadata): Try[BagInfo] = Try {
     def getMaybe(key: String) = Option(bagInfo.get(key))
       .flatMap(_.asScala.headOption)
 
@@ -41,9 +41,6 @@ object BagInfo {
 
     val maybeVersionOf = getMaybe(DansV0Bag.IS_VERSION_OF_KEY).map(uuidFromVersionOf)
     val maybeBaseUrn = getMaybe(baseUrnKey)
-
-    if (maybeVersionOf.isDefined && requireBaseUrnWithVersionOf && maybeBaseUrn.isEmpty)
-      throw notFound(baseUrnKey)
 
     new BagInfo(
       userId = getMandatory(DansV0Bag.EASY_USER_ACCOUNT_KEY),

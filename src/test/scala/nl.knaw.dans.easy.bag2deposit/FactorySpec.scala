@@ -43,7 +43,7 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
 
     DepositPropertiesFactory(cfg, IdType.DOI, BagSource.VAULT)
       .create(
-        BagInfo(bagDir, mockBag(bagDir).getMetadata, requireBaseUrnWithVersionOf = false).unsafeGetOrThrow,
+        BagInfo(bagDir, mockBag(bagDir).getMetadata).unsafeGetOrThrow,
         ddm = XML.loadFile((bagDir / "metadata" / "dataset.xml").toJava),
       ).map(serialize) shouldBe Success(
       s"""state.label = SUBMITTED

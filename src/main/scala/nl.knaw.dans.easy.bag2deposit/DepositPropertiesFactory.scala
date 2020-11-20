@@ -73,6 +73,8 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
           addProperty("dataverse.bag-id", "urn:uuid:" + bagInfo.uuid)
           addProperty("dataverse.nbn", nbn)
         case FEDORA =>
+          if (bagInfo.versionOf.isDefined && bagInfo.baseUrn.isEmpty)
+            throw InvalidBagException(s"bag-info.txt should have the ${ BagInfo.baseUrnKey } of ${ bagInfo.versionOf }")
           addProperty("dataverse.nbn", bagInfo.baseUrn.getOrElse(urn))
         case _ =>
       }
