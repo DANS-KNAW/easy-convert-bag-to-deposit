@@ -145,7 +145,7 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |identifier.fedora = easy-dataset:162288
          |dataverse.nbn = rabarbera
          |dataverse.id-protocol = urn
-         |dataverse.id-identifier = urn:nbn:nl:ui:13-00-3haq
+         |dataverse.id-identifier = rabarbera
          |dataverse.id-authority = nbn:nl:ui:13
          |""".stripMargin
     )
