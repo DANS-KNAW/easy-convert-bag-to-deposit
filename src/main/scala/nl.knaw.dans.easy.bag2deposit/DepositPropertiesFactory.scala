@@ -86,7 +86,7 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
           addProperty("dataverse.id-identifier", doi.replaceAll(".*/", ""))
           addProperty("dataverse.id-authority", configuration.dataverseIdAutority)
         case URN =>
-          addProperty("dataverse.id-identifier", bagInfo.baseUrn.getOrElse(baseUrnFromBagIndex))
+          addProperty("dataverse.id-identifier", bagInfo.baseUrn.getOrElse(baseUrnFromBagIndex).replace("urn:nbn:nl:ui:13-", ""))
           addProperty("dataverse.id-authority", "nbn:nl:ui:13")
       }
     }
