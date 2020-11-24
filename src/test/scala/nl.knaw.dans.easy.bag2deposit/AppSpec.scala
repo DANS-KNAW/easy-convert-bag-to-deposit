@@ -76,8 +76,8 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     ) shouldBe Success("No fatal errors")
 
     // post condition
-    targetDir / ".." / "deposit.properties" should exist
-    // other changes verified in other test
+    (targetDir / ".." / "deposit.properties").contentAsString should include ("dataverse.id-identifier = dans-2xg-umq8")
+    // other details verified in other test, note that the DOI has no prefix
 
     // TODO (manually) intercept logging: the bag names should reflect the errors
     //  no variation in bag-info.txt not found or a property in that file not found

@@ -112,7 +112,7 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |dataverse.bag-id = urn:uuid:$bagUUID
          |dataverse.nbn = urn:nbn:nl:ui:13-z4-f8cm
          |dataverse.id-protocol = urn
-         |dataverse.id-identifier = urn:nbn:nl:ui:13-00-3haq
+         |dataverse.id-identifier = urn:nbn:nl:ui:13-z4-f8cm
          |dataverse.id-authority = nbn:nl:ui:13
          |""".stripMargin
     )

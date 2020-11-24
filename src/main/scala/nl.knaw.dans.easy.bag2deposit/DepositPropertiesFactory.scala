@@ -40,7 +40,7 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
       .getOrElse(throw InvalidBagException("no fedoraID"))
       .text
 
-    def nbn = bagInfo.versionOf.map(
+    lazy val baseUrnFromBagIndex = bagInfo.versionOf.map(
       configuration.bagIndex.getURN(_).unsafeGetOrThrow
     ).getOrElse(urn)
 
@@ -71,7 +71,7 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
           addProperty("bag-store.bag-id", bagInfo.uuid)
           addProperty("dataverse.sword-token", bagInfo.versionOf.getOrElse(bagInfo.uuid))
           addProperty("dataverse.bag-id", "urn:uuid:" + bagInfo.uuid)
-          addProperty("dataverse.nbn", nbn)
+          addProperty("dataverse.nbn", baseUrnFromBagIndex)
         case FEDORA =>
           if (bagInfo.versionOf.isDefined && bagInfo.baseUrn.isEmpty)
             throw InvalidBagException(s"bag-info.txt should have the ${ BagInfo.baseUrnKey } of ${ bagInfo.versionOf }")
@@ -86,7 +86,7 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
           addProperty("dataverse.id-identifier", doi.replaceAll(".*/", ""))
           addProperty("dataverse.id-authority", configuration.dataverseIdAutority)
         case URN =>
-          addProperty("dataverse.id-identifier", bagInfo.baseUrn.getOrElse(urn))
+          addProperty("dataverse.id-identifier", bagInfo.baseUrn.getOrElse(baseUrnFromBagIndex))
           addProperty("dataverse.id-authority", "nbn:nl:ui:13")
       }
     }
