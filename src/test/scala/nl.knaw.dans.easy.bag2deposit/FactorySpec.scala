@@ -121,7 +121,7 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
   it should "use base urn from bag-info.txt" in {
     val bagUUID = UUID.randomUUID()
     val baseUUID = UUID.randomUUID()
-    val bagInfo = BagInfo(userId = "user001", created = "2017-01-16T14:35:00.888+01:00", uuid = bagUUID, bagName = "bag-name", versionOf = Some(baseUUID), Some("urn:nbn:nl:ui:13-rabarbera"))
+    val bagInfo = BagInfo(userId = "user001", created = "2017-01-16T14:35:00.888+01:00", uuid = bagUUID, bagName = "bag-name", versionOf = Some(baseUUID), baseUrn = Some("urn:nbn:nl:ui:13-rabarbera"))
     val ddm = <ddm:DDM xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
                 <ddm:dcmiMetadata>
                   <dcterms:identifier xsi:type="id-type:DOI">10.5072/dans-2xg-umq8</dcterms:identifier>

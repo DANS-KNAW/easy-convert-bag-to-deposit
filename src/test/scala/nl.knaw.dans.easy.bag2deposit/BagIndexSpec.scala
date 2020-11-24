@@ -56,7 +56,7 @@ class BagIndexSpec extends AnyFlatSpec with Matchers with BagIndexSupport {
     (delegate.execute(_: String)) expects s"/bags/$uuid" returning
       new HttpResponse[String]("", 404, Map.empty)
     delegatingBagIndex(delegate)
-      .getURN(uuid) shouldBe Failure(InvalidBagException(s"/bags/$uuid returned not found in bag-index"))
+      .gePIDs(uuid) shouldBe Failure(InvalidBagException(s"/bags/$uuid returned not found in bag-index"))
   }
 
   it should "return URN" in {
@@ -77,7 +77,7 @@ class BagIndexSpec extends AnyFlatSpec with Matchers with BagIndexSupport {
         Map.empty,
       )
     delegatingBagIndex(delegate)
-      .getURN(uuid) shouldBe Success("urn:nbn:nl:ui:13-z4-f8cm")
+      .gePIDs(uuid) shouldBe Success(("urn:nbn:nl:ui:13-z4-f8cm","10.80270/test-28m-zann"))
   }
 
   it should "report missing URN" in {
@@ -86,7 +86,7 @@ class BagIndexSpec extends AnyFlatSpec with Matchers with BagIndexSupport {
     (delegate.execute(_: String)) expects s"/bags/$uuid" returning
       new HttpResponse[String]("<x/>", 200, Map.empty)
     delegatingBagIndex(delegate)
-      .getURN(uuid) shouldBe Failure(BagIndexException(s"$uuid: no URN in <x/>", null))
+      .gePIDs(uuid) shouldBe Failure(BagIndexException(s"$uuid: no URN in <x/>", null))
   }
 
   it should "report invalid XML" in {
@@ -95,7 +95,7 @@ class BagIndexSpec extends AnyFlatSpec with Matchers with BagIndexSupport {
     (delegate.execute(_: String)) expects s"/bags/$uuid" returning
       new HttpResponse[String]("{}", 200, Map.empty)
     delegatingBagIndex(delegate)
-      .getURN(uuid) should matchPattern {
+      .gePIDs(uuid) should matchPattern {
       case Failure(BagIndexException(msg, _)) if msg == s"$uuid: Content is not allowed in prolog. RESPONSE: {}" =>
     }
   }
@@ -106,7 +106,7 @@ class BagIndexSpec extends AnyFlatSpec with Matchers with BagIndexSupport {
     (delegate.execute(_: String)) expects s"/bags/$uuid" throwing new IOException("mocked")
 
     delegatingBagIndex(delegate)
-      .getURN(uuid) should matchPattern {
+      .gePIDs(uuid) should matchPattern {
       case Failure(BagIndexException(msg, _)) if msg == s"/bags/$uuid mocked" =>
     }
   }
@@ -117,6 +117,6 @@ class BagIndexSpec extends AnyFlatSpec with Matchers with BagIndexSupport {
     (delegate.execute(_: String)) expects s"/bags/$uuid" returning
       new HttpResponse[String]("", 300, Map.empty)
     delegatingBagIndex(delegate)
-      .getURN(uuid) shouldBe Failure(BagIndexException(s"Not expected response code from bag-index. /bags/$uuid, response: 300 - ", null))
+      .gePIDs(uuid) shouldBe Failure(BagIndexException(s"Not expected response code from bag-index. /bags/$uuid, response: 300 - ", null))
   }
 }

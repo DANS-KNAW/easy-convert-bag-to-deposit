@@ -66,7 +66,7 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     (delegate.execute(_: String)) expects s"/bag-sequence?contains=$noBaseBagUUID" returning
       new HttpResponse[String]("123", 200, Map.empty)
     (delegate.execute(_: String)) expects s"/bags/4722d09d-e431-4899-904c-0733cd773034" returning
-      new HttpResponse[String]("<result><bag-info><urn>urn:nbn:nl:ui:13-z4-f8cm</urn></bag-info></result>", 200, Map.empty)
+      new HttpResponse[String]("<result><bag-info><urn>urn:nbn:nl:ui:13-z4-f8cm</urn><doi>10.5072/dans-2xg-umq8</doi></bag-info></result>", 200, Map.empty)
     val appConfig = testConfig(delegatingBagIndex(delegate))
 
     new EasyConvertBagToDespositApp(appConfig).addPropsToBags(

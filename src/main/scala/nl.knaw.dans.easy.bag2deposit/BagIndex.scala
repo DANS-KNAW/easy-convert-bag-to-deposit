@@ -32,13 +32,14 @@ case class BagIndex(bagIndexUri: URI) {
   def getSeqLength(uuid: UUID): Try[Int] = find(s"/bag-sequence?contains=$uuid")
     .map(_.split("\n").map(_.trim).count(!_.isEmpty))
 
-  def getURN(uuid: UUID): Try[String] = for {
+  def gePIDs(uuid: UUID): Try[(String, String)] = for {
     response <- find(s"/bags/$uuid")
     xml <- parse(response, uuid)
-    nodes = xml \\ "urn"
-    urn = nodes.theSeq.headOption.map(_.text)
+    urn = (xml \\ "urn").theSeq.headOption.map(_.text)
       .getOrElse(throw BagIndexException(s"$uuid: no URN in $response", null))
-  } yield urn
+    doi = (xml \\ "doi").theSeq.headOption.map(_.text)
+      .getOrElse(throw BagIndexException(s"$uuid: no DOI in $response", null))
+  } yield (urn,doi)
 
   private def parse(response: String, uuid: UUID) = Try {
     XML.load(response.inputStream)

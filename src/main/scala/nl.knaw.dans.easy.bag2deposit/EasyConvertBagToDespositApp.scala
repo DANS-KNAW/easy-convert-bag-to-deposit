@@ -44,6 +44,7 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
     val bagInfoKeysToRemove = Seq(
       DansV0Bag.EASY_USER_ACCOUNT_KEY,
       BagInfo.baseUrnKey,
+      BagInfo.baseDoiKey,
     )
     for {
       bagDir <- getBagDir(bagParentDir)

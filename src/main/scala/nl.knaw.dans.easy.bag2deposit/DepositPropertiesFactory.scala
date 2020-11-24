@@ -15,6 +15,8 @@
  */
 package nl.knaw.dans.easy.bag2deposit
 
+import java.util.UUID
+
 import nl.knaw.dans.easy.bag2deposit.BagSource.{ BagSource, FEDORA, VAULT, submittedStateDescription }
 import nl.knaw.dans.easy.bag2deposit.IdType._
 import nl.knaw.dans.lib.error.TryExtensions
@@ -40,9 +42,9 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
       .getOrElse(throw InvalidBagException("no fedoraID"))
       .text
 
-    lazy val baseUrnFromBagIndex = bagInfo.versionOf.map(
-      configuration.bagIndex.getURN(_).unsafeGetOrThrow
-    ).getOrElse(urn)
+    lazy val (baseUrnFromBagIndex, baseDoiFromBagIndex) = bagInfo.versionOf.map(
+      configuration.bagIndex.gePIDs(_).unsafeGetOrThrow
+    ).getOrElse((urn, doi))
 
     def checkSequence(): Unit = {
       val seqLength = configuration.bagIndex
@@ -82,12 +84,12 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
         addProperty("dataverse.other-id", "https://doi.org/" + doi)
       addProperty("dataverse.id-protocol", idType.toString.toLowerCase)
       idType match {
-        case DOI =>
-          addProperty("dataverse.id-identifier", doi.replaceAll(".*/", ""))
-          addProperty("dataverse.id-authority", configuration.dataverseIdAutority)
         case URN =>
           addProperty("dataverse.id-identifier", bagInfo.baseUrn.getOrElse(baseUrnFromBagIndex).replace("urn:nbn:nl:ui:13-", ""))
           addProperty("dataverse.id-authority", "nbn:nl:ui:13")
+        case DOI =>
+          addProperty("dataverse.id-identifier", bagInfo.baseDoi.getOrElse(baseDoiFromBagIndex).replaceAll(".*/", ""))
+          addProperty("dataverse.id-authority", configuration.dataverseIdAutority)
       }
     }
   }

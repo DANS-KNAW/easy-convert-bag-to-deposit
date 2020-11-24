@@ -26,10 +26,12 @@ import org.apache.commons.configuration.ConfigurationException
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
 
-case class BagInfo(userId: String, created: String, uuid: UUID, bagName: String, versionOf: Option[UUID], baseUrn: Option[String] = None)
+case class BagInfo(userId: String, created: String, uuid: UUID, bagName: String, versionOf: Option[UUID], baseUrn: Option[String] = None, baseDoi: Option[String] = None)
 
 object BagInfo {
+  // these values should match easy-fedora-to-bag
   val baseUrnKey = "Base-Urn"
+  val baseDoiKey = "Base-DOI"
 
   def apply(bagDir: File, bagInfo: Metadata): Try[BagInfo] = Try {
     def getMaybe(key: String) = Option(bagInfo.get(key))
