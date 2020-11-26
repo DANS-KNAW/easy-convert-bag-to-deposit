@@ -26,20 +26,20 @@ import scala.util.{ Failure, Try }
 import scala.xml.XML
 
 case class BagIndexException(msg: String, cause: Throwable) extends IOException(msg, cause)
-
+case class BasePids(urn: String, doi: String)
 case class BagIndex(bagIndexUri: URI) {
 
   def getSeqLength(uuid: UUID): Try[Int] = find(s"/bag-sequence?contains=$uuid")
     .map(_.split("\n").map(_.trim).count(!_.isEmpty))
 
-  def gePIDs(uuid: UUID): Try[(String, String)] = for {
+  def gePIDs(uuid: UUID): Try[BasePids] = for {
     response <- find(s"/bags/$uuid")
     xml <- parse(response, uuid)
     urn = (xml \\ "urn").theSeq.headOption.map(_.text)
       .getOrElse(throw BagIndexException(s"$uuid: no URN in $response", null))
     doi = (xml \\ "doi").theSeq.headOption.map(_.text)
       .getOrElse(throw BagIndexException(s"$uuid: no DOI in $response", null))
-  } yield (urn,doi)
+  } yield BasePids(urn, doi)
 
   private def parse(response: String, uuid: UUID) = Try {
     XML.load(response.inputStream)

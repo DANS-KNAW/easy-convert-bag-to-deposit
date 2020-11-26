@@ -77,7 +77,7 @@ class BagIndexSpec extends AnyFlatSpec with Matchers with BagIndexSupport {
         Map.empty,
       )
     delegatingBagIndex(delegate)
-      .gePIDs(uuid) shouldBe Success(("urn:nbn:nl:ui:13-z4-f8cm","10.80270/test-28m-zann"))
+      .gePIDs(uuid) shouldBe Success(BasePids("urn:nbn:nl:ui:13-z4-f8cm", "10.80270/test-28m-zann"))
   }
 
   it should "report missing URN" in {

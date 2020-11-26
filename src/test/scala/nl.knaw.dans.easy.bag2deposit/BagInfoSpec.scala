@@ -96,8 +96,9 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
       s"""Bagging-Date: $dateTime
          |Is-Version-Of: $versionOfUuid
          |${ BagInfo.baseUrnKey }: rabarbera
+         |${ BagInfo.baseDoiKey }: lalala
          |EASY-User-Account: user001
          |""".stripMargin)
-    BagInfo(bagDir, mockBag(bagDir).getMetadata) shouldBe Success(new BagInfo("user001", dateTime, bagUuid, "bag-name", Some(versionOfUuid), Some("rabarbera")))
+    BagInfo(bagDir, mockBag(bagDir).getMetadata) shouldBe Success(new BagInfo("user001", dateTime, bagUuid, "bag-name", Some(versionOfUuid), Some(BasePids("rabarbera", "lalala"))))
   }
 }

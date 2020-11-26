@@ -26,7 +26,7 @@ import org.apache.commons.configuration.ConfigurationException
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
 
-case class BagInfo(userId: String, created: String, uuid: UUID, bagName: String, versionOf: Option[UUID], baseUrn: Option[String] = None, baseDoi: Option[String] = None)
+case class BagInfo(userId: String, created: String, uuid: UUID, bagName: String, versionOf: Option[UUID], basePids: Option[BasePids] = None)
 
 object BagInfo {
   // these values should match easy-fedora-to-bag
@@ -42,7 +42,11 @@ object BagInfo {
     def getMandatory(key: String) = getMaybe(key).getOrElse(throw notFound(key))
 
     val maybeVersionOf = getMaybe(DansV0Bag.IS_VERSION_OF_KEY).map(uuidFromVersionOf)
-    val maybeBaseUrn = getMaybe(baseUrnKey)
+    val basePids = (getMaybe(baseUrnKey), getMaybe(baseDoiKey)) match {
+      case (None, None) => None
+      case (Some(urn), Some(doi)) => Some(BasePids(urn, doi))
+      case _ => throw new Exception("")
+    }
 
     new BagInfo(
       userId = getMandatory(DansV0Bag.EASY_USER_ACCOUNT_KEY),
@@ -50,7 +54,7 @@ object BagInfo {
       uuid = uuidFromFile(bagDir.parent),
       bagName = bagDir.name,
       versionOf = maybeVersionOf,
-      baseUrn = maybeBaseUrn,
+      basePids = basePids,
     )
   }.recoverWith { case e: ConfigurationException =>
     Failure(InvalidBagException(e.getMessage))
