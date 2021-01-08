@@ -16,7 +16,6 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import java.util.UUID
-
 import better.files.File
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
@@ -24,11 +23,14 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.util.Try
 import scala.xml.transform.RuleTransformer
-import scala.xml.{ Node, Utility }
+import scala.xml.{ Node, NodeBuffer, Utility }
 
-class AbrRewriteSpec extends AnyFlatSpec with Matchers {
+class RewriteSpec extends AnyFlatSpec with Matchers {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
-  private val ddmTransformer = new RuleTransformer(AbrRewriteRule(cfgDir))
+  private val ddmTransformer = new RuleTransformer(
+    AbrRewriteRule(cfgDir),
+    RceRewriteRule(cfgDir),
+  )
 
   "ABR-complex" should "be valid" in {
     val records = parseCsv(cfgDir / "ABR-complex.csv", AbrRewriteRule.nrOfHeaderLines)
@@ -48,7 +50,11 @@ class AbrRewriteSpec extends AnyFlatSpec with Matchers {
 
   "transform" should "convert" in {
     val ddmIn = ddm(
+        <ddm:profile>
+          <dc:title>Rapport 123</dc:title>
+        </ddm:profile>
         <ddm:dcmiMetadata>
+            <dc:title>Rapport 456</dc:title>
             <dcterms:temporal xsi:type="abr:ABRperiode">VMEA</dcterms:temporal>
             <dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject>
             <dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
@@ -57,7 +63,16 @@ class AbrRewriteSpec extends AnyFlatSpec with Matchers {
     ddmTransformer.transform(ddmIn)
       .headOption.map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(ddm(
+        <ddm:profile>
+          <dc:title>Rapport 123</dc:title>
+        </ddm:profile>
         <ddm:dcmiMetadata>
+            <reportNumber
+              schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
+              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f"
+              subjectScheme="RCE rapporten"
+              reportNo="456"
+            >Rapport 456</reportNumber>
             <ddm:temporal xml:lang="nl"
                           valueURI="https://data.cultureelerfgoed.nl/term/id/abr/330e7fe0-a1f7-43de-b448-d477898f6648"
                           subjectScheme="Archeologisch Basis Register"
@@ -86,7 +101,7 @@ class AbrRewriteSpec extends AnyFlatSpec with Matchers {
     .replaceAll("\n +<", "\n<")
     .trim
 
-  private def ddm(dcmi: Node) =
+  private def ddm(dcmi: NodeBuffer) =
       <ddm:DDM xmlns:dcx="http://easy.dans.knaw.nl/schemas/dcx/"
          xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
