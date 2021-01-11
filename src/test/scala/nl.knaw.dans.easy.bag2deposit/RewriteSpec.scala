@@ -27,10 +27,7 @@ import scala.xml.{ Node, NodeBuffer, Utility }
 
 class RewriteSpec extends AnyFlatSpec with Matchers {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
-  private val ddmTransformer = new RuleTransformer(
-    AbrRewriteRule(cfgDir),
-    RceRewriteRule(cfgDir),
-  )
+  private val cfg = Configuration(cfgDir.parent)
 
   "ABR-complex" should "be valid" in {
     val records = parseCsv(cfgDir / "ABR-complex.csv", AbrRewriteRule.nrOfHeaderLines)
@@ -60,7 +57,7 @@ class RewriteSpec extends AnyFlatSpec with Matchers {
             <dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
         </ddm:dcmiMetadata>
     )
-    ddmTransformer.transform(ddmIn)
+    cfg.ddmTransformer.transform(ddmIn)
       .headOption.map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(ddm(
         <ddm:profile>

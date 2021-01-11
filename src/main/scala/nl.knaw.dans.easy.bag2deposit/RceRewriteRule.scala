@@ -16,31 +16,35 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.AbrRewriteRule.{ find, isAbr, parse }
 
 import scala.xml.transform.RewriteRule
-import scala.xml.{ Elem, MetaData, Node, Text }
+import scala.xml.{ Elem, Node, Text }
 
 case class RceRewriteRule(cfgDir: File) extends RewriteRule {
 
-  case class ReportCfg (uuid: String, label: String, regexp: String)
+  case class ReportCfg(uuid: String, label: String, regexp: String)
 
   // just one that does not match easy-dataset:99840 "Arcadis Archeologische Rapporten [2017 - 116]"
-  private val nrRegExp = " [-_/a-z0-9]+\\.? *"
+  private val an = "[-_/.a-z0-9]"
+  private val digit = "[0-9]"
+  val nrRegExp = s"\\W*($an+$digit$an*|$digit)"
 
-  private val reportFile: File = cfgDir / "ABR-reports.csv"
+  private val reportFile: File = cfgDir / "RCE-reports.csv"
   val reportMap: Seq[ReportCfg] = parseCsv(reportFile, 0)
-    .map(r => ReportCfg( r.get(0), r.get(1), s"${ r.get(2) }$nrRegExp")).toSeq
+    .map(r => ReportCfg(
+      r.get(0),
+      r.get(1),
+      r.get(2).trim + nrRegExp + "([.]|:.*)?",
+    )).toSeq
 
   override def transform(n: Node): Seq[Node] = n match {
     case Elem(_, "profile", _, _, _) => n // TODO title inside profile should not be processed
     case Elem(_, "title", _, _, Text(titleValue)) =>
       // TODO logging
-      val lowerCase = titleValue.toLowerCase
       reportMap
-      .filter(cfg => lowerCase.matches(cfg.regexp + "$"))
-      .map(cfg => toRceReport(titleValue,cfg.uuid))
-      .headOption.getOrElse(n) // TODO warn and skip if multiple matches?
+        .filter(cfg => titleValue.trim.toLowerCase.matches(cfg.regexp))
+        .map(cfg => toRceReport(titleValue, cfg.uuid))
+        .headOption.getOrElse(n) // TODO warn and skip if multiple matches?
     case _ => n
   }
 
@@ -53,5 +57,7 @@ case class RceRewriteRule(cfgDir: File) extends RewriteRule {
     >{ titleValue }
     </reportNumber>
   }
+}
+object RceRewriteRule {
 }
 
