@@ -88,18 +88,18 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         <ddm:dcmiMetadata>
             <dc:title>blabla</dc:title>
             <dc:title>rabarbera</dc:title>
-            <reportNumber
+            <ddm:reportNumber
               schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
               valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f"
-              subjectScheme="RCE rapporten"
+              subjectScheme="ABR Rapporten"
               reportNo="123"
-            >Rapport 123</reportNumber>
-            <reportNumber
+            >Rapport 123</ddm:reportNumber>
+            <ddm:reportNumber
               schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
               valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f"
-              subjectScheme="RCE rapporten"
+              subjectScheme="ABR Rapporten"
               reportNo="456"
-            >Rapport 456</reportNumber>
+            >Rapport 456</ddm:reportNumber>
             <ddm:temporal xml:lang="nl"
                           valueURI="https://data.cultureelerfgoed.nl/term/id/abr/330e7fe0-a1f7-43de-b448-d477898f6648"
                           subjectScheme="Archeologisch Basis Register"
