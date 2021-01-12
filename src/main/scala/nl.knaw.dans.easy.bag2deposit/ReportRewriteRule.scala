@@ -20,17 +20,16 @@ import better.files.File
 import scala.xml.transform.RewriteRule
 import scala.xml.{ Elem, Node, Text }
 
-case class RceRewriteRule(cfgDir: File) extends RewriteRule {
+case class ReportRewriteRule(cfgDir: File) extends RewriteRule {
 
   case class ReportCfg(uuid: String, label: String, regexp: String)
 
   // just one that does not match easy-dataset:99840 "Arcadis Archeologische Rapporten [2017 - 116]"
   private val an = "[-_/.a-z0-9]"
   private val digit = "[0-9]"
-  val nrRegExp = s"\\W+($an+$digit$an*|$digit)"
+  val nrRegExp = s"\\W+$an*$digit$an*"
 
-  private val reportFile: File = cfgDir / "RCE-reports.csv"
-  val reportMap: Seq[ReportCfg] = parseCsv(reportFile, 0)
+  val reportMap: Seq[ReportCfg] = parseCsv(cfgDir / "ABR-reports.csv", 0)
     .map(r => ReportCfg(
       r.get(0),
       r.get(1),
@@ -49,14 +48,11 @@ case class RceRewriteRule(cfgDir: File) extends RewriteRule {
   }
 
   private def toRceReport(titleValue: String, uuid: String): Elem = {
-    <reportNumber
+    <ddm:reportNumber
       schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
       valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/$uuid" }
-      subjectScheme="RCE rapporten"
+      subjectScheme="ABR Rapporten"
       reportNo={ titleValue.replaceAll(s".*($nrRegExp)$$", "$1").trim }
-    >{ titleValue }</reportNumber>
+    >{ titleValue }</ddm:reportNumber>
   }
 }
-object RceRewriteRule {
-}
-

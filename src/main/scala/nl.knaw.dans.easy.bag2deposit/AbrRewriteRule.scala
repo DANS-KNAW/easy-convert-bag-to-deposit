@@ -20,7 +20,7 @@ import nl.knaw.dans.easy.bag2deposit.AbrRewriteRule.{ find, isAbr, parse }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.csv.CSVRecord
 
-import scala.xml.transform.RewriteRule
+import scala.xml.transform.{ RewriteRule, RuleTransformer }
 import scala.xml.{ Elem, MetaData, Node, Text }
 
 case class AbrRewriteRule(cfgDir: File) extends RewriteRule {
@@ -30,7 +30,11 @@ case class AbrRewriteRule(cfgDir: File) extends RewriteRule {
   private val complexFile: File = cfgDir / "ABR-complex.csv"
   private val complexMap = parse(complexFile, "ddm:subject")
 
+  // don't replace the title in <ddm:profile>
+  private val dcmiMetadataTransformer = new RuleTransformer(ReportRewriteRule(cfgDir))
+
   override def transform(n: Node): Seq[Node] = n match {
+    case Elem(_, "dcmiMetadata", _, _, _*) => dcmiMetadataTransformer(n)
     case Elem(_, "temporal", attr: MetaData, _, Text(key)) if isAbr(attr) => find(key, periodMap, periodFile)
     case Elem(_, "subject", attr: MetaData, _, Text(key)) if isAbr(attr) => find(key, complexMap, complexFile)
     case _ => n

@@ -20,7 +20,7 @@ import nl.knaw.dans.easy.bag2deposit.Fixture.FileSystemSupport
 import org.scalatest.flatspec.AnyFlatSpec
 
 class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
-  private val rule: RceRewriteRule = RceRewriteRule(File("src/main/assembly/dist/cfg"))
+  private val rule: ReportRewriteRule = ReportRewriteRule(File("src/main/assembly/dist/cfg"))
   private val cfg = rule.reportMap
   private val titlesPerDataset = File("src/test/resources/archeologischeTitels.txt")
     .lines.toSeq
