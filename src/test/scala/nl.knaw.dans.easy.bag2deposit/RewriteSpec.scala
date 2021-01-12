@@ -17,17 +17,36 @@ package nl.knaw.dans.easy.bag2deposit
 
 import java.util.UUID
 import better.files.File
+import nl.knaw.dans.easy.bag2deposit.Fixture.SchemaSupport
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.util.Try
+import javax.xml.XMLConstants
+import javax.xml.transform.Source
+import javax.xml.transform.stream.StreamSource
+import javax.xml.validation.SchemaFactory
+import scala.util.{ Success, Try }
 import scala.xml.transform.RuleTransformer
 import scala.xml.{ Node, NodeBuffer, Utility }
 
-class RewriteSpec extends AnyFlatSpec with Matchers {
+class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
   private val cfg = Configuration(cfgDir.parent)
+  override val schema = "https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"
+
+  private val mandatoryInProfile =
+          <dct:description>YYY</dct:description>
+          <dcx-dai:creatorDetails>
+            <dcx-dai:organization>
+              <dcx-dai:name>DANS</dcx-dai:name>
+            </dcx-dai:organization>
+          </dcx-dai:creatorDetails>
+          <ddm:created>2013-03</ddm:created>
+          <ddm:available>2013-04</ddm:available>
+          <ddm:audience>D35400</ddm:audience>
+          <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
+
 
   "ABR-complex" should "be valid" in {
     val records = parseCsv(cfgDir / "ABR-complex.csv", AbrRewriteRule.nrOfHeaderLines)
@@ -49,21 +68,32 @@ class RewriteSpec extends AnyFlatSpec with Matchers {
     val ddmIn = ddm(
         <ddm:profile>
           <dc:title>Rapport 123</dc:title>
+          { mandatoryInProfile }
         </ddm:profile>
         <ddm:dcmiMetadata>
+            <dc:title>blabla</dc:title>
             <dc:title>Rapport 456</dc:title>
+            <dc:title>rabarbera</dc:title>
             <dcterms:temporal xsi:type="abr:ABRperiode">VMEA</dcterms:temporal>
             <dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject>
             <dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
         </ddm:dcmiMetadata>
     )
-    cfg.ddmTransformer.transform(ddmIn)
-      .headOption.map(normalized)
-      .getOrElse(fail("no DDM returned")) shouldBe normalized(ddm(
+
+    val expectedDDM = ddm(
         <ddm:profile>
           <dc:title>Rapport 123</dc:title>
+          { mandatoryInProfile }
         </ddm:profile>
         <ddm:dcmiMetadata>
+            <dc:title>blabla</dc:title>
+            <dc:title>rabarbera</dc:title>
+            <reportNumber
+              schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
+              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f"
+              subjectScheme="RCE rapporten"
+              reportNo="456"
+            >Rapport 123</reportNumber>
             <reportNumber
               schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
               valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f"
@@ -86,7 +116,13 @@ class RewriteSpec extends AnyFlatSpec with Matchers {
                          schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed"
             >akker / tuin</ddm:subject>
         </ddm:dcmiMetadata>
-    ))
+    )
+
+    cfg.ddmTransformer.transform(ddmIn).headOption.map(normalized)
+      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
+
+    assume(schemaIsAvailable)
+    validate(expectedDDM) shouldBe Success(())
   }
 
   val nameSpaceRegExp = """ xmlns:[a-z-]+="[^"]*"""" // these attributes have a variable order
