@@ -36,7 +36,7 @@ object Command extends App with DebugEnhancedLogging {
     commandLine.idType(),
     commandLine.bagSource()
   )
-  new EasyConvertBagToDespositApp(configuration)
+  new EasyConvertBagToDepositApp(configuration)
     .addPropsToBags(
       bagParentDirs,
       commandLine.outputDir.toOption,

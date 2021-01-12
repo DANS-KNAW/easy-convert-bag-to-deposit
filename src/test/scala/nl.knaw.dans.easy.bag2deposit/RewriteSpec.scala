@@ -112,7 +112,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         </ddm:dcmiMetadata>
     )
 
-    new EasyConvertBagToDespositApp(cfg).formatDiff(ddmIn, expectedDDM) shouldBe
+    new EasyConvertBagToDepositApp(cfg.copy(version= "x.y.z")).formatDiff(ddmIn, expectedDDM) shouldBe
       """===== some generated DDM
         |
         |<dc:title>Rapport 456</dc:title>
@@ -120,7 +120,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         |<dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject>
         |<dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
         |
-        |===== is changed with EasyConvertBagToDespositApp ${project.version} into
+        |===== is changed with EasyConvertBagToDepositApp x.y.z into
         |
         |<ddm:reportNumber  schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f" subjectScheme="ABR Rapporten" reportNo="456">
         | Rapport 456

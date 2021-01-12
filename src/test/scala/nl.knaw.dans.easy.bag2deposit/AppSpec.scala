@@ -40,7 +40,7 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     val manifestContent = (srcDir / "tagmanifest-sha1.txt").contentAsString
 
     val appConfig = testConfig(null)
-    new EasyConvertBagToDespositApp(appConfig).addPropsToBags(
+    new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
       (testDir / "exports").children,
       None,
       DepositPropertiesFactory(appConfig, URN, FEDORA)
@@ -69,7 +69,7 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
       new HttpResponse[String]("<result><bag-info><urn>urn:nbn:nl:ui:13-z4-f8cm</urn><doi>10.5072/dans-2xg-umq8</doi></bag-info></result>", 200, Map.empty)
     val appConfig = testConfig(delegatingBagIndex(delegate))
 
-    new EasyConvertBagToDespositApp(appConfig).addPropsToBags(
+    new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
       (testDir / "exports").children,
       maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
       DepositPropertiesFactory(appConfig, DOI, VAULT)

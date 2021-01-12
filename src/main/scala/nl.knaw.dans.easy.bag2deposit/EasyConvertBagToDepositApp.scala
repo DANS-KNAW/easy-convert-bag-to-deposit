@@ -25,7 +25,7 @@ import java.io.{ FileNotFoundException, IOException }
 import scala.util.{ Failure, Success, Try }
 import scala.xml.Node
 
-class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnhancedLogging {
+class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnhancedLogging {
 
   def addPropsToBags(bagParentDirs: Iterator[File],
                      maybeOutputDir: Option[File],
