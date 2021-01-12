@@ -34,6 +34,10 @@ case class AbrRewriteRule(cfgDir: File) extends RewriteRule {
   private val dcmiMetadataTransformer = new RuleTransformer(ReportRewriteRule(cfgDir))
 
   override def transform(n: Node): Seq[Node] = n match {
+    case Elem(_, "profile", _, _, _*) =>
+      dcmiMetadataTransformer(n).head.asInstanceOf[Elem].map(_ \ "reportNumber")
+        .headOption.foreach { _ => /* TODO add to dcmiMetadata */ }
+      n
     case Elem(_, "dcmiMetadata", _, _, _*) => dcmiMetadataTransformer(n)
     case Elem(_, "temporal", attr: MetaData, _, Text(key)) if isAbr(attr) => find(key, periodMap, periodFile)
     case Elem(_, "subject", attr: MetaData, _, Text(key)) if isAbr(attr) => find(key, complexMap, complexFile)
