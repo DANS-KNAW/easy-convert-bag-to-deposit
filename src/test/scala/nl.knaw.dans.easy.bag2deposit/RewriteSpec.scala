@@ -67,6 +67,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         <ddm:dcmiMetadata>
             <dc:title>blabla</dc:title>
             <dc:title>Rapport 456</dc:title>
+            <dc:title>Transect-rapport 2859: barbapappa</dc:title>
             <dc:title>rabarbera</dc:title>
             <dcterms:temporal xsi:type="abr:ABRperiode">VMEA</dcterms:temporal>
             <dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject>
@@ -87,6 +88,13 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
               subjectScheme="ABR Rapporten"
               reportNo="456"
             >Rapport 456</ddm:reportNumber>
+            <ddm:reportNumber
+              schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
+              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/90f3092a-818e-4db2-8467-35b64262c5b3"
+              subjectScheme="ABR Rapporten"
+              reportNo="2859"
+            >Transect-rapport 2859: barbapappa</ddm:reportNumber>
+            <dc:title>Transect-rapport 2859: barbapappa</dc:title>
             <dc:title>rabarbera</dc:title>
             <ddm:temporal xml:lang="nl"
                           valueURI="https://data.cultureelerfgoed.nl/term/id/abr/330e7fe0-a1f7-43de-b448-d477898f6648"
@@ -125,6 +133,9 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         |<ddm:reportNumber  schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f" subjectScheme="ABR Rapporten" reportNo="456">
         | Rapport 456
         |</ddm:reportNumber>
+        |<ddm:reportNumber  schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/90f3092a-818e-4db2-8467-35b64262c5b3" subjectScheme="ABR Rapporten" reportNo="2859">
+        | Transect-rapport 2859: barbapappa
+        |</ddm:reportNumber>
         |<ddm:temporal  xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/330e7fe0-a1f7-43de-b448-d477898f6648" subjectScheme="Archeologisch Basis Register" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">
         | Vroege Middeleeuwen A
         |</ddm:temporal>
@@ -139,7 +150,8 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         |</ddm:reportNumber>
         |""".stripMargin
 
-    cfg.ddmTransformer.transform(ddmIn).headOption.map(normalized)
+    val maybeString = cfg.ddmTransformer.transform(ddmIn).headOption.map(normalized)
+    maybeString
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
 
     assume(schemaIsAvailable)
