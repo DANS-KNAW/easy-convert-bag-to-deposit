@@ -27,7 +27,7 @@ case class RceRewriteRule(cfgDir: File) extends RewriteRule {
   // just one that does not match easy-dataset:99840 "Arcadis Archeologische Rapporten [2017 - 116]"
   private val an = "[-_/.a-z0-9]"
   private val digit = "[0-9]"
-  val nrRegExp = s"\\W*($an+$digit$an*|$digit)"
+  val nrRegExp = s"\\W+($an+$digit$an*|$digit)"
 
   private val reportFile: File = cfgDir / "RCE-reports.csv"
   val reportMap: Seq[ReportCfg] = parseCsv(reportFile, 0)
@@ -54,8 +54,7 @@ case class RceRewriteRule(cfgDir: File) extends RewriteRule {
       valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/$uuid" }
       subjectScheme="RCE rapporten"
       reportNo={ titleValue.replaceAll(s".*($nrRegExp)$$", "$1").trim }
-    >{ titleValue }
-    </reportNumber>
+    >{ titleValue }</reportNumber>
   }
 }
 object RceRewriteRule {
