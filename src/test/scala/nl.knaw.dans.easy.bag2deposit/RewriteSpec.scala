@@ -15,20 +15,15 @@
  */
 package nl.knaw.dans.easy.bag2deposit
 
-import java.util.UUID
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.SchemaSupport
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import javax.xml.XMLConstants
-import javax.xml.transform.Source
-import javax.xml.transform.stream.StreamSource
-import javax.xml.validation.SchemaFactory
+import java.util.UUID
 import scala.util.{ Success, Try }
-import scala.xml.transform.RuleTransformer
-import scala.xml.{ Node, NodeBuffer, Utility }
+import scala.xml.NodeBuffer
 
 class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
@@ -46,7 +41,6 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
           <ddm:available>2013-04</ddm:available>
           <ddm:audience>D35400</ddm:audience>
           <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
-
 
   "ABR-complex" should "be valid" in {
     val records = parseCsv(cfgDir / "ABR-complex.csv", AbrRewriteRule.nrOfHeaderLines)
@@ -118,21 +112,39 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         </ddm:dcmiMetadata>
     )
 
+    new EasyConvertBagToDespositApp(cfg).formatDiff(ddmIn, expectedDDM) shouldBe
+      """===== some generated DDM
+        |
+        |<dc:title>Rapport 456</dc:title>
+        |<dcterms:temporal xsi:type="abr:ABRperiode">VMEA</dcterms:temporal>
+        |<dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject>
+        |<dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
+        |
+        |===== is changed with EasyConvertBagToDespositApp ${project.version} into
+        |
+        |<ddm:reportNumber  schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f" subjectScheme="ABR Rapporten" reportNo="456">
+        | Rapport 456
+        |</ddm:reportNumber>
+        |<ddm:temporal  xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/330e7fe0-a1f7-43de-b448-d477898f6648" subjectScheme="Archeologisch Basis Register" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">
+        | Vroege Middeleeuwen A
+        |</ddm:temporal>
+        |<ddm:subject  xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/6ae3ab19-49ca-44a7-8b65-3a3395014bb9" subjectScheme="Archeologisch Basis Register" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">
+        | veenwinning (inclusief zouthoudend veen t.b.v. zoutproductie)
+        |</ddm:subject>
+        |<ddm:subject  xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/f182d72c-2d22-47ae-b799-26dea01e770c" subjectScheme="Archeologisch Basis Register" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">
+        | akker / tuin
+        |</ddm:subject>
+        |<ddm:reportNumber  schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f" subjectScheme="ABR Rapporten" reportNo="123">
+        | Rapport 123
+        |</ddm:reportNumber>
+        |""".stripMargin
+
     cfg.ddmTransformer.transform(ddmIn).headOption.map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
 
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())
   }
-
-  val nameSpaceRegExp = """ xmlns:[a-z-]+="[^"]*"""" // these attributes have a variable order
-
-  private def normalized(elem: Node) = printer
-    .format(Utility.trim(elem)) // this trim normalizes <a/> and <a></a>
-    .replaceAll(nameSpaceRegExp, "") // the random order would cause differences in actual and expected
-    .replaceAll(" +\n?", " ")
-    .replaceAll("\n +<", "\n<")
-    .trim
 
   private def ddm(dcmi: NodeBuffer) =
       <ddm:DDM xmlns:dcx="http://easy.dans.knaw.nl/schemas/dcx/"

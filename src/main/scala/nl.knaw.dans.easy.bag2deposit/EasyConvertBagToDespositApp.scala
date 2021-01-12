@@ -15,16 +15,15 @@
  */
 package nl.knaw.dans.easy.bag2deposit
 
-import java.io.{ FileNotFoundException, IOException }
-
 import better.files.File
 import better.files.File.CopyOptions
 import nl.knaw.dans.bag.v0.DansV0Bag
-import nl.knaw.dans.easy.bag2deposit.BagSource.VAULT
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
+import java.io.{ FileNotFoundException, IOException }
 import scala.util.{ Failure, Success, Try }
+import scala.xml.Node
 
 class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnhancedLogging {
 
@@ -36,6 +35,13 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
       .map(addProps(properties, maybeOutputDir))
       .collectFirst { case Failure(e) => Failure(e) }
       .getOrElse(Success(s"No fatal errors")) // TODO show number of false/true values
+  }
+
+  def formatDiff(generated: Node, modified: Node): String = {
+    val original = normalized(generated).split("\n")
+    val changed = normalized(modified).split("\n")
+    original.diff(changed).mkString("===== some generated DDM\n\n", "\n", "\n\n") +
+      changed.diff(original).mkString(s"===== is changed with ${getClass.getSimpleName} ${configuration.version} into\n\n", "\n", "\n")
   }
 
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
@@ -56,6 +62,7 @@ class EasyConvertBagToDespositApp(configuration: Configuration) extends DebugEnh
       ddmIn <- loadXml(ddmFile)
       ddmOut = configuration.ddmTransformer.transform(ddmIn).headOption
         .getOrElse(throw InvalidBagException("DDM transformation returned empty sequence"))
+      _ = if (ddmIn != ddmOut) logger.info(formatDiff(ddmIn, ddmOut))
       _ = ddmFile.writeText(ddmOut.serialize)
       props <- depositPropertiesFactory.create(bagInfo, ddmOut)
       _ = props.save((bagParentDir / "deposit.properties").toJava)

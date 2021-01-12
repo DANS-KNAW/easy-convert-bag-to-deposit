@@ -44,6 +44,15 @@ package object bag2deposit {
       .tried.unsafeGetOrThrow
   }
 
+  private val nameSpaceRegExp = """ xmlns:[a-z-]+="[^"]*"""" // these attributes have a variable order
+
+  def normalized(elem: Node): String = printer
+    .format(Utility.trim(elem)) // this trim normalizes <a/> and <a></a>
+    .replaceAll(nameSpaceRegExp, "") // the random order would cause differences in actual and expected
+    .replaceAll(" +\n?", " ")
+    .replaceAll("\n +<", "\n<")
+    .trim
+
   implicit class RichNode(val left: Node) extends AnyVal {
 
     def hasType(t: String): Boolean = {
