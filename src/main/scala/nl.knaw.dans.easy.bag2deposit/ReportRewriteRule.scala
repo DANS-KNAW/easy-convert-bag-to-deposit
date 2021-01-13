@@ -38,7 +38,6 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule {
     )).toSeq
 
   override def transform(n: Node): Seq[Node] = n match {
-    case Elem(_, "profile", _, _, _) => n
     case Elem(_, "title", _, _, Text(titleValue)) =>
       val reports = reportMap
         .filter(cfg => titleValue.trim.toLowerCase.matches(cfg.regexp))
