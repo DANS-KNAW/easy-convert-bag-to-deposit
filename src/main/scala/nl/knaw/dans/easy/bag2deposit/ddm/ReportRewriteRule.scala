@@ -2,11 +2,12 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.parseCsv
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.xml.transform.RewriteRule
 import scala.xml.{ Elem, Node, Text }
 
-case class ReportRewriteRule(cfgDir: File) extends RewriteRule {
+case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhancedLogging {
 
   case class ReportCfg(uuid: String, label: String, regexp: String)
 
@@ -27,11 +28,11 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule {
     case Elem(_, "title", _, _, Text(titleValue)) =>
       val reports = reportMap
         .filter(cfg => titleValue.trim.toLowerCase.matches(cfg.regexp))
-        .map(cfg => toReportNr(titleValue, cfg.uuid))
+        .map(cfg => toReportNr(titleValue.replaceAll(":.*", ""), cfg.uuid))
         .theSeq
-      if (reports.isEmpty) n
-      else if (titleValue.matches(s".*$nrRegExp:.+")) reports :+ n
-           else reports
+      if (titleValue == reports.text)
+        reports
+      else reports :+ n
     case _ => n
   }
 

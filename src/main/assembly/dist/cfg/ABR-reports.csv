@@ -101,7 +101,7 @@ b3c30fbe-2795-4de0-806a-87706c866926,"RAAP-Adviesdocument","raap[^a-z]*adviesdoc
 a3c84e75-ce18-4762-b063-4c98990438e3,"RAAP-notitie","raap[^a-z]*notitie[a-z]*"
 fb15bb66-be11-4414-afa1-1a0e5bfeceb5,"RAAP-rapport","raap[^a-z]*rapport[a-z]*"
 178cc6f8-bd39-41a4-8aeb-cb6359486281,"RAAP-regiobrief","raap[^a-z]*regiobrief"
-fcff6035-9e90-450f-8b39-cf33447e6e9f,"Rapport","(brief)?rapport"
+fcff6035-9e90-450f-8b39-cf33447e6e9f,"Rapport","rapport[a-z]*"
 0ad79e13-abf7-4e1c-85a2-f6000fa5f388,"Rapport Stichting Archeologische Monumentenwacht Nederland","rapport[^a-z]+stichting[^a-z]+ar(ch|g)a?eologi[a-z]+[^a-z]+monumentenwacht[^a-z]+nederland"
 05c754af-7944-4971-8280-9e1b4e474a8d,"Rapporten over Alkmaarse Monumenten en Archeologie","rapporten[^a-z]+over[^a-z]+alkmaarse[^a-z]+monumenten[^a-z]+en[^a-z]+ar(ch|g)a?eologi[a-z]"
 1dca0597-4f72-4619-8de5-cb116d6609ad,"RCE Beknopte Rapportage Archeologische Monumentenzorg","rce[^a-z]+beknopte[^a-z]+rapport[a-z]*age[^a-z]+ar(ch|g)a?eologi[a-z]+[^a-z]+monumentenzorg"

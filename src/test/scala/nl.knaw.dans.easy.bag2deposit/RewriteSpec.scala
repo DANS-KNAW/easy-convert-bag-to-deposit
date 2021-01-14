@@ -94,7 +94,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
               valueURI="https://data.cultureelerfgoed.nl/term/id/abr/90f3092a-818e-4db2-8467-35b64262c5b3"
               subjectScheme="ABR Rapporten"
               reportNo="2859"
-            >Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).</ddm:reportNumber>
+            >Transect-rapport 2859</ddm:reportNumber>
             <dc:title>Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).</dc:title>
             <dc:title>rabarbera</dc:title>
             <ddm:temporal xml:lang="nl"
@@ -135,7 +135,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         | Rapport 456
         |</ddm:reportNumber>
         |<ddm:reportNumber  schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/90f3092a-818e-4db2-8467-35b64262c5b3" subjectScheme="ABR Rapporten" reportNo="2859">
-        | Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).
+        | Transect-rapport 2859
         |</ddm:reportNumber>
         |<ddm:temporal  xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/330e7fe0-a1f7-43de-b448-d477898f6648" subjectScheme="Archeologisch Basis Register" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">
         | Vroege Middeleeuwen A

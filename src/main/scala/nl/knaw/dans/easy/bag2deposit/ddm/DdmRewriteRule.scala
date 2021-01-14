@@ -16,11 +16,12 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.xml.transform.{ RewriteRule, RuleTransformer }
-import scala.xml.{ Elem, MetaData, Node, Text }
+import scala.xml.{ Elem, Node }
 
-case class DdmRewriteRule(cfgDir: File) extends RewriteRule {
+case class DdmRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhancedLogging {
 
   private val abrRule = AbrRewriteRule(cfgDir)
   private val reportRule = ReportRewriteRule(cfgDir)
@@ -28,8 +29,12 @@ case class DdmRewriteRule(cfgDir: File) extends RewriteRule {
 
   override def transform(n: Node): Seq[Node] = n match {
     case Elem(_, "profile", _, _, _*) =>
-      reportRule(n).map(_ \ "reportNumber")
-        .foreach { _ => /* TODO add transformed title to dcmiMetadata */ }
+      reportRule(n)
+        .map(_ \ "reportNumber")
+        .foreach { n => // in practice at most one
+          logger.warn(s"report in first title uuid=${ n \@ "valueURI" } ${ n.text }")
+          /* TODO add transformed title to dcmiMetadata */
+        }
       n // profile with original title
     case Elem(_, "dcmiMetadata", _, _, _*) => dcmiTransformer(n)
     case _ => n
