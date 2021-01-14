@@ -50,7 +50,7 @@ class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
       val n = titlesPerDataset
         .mapValues(_.filter(_.toLowerCase.matches(m.regexp)))
         .count(_._2.nonEmpty)
-      println(s"$n : \t${m.label}")
+      println(s"$n : \t${ m.label }")
     }
   }
   it should "show matches and missed" in {
@@ -65,7 +65,7 @@ class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
     val keyword = "(notitie|rapport|bericht|publicat)"
     println(cfg.map(_.label)
       .filterNot(_.toLowerCase.matches(s".*$keyword.*"))
-      .zipWithIndex.mkString("without keyword:\n\t","\n\t","")
+      .zipWithIndex.mkString("without keyword:\n\t", "\n\t", "")
     )
     (testDir / "missed.txt").write(titlesPerDataset.map { case (id, t) =>
       t.filterNot(title => cfg.exists(m => title.toLowerCase.matches(m.regexp)))
@@ -74,7 +74,7 @@ class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
         .mkString("")
     }.mkString(""))
   }
-  it should "show general"  ignore {
+  it should "show general" ignore {
     // easy-dataset:103605,"...Zuidnederlandse Archeologische Rapporten 62..." heeft al een identifier: "ZAR 62"
 
     val mnemonics = "adc|baac|gra|mug|vestigia|zan|zar"

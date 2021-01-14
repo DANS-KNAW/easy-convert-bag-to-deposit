@@ -15,18 +15,18 @@
  */
 package nl.knaw.dans.easy
 
-import java.io.FileNotFoundException
-import java.nio.charset.Charset.defaultCharset
-import nl.knaw.dans.lib.error._
 import better.files.File
+import nl.knaw.dans.lib.error._
 import org.apache.commons.csv.{ CSVFormat, CSVParser, CSVRecord }
 import org.joda.time.format.{ DateTimeFormatter, ISODateTimeFormat }
 import org.joda.time.{ DateTime, DateTimeZone }
 import resource.managed
 
-import scala.util.{ Failure, Try }
-import scala.xml.{ Elem, Node, PrettyPrinter, SAXParseException, Utility, XML }
+import java.io.FileNotFoundException
+import java.nio.charset.Charset.defaultCharset
 import scala.collection.JavaConverters._
+import scala.util.{ Failure, Try }
+import scala.xml._
 
 package object bag2deposit {
 

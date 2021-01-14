@@ -21,7 +21,7 @@ import nl.knaw.dans.easy.bag2deposit.parseCsv
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.csv.CSVRecord
 
-import scala.xml.transform.{ RewriteRule, RuleTransformer }
+import scala.xml.transform.RewriteRule
 import scala.xml.{ Elem, MetaData, Node, Text }
 
 case class AbrRewriteRule(cfgDir: File) extends RewriteRule {

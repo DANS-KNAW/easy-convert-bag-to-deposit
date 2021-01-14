@@ -121,7 +121,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         </ddm:dcmiMetadata>
     )
 
-    new EasyConvertBagToDepositApp(cfg.copy(version= "x.y.z")).formatDiff(ddmIn, expectedDDM) shouldBe
+    new EasyConvertBagToDepositApp(cfg.copy(version = "x.y.z")).formatDiff(ddmIn, expectedDDM) shouldBe
       """===== some generated DDM
         |
         |<dc:title>Rapport 456</dc:title>

@@ -16,10 +16,8 @@
 package nl.knaw.dans.easy.bag2deposit.Fixture
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.ddm.{ AbrRewriteRule, DdmTransformer }
+import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer
 import nl.knaw.dans.easy.bag2deposit.{ BagIndex, Configuration }
-
-import scala.xml.transform.RuleTransformer
 
 trait AppConfigSupport extends BagIndexSupport {
   def testConfig(bagIndex: BagIndex): Configuration = {
