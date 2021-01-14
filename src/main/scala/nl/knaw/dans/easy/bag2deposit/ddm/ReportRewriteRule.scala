@@ -11,10 +11,13 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
 
   case class ReportCfg(uuid: String, label: String, regexp: String)
 
-  // just one that does not match easy-dataset:99840 "Arcadis Archeologische Rapporten [2017 - 116]"
+  /** alpha numeric and a little more */
   private val an = "[-_/.a-z0-9]"
+
   private val digit = "[0-9]"
   private val trailer = "([.]|:.*)?"
+
+  /** just one that does not match easy-dataset:99840 "Arcadis Archeologische Rapporten [2017 - 116]" */
   val nrRegExp = s"\\W+$an*$digit$an*"
 
   val reportMap: Seq[ReportCfg] = parseCsv(cfgDir / "ABR-reports.csv", 0)
