@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.bag2deposit
+package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.AbrRewriteRule.{ find, isAbr, parse }
+import nl.knaw.dans.easy.bag2deposit.ddm.AbrRewriteRule.{ find, isAbr, parse }
+import nl.knaw.dans.easy.bag2deposit.parseCsv
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.csv.CSVRecord
 

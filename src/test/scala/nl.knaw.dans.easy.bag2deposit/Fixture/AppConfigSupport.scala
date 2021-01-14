@@ -16,7 +16,8 @@
 package nl.knaw.dans.easy.bag2deposit.Fixture
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.{ AbrRewriteRule, BagIndex, Configuration }
+import nl.knaw.dans.easy.bag2deposit.ddm.AbrRewriteRule
+import nl.knaw.dans.easy.bag2deposit.{ BagIndex, Configuration }
 
 import scala.xml.transform.RuleTransformer
 

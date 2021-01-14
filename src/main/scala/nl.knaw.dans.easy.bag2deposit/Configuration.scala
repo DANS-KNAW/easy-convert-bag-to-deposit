@@ -16,9 +16,9 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import java.net.URI
-
 import better.files.File
 import better.files.File.root
+import nl.knaw.dans.easy.bag2deposit.ddm.AbrRewriteRule
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration
 

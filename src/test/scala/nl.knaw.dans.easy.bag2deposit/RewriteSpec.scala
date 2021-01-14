@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.SchemaSupport
+import nl.knaw.dans.easy.bag2deposit.ddm.AbrRewriteRule
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
