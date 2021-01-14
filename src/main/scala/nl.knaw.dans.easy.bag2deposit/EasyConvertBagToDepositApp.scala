@@ -37,11 +37,22 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       .getOrElse(Success(s"No fatal errors")) // TODO show number of false/true values
   }
 
-  def formatDiff(generated: Node, modified: Node): String = {
+  def formatDiff(generated: Node, modified: Node): Option[String] = {
     val original = normalized(generated).split("\n")
     val changed = normalized(modified).split("\n")
-    original.diff(changed).mkString("===== some generated DDM\n\n", "\n", "\n\n") +
-      changed.diff(original).mkString(s"===== is changed with ${ getClass.getSimpleName } ${ configuration.version } into\n\n", "\n", "\n")
+    val diff1 = original.diff(changed).mkString("\n").trim
+    val diff2 = changed.diff(original).mkString("\n").trim
+    if (diff1.nonEmpty || diff2.nonEmpty)
+      Some(
+        s"""===== only in old DDM
+           |
+           |$diff1
+           |
+           |===== only in new DDM by ${ getClass.getSimpleName } ${ configuration.version }
+           |
+           |$diff2
+           |""".stripMargin)
+    else None
   }
 
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
@@ -62,7 +73,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       ddmIn <- loadXml(ddmFile)
       ddmOut = configuration.ddmTransformer.transform(ddmIn).headOption
         .getOrElse(throw InvalidBagException("DDM transformation returned empty sequence"))
-      _ = if (ddmIn != ddmOut) logger.info(formatDiff(ddmIn, ddmOut))
+      _ = formatDiff(ddmIn, ddmOut).foreach(s => logger.info(s))
       _ = ddmFile.writeText(ddmOut.serialize)
       props <- depositPropertiesFactory.create(bagInfo, ddmOut)
       _ = props.save((bagParentDir / "deposit.properties").toJava)

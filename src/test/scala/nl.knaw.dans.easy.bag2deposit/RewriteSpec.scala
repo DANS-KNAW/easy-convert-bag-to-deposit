@@ -70,6 +70,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
             <dc:title>Rapport 456</dc:title>
             <dc:title>Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).</dc:title>
             <dc:title>rabarbera</dc:title>
+            <dc:title>Archeologische Berichten Nijmegen – Briefrapport 21</dc:title>
             <dcterms:temporal xsi:type="abr:ABRperiode">VMEA</dcterms:temporal>
             <dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject>
             <dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
@@ -97,6 +98,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
             >Transect-rapport 2859</ddm:reportNumber>
             <dc:title>Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).</dc:title>
             <dc:title>rabarbera</dc:title>
+            <dc:title>Archeologische Berichten Nijmegen – Briefrapport 21</dc:title>
             <ddm:temporal xml:lang="nl"
                           valueURI="https://data.cultureelerfgoed.nl/term/id/abr/330e7fe0-a1f7-43de-b448-d477898f6648"
                           subjectScheme="Archeologisch Basis Register"
@@ -121,15 +123,15 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         </ddm:dcmiMetadata>
     )
 
-    new EasyConvertBagToDepositApp(cfg.copy(version = "x.y.z")).formatDiff(ddmIn, expectedDDM) shouldBe
-      """===== some generated DDM
+    new EasyConvertBagToDepositApp(cfg.copy(version = "x.y.z")).formatDiff(ddmIn, expectedDDM) shouldBe Some(
+      """===== only in old DDM
         |
         |<dc:title>Rapport 456</dc:title>
         |<dcterms:temporal xsi:type="abr:ABRperiode">VMEA</dcterms:temporal>
         |<dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject>
         |<dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
         |
-        |===== is changed with EasyConvertBagToDepositApp x.y.z into
+        |===== only in new DDM by EasyConvertBagToDepositApp x.y.z
         |
         |<ddm:reportNumber  schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f" subjectScheme="ABR Rapporten" reportNo="456">
         | Rapport 456
@@ -150,6 +152,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         | Rapport 123
         |</ddm:reportNumber>
         |""".stripMargin
+    )
 
     cfg.ddmTransformer.transform(ddmIn).headOption.map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)

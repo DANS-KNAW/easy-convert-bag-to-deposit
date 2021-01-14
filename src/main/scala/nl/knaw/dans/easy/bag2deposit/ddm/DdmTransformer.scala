@@ -16,11 +16,12 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.xml.transform.{ RewriteRule, RuleTransformer }
 import scala.xml.{ Elem, Node, NodeSeq }
 
-case class DdmTransformer(cfgDir: File) {
+case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
 
   /** remembers transformed title from profile for dcmiMetadata */
   private var reports: NodeSeq = NodeSeq.Empty
@@ -47,7 +48,11 @@ case class DdmTransformer(cfgDir: File) {
 
   def transform(n: Node): Seq[Node] = {
     reports = NodeSeq.Empty
-    ddmRuleTransformer.transform(n)
+    val ddm = ddmRuleTransformer.transform(n)
+    val titles = (ddm \\ "title").text
+    if (titles.toLowerCase.matches(s".*brief[^a-z]*rapport${ reportRewriteRule.nrRegExp }.*"))
+      logger.info(s"briefrapport publiser=[${ddm \ "publisher"}] rightsHolder=[${ddm \ "rightsHolder"}] titles=[$titles]")
+    ddm
   }
 }
 

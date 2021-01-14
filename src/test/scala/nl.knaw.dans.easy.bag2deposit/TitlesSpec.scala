@@ -58,9 +58,9 @@ class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
         .toSeq.mkString(s"${ m.label }", "", "\n")
     }.mkString(""))
 
-    (testDir / "missed-at-end-of-title.txt").write(rule.reportMap.filterNot(_.label=="Rapport").map { m =>
+    (testDir / "missed-at-end-of-title.txt").write(rule.reportMap.filterNot(_.label == "Rapport").map { m =>
       titlesPerDataset
-        .mapValues(_.filter(_.toLowerCase.matches(".+"+m.regexp)))
+        .mapValues(_.filter(_.toLowerCase.matches(".+" + m.regexp)))
         .filter(_._2.nonEmpty)
         .map { case (id, t) => t.map(t => s"\n\t$id\t--- $t").mkString("\n") }
         .toSeq.mkString(s"${ m.label }", "", "\n")
@@ -72,10 +72,17 @@ class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
       .zipWithIndex.mkString("without keyword:\n\t", "\n\t", "")
     )
     (testDir / "missed.txt").write(titlesPerDataset.map { case (id, t) =>
-      t.filterNot(title => rule.reportMap.exists(m => title.toLowerCase.matches(".*"+m.regexp)))
+      t.filterNot(title => rule.reportMap.exists(m => title.toLowerCase.matches(".*" + m.regexp)))
         .filter(_.toLowerCase.matches(s".*$keyword[^0-9]*${ rule.nrRegExp }(:.*)?"))
         .map(title => s"\n$id\t$title")
         .mkString("")
     }.mkString(""))
+
+    (testDir / "briefrapport.txt").write(
+      (testDir / "missed.txt")
+        .lines
+        .filter(_.toLowerCase.matches(s".*brief[^a-z]*rapport${rule.nrRegExp}.*"))
+        .mkString("\n")
+    )
   }
 }
