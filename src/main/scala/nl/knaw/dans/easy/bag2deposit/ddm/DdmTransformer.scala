@@ -24,7 +24,7 @@ import scala.xml.{ Elem, Node, NodeSeq }
 case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
 
   /** remembers transformed title from profile for dcmiMetadata */
-  private var reports: NodeSeq = NodeSeq.Empty
+  private var profileReports: NodeSeq = NodeSeq.Empty
 
   private val abrRewriteRule = AbrRewriteRule(cfgDir)
   private val reportRewriteRule = ReportRewriteRule(cfgDir)
@@ -33,22 +33,19 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
   private val dcmiRuleTransformer = new RuleTransformer(abrRewriteRule, reportRewriteRule)
   private val ddmRuleTransformer = new RuleTransformer(new RewriteRule {
     override def transform(n: Node): Seq[Node] = n match {
-      case Elem(_, "profile", _, _, _*) =>
-        reports = profileRuleTransformer(n)
-          .flatMap(_ \ "reportNumber")
-        n // original profile
       case Elem(_, "dcmiMetadata", _, _, _*) =>
         <dcmiMetadata>
           { dcmiRuleTransformer(n).nonEmptyChildren }
-          { reports }
+          { profileReports }
         </dcmiMetadata>.copy(prefix = n.prefix, attributes = n.attributes, scope = n.scope)
       case _ => n
     }
   })
 
   def transform(n: Node): Seq[Node] = {
-    reports = NodeSeq.Empty
-    val ddm = ddmRuleTransformer.transform(n)
+    profileReports = (n \ "profile" \ "title")
+      .flatMap(profileRuleTransformer)
+    val ddm = ddmRuleTransformer(n)
     val titles = (ddm \\ "title").text
     if (titles.toLowerCase.matches(s".*brief[^a-z]*rapport${ reportRewriteRule.nrRegExp }.*"))
       logger.info(s"briefrapport publiser=[${ddm \ "publisher"}] rightsHolder=[${ddm \ "rightsHolder"}] titles=[$titles]")
