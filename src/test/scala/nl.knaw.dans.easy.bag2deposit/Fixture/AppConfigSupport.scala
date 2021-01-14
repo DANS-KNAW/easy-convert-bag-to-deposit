@@ -16,7 +16,7 @@
 package nl.knaw.dans.easy.bag2deposit.Fixture
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.ddm.AbrRewriteRule
+import nl.knaw.dans.easy.bag2deposit.ddm.{ AbrRewriteRule, DdmTransformer }
 import nl.knaw.dans.easy.bag2deposit.{ BagIndex, Configuration }
 
 import scala.xml.transform.RuleTransformer
@@ -29,7 +29,7 @@ trait AppConfigSupport extends BagIndexSupport {
       dansDoiPrefixes = Seq("10.17026/", "10.5072/"),
       dataverseIdAutority = "10.80270",
       bagIndex = bagIndex,
-      ddmTransformer = new RuleTransformer(AbrRewriteRule(cfgFile))
+      ddmTransformer = DdmTransformer(cfgFile)
     )
   }
 }

@@ -151,8 +151,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         |</ddm:reportNumber>
         |""".stripMargin
 
-    val maybeString = cfg.ddmTransformer.transform(ddmIn).headOption.map(normalized)
-    maybeString
+    cfg.ddmTransformer.transform(ddmIn).headOption.map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
 
     assume(schemaIsAvailable)

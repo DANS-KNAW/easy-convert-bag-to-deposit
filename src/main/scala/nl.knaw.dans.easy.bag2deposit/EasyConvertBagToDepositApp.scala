@@ -41,7 +41,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     val original = normalized(generated).split("\n")
     val changed = normalized(modified).split("\n")
     original.diff(changed).mkString("===== some generated DDM\n\n", "\n", "\n\n") +
-      changed.diff(original).mkString(s"===== is changed with ${getClass.getSimpleName} ${configuration.version} into\n\n", "\n", "\n")
+      changed.diff(original).mkString(s"===== is changed with ${ getClass.getSimpleName } ${ configuration.version } into\n\n", "\n", "\n")
   }
 
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
