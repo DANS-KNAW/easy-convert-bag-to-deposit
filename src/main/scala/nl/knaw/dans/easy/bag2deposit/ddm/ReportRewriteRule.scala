@@ -5,7 +5,7 @@ import nl.knaw.dans.easy.bag2deposit.parseCsv
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.xml.transform.RewriteRule
-import scala.xml.{ Elem, Node, Text }
+import scala.xml.{ Elem, Node }
 
 case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhancedLogging {
 
@@ -15,7 +15,7 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
   private val an = "[-_/.a-z0-9]"
 
   private val digit = "[0-9]"
-  private val trailer = "([.]|:.*)?"
+  val trailer = "([.]|:.*)?"
 
   /** just one that does not match easy-dataset:99840 "Arcadis Archeologische Rapporten [2017 - 116]" */
   val nrRegExp = s"\\W+$an*$digit$an*"
@@ -27,8 +27,10 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
       r.get(2).trim + nrRegExp + trailer,
     )).toSeq
 
-  override def transform(n: Node): Seq[Node] = n match {
-    case Elem(_, "title", _, _, Text(titleValue)) =>
+  override def transform(n: Node): Seq[Node] = {
+    if (n.label != "title") n
+    else {
+      val titleValue = n.text
       val reports = reportMap
         .filter(cfg => titleValue.trim.toLowerCase.matches(cfg.regexp))
         .map(cfg => toReportNr(titleValue.replaceAll(":.*", ""), cfg.uuid))
@@ -36,7 +38,7 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
       if (titleValue == reports.text)
         reports
       else reports :+ n
-    case _ => n
+    }
   }
 
   private def toReportNr(titleValue: String, uuid: String): Elem = {

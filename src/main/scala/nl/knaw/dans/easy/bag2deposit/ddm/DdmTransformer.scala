@@ -19,37 +19,46 @@ import better.files.File
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.xml.transform.{ RewriteRule, RuleTransformer }
-import scala.xml.{ Elem, Node, NodeSeq }
+import scala.xml.{ Node, NodeSeq }
 
 case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
 
   /** remembers transformed title from profile for dcmiMetadata */
-  private var profileReports: NodeSeq = NodeSeq.Empty
+  private var profileReportNumber: NodeSeq = NodeSeq.Empty
 
-  private val abrRewriteRule = AbrRewriteRule(cfgDir)
   private val reportRewriteRule = ReportRewriteRule(cfgDir)
-
   private val profileRuleTransformer = new RuleTransformer(reportRewriteRule)
-  private val dcmiRuleTransformer = new RuleTransformer(abrRewriteRule, reportRewriteRule)
+  private val dcmiMetadataRuleTransformer = new RuleTransformer(
+    reportRewriteRule,
+    AbrRewriteRule(cfgDir / "ABR-period.csv", "temporal", "ddm:temporal"),
+    AbrRewriteRule(cfgDir / "ABR-complex.csv", "subject", "ddm:subject"),
+  )
   private val ddmRuleTransformer = new RuleTransformer(new RewriteRule {
-    override def transform(n: Node): Seq[Node] = n match {
-      case Elem(_, "dcmiMetadata", _, _, _*) =>
-        <dcmiMetadata>
-          { dcmiRuleTransformer(n).nonEmptyChildren }
-          { profileReports }
-        </dcmiMetadata>.copy(prefix = n.prefix, attributes = n.attributes, scope = n.scope)
-      case _ => n
+    override def transform(n: Node): Seq[Node] = {
+      if (n.label != "dcmiMetadata") n
+      else <dcmiMetadata>
+             { dcmiMetadataRuleTransformer(n).nonEmptyChildren }
+             { profileReportNumber }
+           </dcmiMetadata>.copy(prefix = n.prefix, attributes = n.attributes, scope = n.scope)
     }
   })
 
-  def transform(n: Node): Seq[Node] = {
-    profileReports = (n \ "profile" \ "title")
-      .flatMap(profileRuleTransformer)
-    val ddm = ddmRuleTransformer(n)
-    val titles = (ddm \\ "title").text
-    if (titles.toLowerCase.matches(s".*brief[^a-z]*rapport${ reportRewriteRule.nrRegExp }.*"))
-      logger.info(s"briefrapport publiser=[${ddm \ "publisher"}] rightsHolder=[${ddm \ "rightsHolder"}] titles=[$titles]")
-    ddm
+  val nrTailRegexp = s"${ reportRewriteRule.nrRegExp }${ reportRewriteRule.trailer }"
+  def transform(ddmIn: Node): Seq[Node] = {
+    val firstTitle = (ddmIn \ "profile" \ "title").flatMap(profileRuleTransformer)
+
+    profileReportNumber = firstTitle.filter(_.label == "reportNumber")
+    val ddmOut = ddmRuleTransformer(ddmIn)
+
+    val titles = (ddmOut \ "dcmiMetadata" \ "title") +: firstTitle.filter(_ => profileReportNumber.isEmpty)
+    titles.foreach { node =>
+      val title = node.text
+      if (title.toLowerCase.matches(s"brief[^a-z]*rapport$nrTailRegexp"))
+        logger.info(s"briefrapport rightsHolder=[${ ddmOut \ "rightsHolder" }] publisher=[${ ddmOut \ "publisher" }] titles=[$title]")
+      else if (title.toLowerCase.matches(s".*(notitie|rapport|bericht|publicat).*$nrTailRegexp"))
+             logger.info(s"potential report number: $title") // TODO logs too much
+    }
+    ddmOut
   }
 }
 

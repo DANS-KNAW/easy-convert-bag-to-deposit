@@ -16,37 +16,33 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.ddm.AbrRewriteRule.{ find, isAbr, parse }
+import nl.knaw.dans.easy.bag2deposit.ddm.AbrRewriteRule.parse
 import nl.knaw.dans.easy.bag2deposit.parseCsv
-import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.csv.CSVRecord
 
 import scala.xml.transform.RewriteRule
-import scala.xml.{ Elem, MetaData, Node, Text }
+import scala.xml.{ Elem, Node }
 
-case class AbrRewriteRule(cfgDir: File) extends RewriteRule {
+case class AbrRewriteRule(cfgFile: File, oldLabel: String, newLabel: String) extends RewriteRule {
+  private val map = parse(cfgFile, newLabel)
 
-  private val periodFile: File = cfgDir / "ABR-period.csv"
-  private val periodMap = parse(periodFile, "ddm:temporal")
-  private val complexFile: File = cfgDir / "ABR-complex.csv"
-  private val complexMap = parse(complexFile, "ddm:subject")
+  override def transform(node: Node): Seq[Node] = {
+    if (!isAbr(node)) node
+    else {
+      val key = node.text
+      map.getOrElse(key, throw new Exception(s"$key not found in $cfgFile"))
+    }
+  }
 
-  override def transform(n: Node): Seq[Node] = n match {
-    case Elem(_, "temporal", attr: MetaData, _, Text(key)) if isAbr(attr) => find(key, periodMap, periodFile)
-    case Elem(_, "subject", attr: MetaData, _, Text(key)) if isAbr(attr) => find(key, complexMap, complexFile)
-    case _ => n
+  private def isAbr(node: Node) = {
+    val attr = node.attributes
+    node.label == oldLabel &&
+      attr.prefixedKey == "xsi:type" && attr.value.mkString("").startsWith("abr:ABR")
   }
 }
-object AbrRewriteRule extends DebugEnhancedLogging {
+
+object AbrRewriteRule {
   val nrOfHeaderLines = 2
-
-  private def isAbr(attr: MetaData) = {
-    attr.prefixedKey == "xsi:type" && attr.value.mkString("").startsWith("abr:ABR")
-  }
-
-  private def find(key: String, map: Map[String, Node], file: File): Node = {
-    map.getOrElse(key, throw new Exception(s"$key not found in $file"))
-  }
 
   private def parse(file: File, label: String): Map[String, Elem] = {
     parseCsv(file, nrOfHeaderLines)
