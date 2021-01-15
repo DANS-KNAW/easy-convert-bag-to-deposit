@@ -43,7 +43,6 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
     }
   })
 
-  val nrTailRegexp = s"${ reportRewriteRule.nrRegExp }${ reportRewriteRule.trailer }"
   def transform(ddmIn: Node): Seq[Node] = {
     val firstTitle = (ddmIn \ "profile" \ "title").flatMap(profileRuleTransformer)
 
@@ -53,10 +52,8 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
     val titles = (ddmOut \ "dcmiMetadata" \ "title") +: firstTitle.filter(_ => profileReportNumber.isEmpty)
     titles.foreach { node =>
       val title = node.text
-      if (title.toLowerCase.matches(s"brief[^a-z]*rapport$nrTailRegexp"))
+      if (title.toLowerCase.matches(s"brief[^a-z]*rapport${ reportRewriteRule.nrTailRegexp } }"))
         logger.info(s"briefrapport rightsHolder=[${ ddmOut \ "rightsHolder" }] publisher=[${ ddmOut \ "publisher" }] titles=[$title]")
-      else if (title.toLowerCase.matches(s".*(notitie|rapport|bericht|publicat).*$nrTailRegexp"))
-             logger.info(s"potential report number: $title") // TODO logs too much
     }
     ddmOut
   }

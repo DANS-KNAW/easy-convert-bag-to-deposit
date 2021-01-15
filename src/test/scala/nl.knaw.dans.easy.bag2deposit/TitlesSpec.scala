@@ -73,7 +73,7 @@ class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
     )
     (testDir / "missed.txt").write(titlesPerDataset.map { case (id, t) =>
       t.filterNot(title => rule.reportMap.exists(m => title.toLowerCase.matches(".*" + m.regexp)))
-        .filter(_.toLowerCase.matches(s".*$keyword[^0-9]*${ rule.nrRegExp }(:.*)?"))
+        .filter(_.toLowerCase.matches(s".*$keyword[^0-9]*${ rule.nrRegexp }(:.*)?"))
         .map(title => s"\n$id\t$title")
         .mkString("")
     }.mkString(""))
@@ -81,7 +81,7 @@ class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
     (testDir / "briefrapport.txt").write(
       (testDir / "missed.txt")
         .lines
-        .filter(_.toLowerCase.matches(s".*brief[^a-z]*rapport${rule.nrRegExp}.*"))
+        .filter(_.toLowerCase.matches(s".*brief[^a-z]*rapport${rule.nrRegexp}.*"))
         .mkString("\n")
     )
   }
