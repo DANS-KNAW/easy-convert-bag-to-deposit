@@ -81,7 +81,7 @@ class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
     (testDir / "briefrapport.txt").write(
       (testDir / "missed.txt")
         .lines
-        .filter(_.toLowerCase.matches(s".*brief[^a-z]*rapport${rule.nrRegexp}.*"))
+        .filter(_.toLowerCase.matches(s".*brief[^a-z]*rapport${ rule.nrRegexp }.*"))
         .mkString("\n")
     )
   }
