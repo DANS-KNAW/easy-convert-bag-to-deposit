@@ -45,17 +45,19 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
 
   def transform(ddmIn: Node): Seq[Node] = {
     val firstTitle = (ddmIn \ "profile" \ "title").flatMap(profileRuleTransformer)
-
     profileReportNumber = firstTitle.filter(_.label == "reportNumber")
     val ddmOut = ddmRuleTransformer(ddmIn)
+    logMissedBriefRapporten(firstTitle, ddmOut)
+    ddmOut
+  }
 
+  private def logMissedBriefRapporten(firstTitle: NodeSeq, ddmOut: Node): Unit = {
     val titles = (ddmOut \ "dcmiMetadata" \ "title") +: firstTitle.filter(_ => profileReportNumber.isEmpty)
     titles.foreach { node =>
       val title = node.text
       if (title.toLowerCase.matches(s"brief[^a-z]*rapport${ reportRewriteRule.nrTailRegexp } }"))
         logger.info(s"briefrapport rightsHolder=[${ ddmOut \ "rightsHolder" }] publisher=[${ ddmOut \ "publisher" }] titles=[$title]")
     }
-    ddmOut
   }
 }
 
