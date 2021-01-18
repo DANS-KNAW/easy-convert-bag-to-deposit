@@ -23,9 +23,6 @@ import scala.xml.{ Node, NodeSeq }
 
 case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
 
-  /** remembers transformed title from profile for dcmiMetadata */
-  private var profileReportNumber: NodeSeq = NodeSeq.Empty
-
   private val reportRewriteRule = ReportRewriteRule(cfgDir)
   private val profileRuleTransformer = new RuleTransformer(reportRewriteRule)
   private val dcmiMetadataRuleTransformer = new RuleTransformer(
@@ -33,27 +30,30 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
     AbrRewriteRule(cfgDir / "ABR-period.csv", "temporal", "ddm:temporal"),
     AbrRewriteRule(cfgDir / "ABR-complex.csv", "subject", "ddm:subject"),
   )
-  private val ddmRuleTransformer = new RuleTransformer(new RewriteRule {
+
+  private case class DdmRewriteRule(title: NodeSeq) extends RewriteRule {
     override def transform(n: Node): Seq[Node] = {
       if (n.label != "dcmiMetadata") n
       else <dcmiMetadata>
              { dcmiMetadataRuleTransformer(n).nonEmptyChildren }
-             { profileReportNumber }
+             { title }
            </dcmiMetadata>.copy(prefix = n.prefix, attributes = n.attributes, scope = n.scope)
     }
-  })
+  }
 
   def transform(ddmIn: Node): Seq[Node] = {
     val firstTitle = (ddmIn \ "profile" \ "title").flatMap(profileRuleTransformer)
-    profileReportNumber = firstTitle.filter(_.label == "reportNumber")
+    val reportNumberFromFirstTitle = firstTitle.filter(_.label == "reportNumber")
+    val ddmRuleTransformer = new RuleTransformer(DdmRewriteRule(reportNumberFromFirstTitle))
     val ddmOut = ddmRuleTransformer(ddmIn)
-    logMissedBriefRapporten(firstTitle, ddmOut)
+    val notConvertedFirstTitle = firstTitle.filter(_ => reportNumberFromFirstTitle.isEmpty)
+    val notConvertedTitles = (ddmOut \ "dcmiMetadata" \ "title") ++ notConvertedFirstTitle
+    logBriefRapportTitles(notConvertedTitles, ddmOut)
     ddmOut
   }
 
-  private def logMissedBriefRapporten(firstTitle: NodeSeq, ddmOut: Node): Unit = {
-    val titles = (ddmOut \ "dcmiMetadata" \ "title") +: firstTitle.filter(_ => profileReportNumber.isEmpty)
-    titles.foreach { node =>
+  private def logBriefRapportTitles(notConvertedTitles: NodeSeq, ddmOut: Node): Unit = {
+    notConvertedTitles.foreach { node =>
       val title = node.text
       if (title.toLowerCase.matches(s"brief[^a-z]*rapport${ reportRewriteRule.nrTailRegexp } }"))
         logger.info(s"briefrapport rightsHolder=[${ ddmOut \ "rightsHolder" }] publisher=[${ ddmOut \ "publisher" }] titles=[$title]")
