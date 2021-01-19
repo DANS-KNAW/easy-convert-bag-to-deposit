@@ -71,8 +71,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ = logger.debug(s"$bagInfo")
       ddmFile = bagDir / "metadata" / "dataset.xml"
       ddmIn <- loadXml(ddmFile)
-      ddmOut = configuration.ddmTransformer.transform(ddmIn).headOption
-        .getOrElse(throw InvalidBagException("DDM transformation returned empty sequence"))
+      ddmOut <- configuration.ddmTransformer.transform(ddmIn)
       _ = formatDiff(ddmIn, ddmOut).foreach(s => logger.info(s))
       _ = ddmFile.writeText(ddmOut.serialize)
       props <- depositPropertiesFactory.create(bagInfo, ddmOut)

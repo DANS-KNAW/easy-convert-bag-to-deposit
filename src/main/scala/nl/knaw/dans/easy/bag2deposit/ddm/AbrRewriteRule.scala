@@ -18,19 +18,20 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.ddm.AbrRewriteRule.parse
 import nl.knaw.dans.easy.bag2deposit.parseCsv
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.csv.CSVRecord
 
 import scala.xml.transform.RewriteRule
 import scala.xml.{ Elem, Node }
 
-case class AbrRewriteRule(cfgFile: File, oldLabel: String, newLabel: String) extends RewriteRule {
+case class AbrRewriteRule(cfgFile: File, oldLabel: String, newLabel: String) extends RewriteRule with DebugEnhancedLogging {
   private val map = parse(cfgFile, newLabel)
 
   override def transform(node: Node): Seq[Node] = {
     if (!isAbr(node)) node
     else {
       val key = node.text
-      map.getOrElse(key, throw new Exception(s"$key not found in $cfgFile"))
+      map.getOrElse(key, <notImplemented>{ s"$key not found in ${ cfgFile.name }" }</notImplemented>)
     }
   }
 

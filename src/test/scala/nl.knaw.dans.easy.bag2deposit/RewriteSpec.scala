@@ -23,7 +23,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.util.UUID
-import scala.util.{ Success, Try }
+import scala.util.{ Failure, Success, Try }
 import scala.xml.NodeBuffer
 
 class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
@@ -154,11 +154,69 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         |""".stripMargin
     )
 
-    cfg.ddmTransformer.transform(ddmIn).headOption.map(normalized)
-      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
+    cfg.ddmTransformer.transform(ddmIn).map(normalized) shouldBe
+      Success(normalized(expectedDDM))
 
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())
+  }
+
+  it should "leave briefrapport untouched" in {
+    val ddmIn = ddm(
+        <ddm:profile>
+          <dc:title>Briefrapport 123</dc:title>
+          { mandatoryInProfile }
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+        </ddm:dcmiMetadata>
+    )
+
+    cfg.ddmTransformer.transform(ddmIn).map(normalized) shouldBe Success(normalized(ddmIn))
+    // TODO manually check logging of briefrapport
+  }
+
+  it should "add report number of profile to dcmiMetadata" in {
+    val ddmIn = ddm(
+        <ddm:profile>
+          <dc:title>Rapport 123</dc:title>
+          { mandatoryInProfile }
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+        </ddm:dcmiMetadata>
+    )
+    val expectedDdm = ddm(
+        <ddm:profile>
+          <dc:title>Rapport 123</dc:title>
+          { mandatoryInProfile }
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+          <ddm:reportNumber
+            schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
+            valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f"
+            subjectScheme="ABR Rapporten"
+            reportNo="123"
+          >Rapport 123</ddm:reportNumber>
+        </ddm:dcmiMetadata>
+    )
+
+    cfg.ddmTransformer.transform(ddmIn).map(normalized) shouldBe
+      Success(normalized(expectedDdm))
+  }
+
+  it should "complain about invalid period/subject" in {
+    val ddmIn = ddm(
+        <ddm:profile>
+          <dc:title>blablabla</dc:title>
+          { mandatoryInProfile }
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+            <dcterms:temporal xsi:type="abr:ABRperiode">rabarbera</dcterms:temporal>
+            <dc:subject xsi:type="abr:ABRcomplex">barbapappa</dc:subject>
+        </ddm:dcmiMetadata>
+    )
+
+    cfg.ddmTransformer.transform(ddmIn).map(normalized) shouldBe
+      Failure(InvalidBagException("rabarbera not found in ABR-period.csv; barbapappa not found in ABR-complex.csv"))
   }
 
   private def ddm(dcmi: NodeBuffer) =
