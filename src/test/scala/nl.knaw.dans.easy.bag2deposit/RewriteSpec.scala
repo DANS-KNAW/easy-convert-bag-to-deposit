@@ -219,6 +219,46 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
       Failure(InvalidBagException("rabarbera not found in ABR-period.csv; barbapappa not found in ABR-complex.csv"))
   }
 
+  it should "match alkmaar variants" in {
+    val ddmIn = ddm(
+        <ddm:profile>
+          <dc:title>blablabla</dc:title>
+          { mandatoryInProfile }
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+            <dc:title>Rapporten over de Alkmaarse Monumenten en Archeologie 18</dc:title>
+            <dc:title> RAMA 13</dc:title>
+            <dc:title>Rapporten over de Alkmaarse Monumentenzorg en Archeologie RAMA 12</dc:title>
+        </ddm:dcmiMetadata>
+    )
+    val expectedDdm = ddm(
+        <ddm:profile>
+          <dc:title>blablabla</dc:title>
+          { mandatoryInProfile }
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+            <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
+                              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/05c754af-7944-4971-8280-9e1b4e474a8d"
+                              subjectScheme="ABR Rapporten" reportNo="18">
+              Rapporten over de Alkmaarse Monumenten en Archeologie 18
+            </ddm:reportNumber>
+            <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
+                              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/05c754af-7944-4971-8280-9e1b4e474a8d"
+                              subjectScheme="ABR Rapporten" reportNo="13">
+              RAMA 13
+            </ddm:reportNumber>
+            <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
+                              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/05c754af-7944-4971-8280-9e1b4e474a8d"
+                              subjectScheme="ABR Rapporten" reportNo="12">
+              Rapporten over de Alkmaarse Monumentenzorg en Archeologie RAMA 12
+            </ddm:reportNumber>
+        </ddm:dcmiMetadata>
+    )
+    // TODO these titles don't show up in target/test/TitlesSpec/matches-per-rce.txt
+    cfg.ddmTransformer.transform(ddmIn).map(normalized) shouldBe
+      Success(normalized(expectedDdm))
+  }
+
   private def ddm(dcmi: NodeBuffer) =
       <ddm:DDM xmlns:dcx="http://easy.dans.knaw.nl/schemas/dcx/"
          xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"

@@ -16,6 +16,7 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
+import nl.knaw.dans.bag.v0.DansV0Bag
 import nl.knaw.dans.bag.v0.DansV0Bag.EASY_USER_ACCOUNT_KEY
 import nl.knaw.dans.easy.bag2deposit.BagSource._
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, FileSystemSupport }
