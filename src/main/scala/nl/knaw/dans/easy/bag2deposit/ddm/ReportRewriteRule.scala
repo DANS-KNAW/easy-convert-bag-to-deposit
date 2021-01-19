@@ -40,9 +40,9 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
 
   val reportMap: Seq[ReportCfg] = parseCsv(cfgDir / "ABR-reports.csv", 0)
     .map(r => ReportCfg(
-      r.get(0),
-      r.get(1),
-      r.get(2).trim + nrTailRegexp,
+      uuid = r.get(0),
+      label = r.get(1),
+      regexp = r.get(2).trim + nrTailRegexp,
     )).toSeq
 
   override def transform(n: Node): Seq[Node] = {
