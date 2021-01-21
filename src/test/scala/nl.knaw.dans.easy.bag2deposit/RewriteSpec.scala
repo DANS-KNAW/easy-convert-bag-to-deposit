@@ -29,7 +29,7 @@ import scala.xml.NodeBuffer
 class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
   private val cfg = Configuration(cfgDir.parent)
-  override val schema = "https://raw.githubusercontent.com/DANS-KNAW/easy-schema/9c2759d913cde537a2b49cbc0300532da56898c7/lib/src/main/resources/md/ddm/ddm.xsd"
+  override val schema = "https://raw.githubusercontent.com/DANS-KNAW/easy-schema/a7b54e1/lib/src/main/resources/md/ddm/ddm.xsd"
 
   private val mandatoryInProfile =
           <dct:description>YYY</dct:description>
@@ -59,7 +59,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
 
   private def getDuplicates(records: Iterable[CSVRecord]) = records.groupBy(_.get(0)).filter(_._2.size > 1)
 
-  "transform" should "convert" in {
+  "ABR rules" should "convert" in {
     val ddmIn = ddm(
         <ddm:profile>
           <dc:title>Rapport 123</dc:title>
@@ -154,8 +154,47 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         |""".stripMargin
     )
 
-    cfg.ddmTransformer.transform(ddmIn).map(normalized) shouldBe
-      Success(normalized(expectedDDM))
+    cfg.ddmTransformer.transform(ddmIn).map(normalized)
+      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
+
+    assume(schemaIsAvailable)
+    validate(expectedDDM) shouldBe Success(())
+  }
+
+  "LanguageRewriteRule" should "convert" in {
+    val ddmIn = ddm(
+        <ddm:profile>
+          <dc:title>language test</dc:title>
+          { mandatoryInProfile }
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+          <dcterms:language>Nederlands</dcterms:language>
+          <dc:language>Engels</dc:language>
+          <dc:language xsi:type='dcterms:ISO639-3'>nld</dc:language>
+          <dc:language xsi:type='dcterms:ISO639-2'>eng</dc:language>
+          <dcterms:language xsi:type='dcterms:ISO639-3'>deu</dcterms:language>
+          <dcterms:language xsi:type='dcterms:ISO639-2'>fre</dcterms:language>
+        </ddm:dcmiMetadata>
+    )
+    val expectedDDM = ddm(
+        <ddm:profile>
+          <dc:title>language test</dc:title>
+          { mandatoryInProfile }
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+          <dcterms:language>Nederlands</dcterms:language>
+          <ddm:language encodingScheme="ISO639-2" code="dut">Nederlands</ddm:language>
+          <dc:language>Engels</dc:language>
+          <ddm:language encodingScheme="ISO639-2" code="eng">Engels</ddm:language>
+          <dc:language xsi:type='dcterms:ISO639-3'>nld</dc:language>
+          <dc:language xsi:type='dcterms:ISO639-2'>eng</dc:language>
+          <ddm:language encodingScheme="ISO639-2" code="eng">eng</ddm:language>
+          <dcterms:language xsi:type='dcterms:ISO639-3'>deu</dcterms:language>
+          <dcterms:language xsi:type='dcterms:ISO639-2'>fre</dcterms:language>
+        </ddm:dcmiMetadata>
+    )
+    cfg.ddmTransformer.transform(ddmIn).map(normalized)
+      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
 
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())

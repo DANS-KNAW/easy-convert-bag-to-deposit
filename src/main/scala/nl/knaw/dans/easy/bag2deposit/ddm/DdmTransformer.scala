@@ -31,6 +31,7 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
     reportRewriteRule,
     AbrRewriteRule(cfgDir / "ABR-period.csv", "temporal", "ddm:temporal"),
     AbrRewriteRule(cfgDir / "ABR-complex.csv", "subject", "ddm:subject"),
+    LanguageRewriteRule(cfgDir / "languages.csv"),
   )
 
   private case class DdmRewriteRule(reportNumberFromFirstTitle: NodeSeq) extends RewriteRule {
