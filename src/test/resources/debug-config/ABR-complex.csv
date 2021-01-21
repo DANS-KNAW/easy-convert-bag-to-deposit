@@ -42,16 +42,12 @@ GHI,BGV.GH,75be5ade-97a2-475f-9c25-ac42f95d3801,grafheuvel
 GHX,BGV.GH,75be5ade-97a2-475f-9c25-ac42f95d3801,grafheuvel
 GMEG,BGV.MEG,a38431c5-a5e5-4383-bf85-8e073e8d9308,megalietgraf
 GVC,BGV.VGV,57446eb6-180f-42d2-8d66-9ad626837750,vlakgrafveld
-GVI,BGV.VGV,57446eb6-180f-42d2-8d66-9ad626837750,vlakgrafveld
+GVI,BGV.GVI,7fb5402b-d0a0-4aa2-813d-a5cfbece67b0,"grafveld, inhumaties"
 GVIC,BGV.VGV,57446eb6-180f-42d2-8d66-9ad626837750,vlakgrafveld
 GVCU,BGV.UV,26da3542-0389-4b96-890d-e5c393fe8d17,urnenveld
-GVX,BGV.UV,26da3542-0389-4b96-890d-e5c393fe8d17,urnenveld
-GVI,BGV.CJBP,85097267-c258-475e-ad97-cd51a28fd855,christelijk / joodse begraafplaats
+GVX,BGV.GVX,1e46e701-dd6c-4be1-a280-e0abd3150555,grafveld
 GVIK,BGV.KH,829ac50c-7d67-467c-9cfa-e42a740630c1,kerkhof
 GVIR,BGV.RGV,4362b9f4-3371-47dc-b928-48dae353ccf0,rijengrafveld
-GVX,BGV.GVX,1e46e701-dd6c-4be1-a280-e0abd3150555,grafveld
-GX,BGV.X,64e9fcac-d66a-4b27-bd63-694c9735059d,begraving
-GX,BGV.GX,dad3cbbc-937e-4049-a74c-529fca372b56,graf
 GX,BGV.GX,dad3cbbc-937e-4049-a74c-529fca372b56,graf
 IBRU,INFR.BRUG,3d8a9af4-a036-4f37-8fe8-6f5e66c6517b,brug
 IDAM,INFR.DAM,422d1303-eb72-4ded-9935-c14cbe02f703,dam
@@ -66,10 +62,9 @@ ISTE,INFR.KADE,eb7f38bb-abbc-41bd-8659-9d4250526b5a,kade / loswal
 IVW,INFR.VWEG,24c9fea0-5749-4f67-a3a0-cb470f0cb333,veenweg
 IWEG,INFR.WEG,5e581128-38bb-488b-8f29-78b02f99318e,weg
 IX,INFR.X,58a279bb-0f21-4845-8985-6f4e94d63880,infrastructuur
-IX,INFR.X,58a279bb-0f21-4845-8985-6f4e94d63880,infrastructuur
 NBAS,BEWV.BEXT,8396298f-678d-4731-9f51-89a1b7093fc4,kamp
 NEXT,BEWV.BEXT,8396298f-678d-4731-9f51-89a1b7093fc4,kamp
-NHP,BEWV.HP,88759e98-e8ed-475d-9759-d542e3f5dbe0,niet opgehoogde, individuele huisplaats
+NHP,BEWV.HP,88759e98-e8ed-475d-9759-d542e3f5dbe0,"niet opgehoogde, individuele huisplaats"
 NHT,BEWV.HT,c9f368dc-81e5-4d82-8f8f-8f7349a2f506,huisterp / huiswierde
 NKD,BEWV.VIC,1ca6c6a5-074e-459d-ac70-b07fc3370a0a,vicus
 NWD,BEWV.VIC,1ca6c6a5-074e-459d-ac70-b07fc3370a0a,vicus
@@ -94,5 +89,4 @@ VSCH,BEWV.SCH,93bcdb92-3d09-4984-b11c-01c7d3845faa,schans
 VWB,BEWV.WB,1b5b4dd1-f4f8-4e4c-9108-a6fb2c606cde,(ring)walburg
 VWP,BEWV.WP,8207e651-b143-428a-a92e-d1a5a98ba002,burgus / wachtpost
 VX,BEWV.VX,755ec670-c9d0-4bc8-bf38-1083b7c12155,versterking onbepaald
-VX,BEWV.VX,18a910e1-4d2e-4832-98d1-251a32156a88,versterking onbepaald
 XXX,XXX,5fbda024-be3e-47ac-a6c8-1c58d2cf5ccc,complextype niet te bepalen
