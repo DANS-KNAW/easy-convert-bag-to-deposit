@@ -25,7 +25,7 @@ import scala.xml.{ Node, NodeSeq }
 
 case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
 
-  private val reportRewriteRule = ReportRewriteRule(cfgDir)
+  val reportRewriteRule = ReportRewriteRule(cfgDir)
   private val profileRuleTransformer = new RuleTransformer(reportRewriteRule)
   private val dcmiMetadataRuleTransformer = new RuleTransformer(
     reportRewriteRule,

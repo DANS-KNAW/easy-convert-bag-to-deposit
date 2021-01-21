@@ -123,7 +123,8 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         </ddm:dcmiMetadata>
     )
 
-    new EasyConvertBagToDepositApp(cfg.copy(version = "x.y.z")).formatDiff(ddmIn, expectedDDM) shouldBe Some(
+    val app = new EasyConvertBagToDepositApp(cfg.copy(version = "x.y.z"))
+    app.formatDiff(ddmIn, expectedDDM) shouldBe Some(
       """===== only in old DDM
         |
         |<dc:title>Rapport 456</dc:title>
@@ -154,8 +155,11 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         |""".stripMargin
     )
 
+    // a few steps of EasyConvertBagToDepositApp.addPropsToBags
     cfg.ddmTransformer.transform(ddmIn).map(normalized) shouldBe
       Success(normalized(expectedDDM))
+    app.registerMatchedReports("easy-dataset:123", expectedDDM \\ "reportNumber")
+    app.logMatchedReports() // once for all datasets
 
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())
