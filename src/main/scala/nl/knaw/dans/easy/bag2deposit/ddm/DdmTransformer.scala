@@ -25,7 +25,7 @@ import scala.xml.{ Node, NodeSeq }
 
 case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
 
-  val reportRewriteRule = ReportRewriteRule(cfgDir)
+  val reportRewriteRule: ReportRewriteRule = ReportRewriteRule(cfgDir)
   private val profileRuleTransformer = new RuleTransformer(reportRewriteRule)
   private val dcmiMetadataRuleTransformer = new RuleTransformer(
     reportRewriteRule,
@@ -43,7 +43,7 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
     }
   }
 
-  def transform(ddmIn: Node): Try[Node] = {
+  def transform(ddmIn: Node, datasetId: String): Try[Node] = {
 
     // the single title may become a title and/or reportNumber
     val transformedFirstTitle = (ddmIn \ "profile" \ "title").flatMap(profileRuleTransformer)
@@ -56,7 +56,7 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
 
     // logging and error handling
     val notConvertedTitles = (ddmOut \ "dcmiMetadata" \ "title") ++ notConvertedFirstTitle
-    logBriefRapportTitles(notConvertedTitles, ddmOut)
+    logBriefRapportTitles(notConvertedTitles, ddmOut, datasetId)
     val problems = ddmOut \\ "notImplemented" // fail slow trick
     if (problems.nonEmpty)
       Failure(InvalidBagException(problems.map(_.text).mkString("; ")))
@@ -64,12 +64,15 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
       .getOrElse(Failure(InvalidBagException("DDM transformation returned empty sequence")))
   }
 
-  private def logBriefRapportTitles(notConvertedTitles: NodeSeq, ddmOut: Node): Unit = {
+  private def logBriefRapportTitles(notConvertedTitles: NodeSeq, ddmOut: Node, datasetId: String): Unit = {
+    // note: some of notConverted may have produced a reportNumber, the ones logged below won't
+    // ReportRewriteRule knows that difference but has no datasetId/rightsHolder/publisher for its logging
+
     // these titles need a more complex transformation or manual fix before the final export
     notConvertedTitles.foreach { node =>
       val title = node.text
       if (title.toLowerCase.matches(s"brief[^a-z]*rapport${ reportRewriteRule.nrTailRegexp } }"))
-        logger.info(s"briefrapport rightsHolder=[${ ddmOut \ "rightsHolder" }] publisher=[${ ddmOut \ "publisher" }] titles=[$title]")
+        logger.info(s"$datasetId - briefrapport rightsHolder=[${ ddmOut \ "rightsHolder" }] publisher=[${ ddmOut \ "publisher" }] titles=[$title]")
     }
   }
 }

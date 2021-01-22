@@ -156,9 +156,10 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
     )
 
     // a few steps of EasyConvertBagToDepositApp.addPropsToBags
-    cfg.ddmTransformer.transform(ddmIn).map(normalized) shouldBe
+    val datasetId = "easy-dataset:123"
+    cfg.ddmTransformer.transform(ddmIn, datasetId).map(normalized) shouldBe
       Success(normalized(expectedDDM))
-    app.registerMatchedReports("easy-dataset:123", expectedDDM \\ "reportNumber")
+    app.registerMatchedReports(datasetId, expectedDDM \\ "reportNumber")
     app.logMatchedReports() // once for all datasets
 
     assume(schemaIsAvailable)
@@ -175,7 +176,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         </ddm:dcmiMetadata>
     )
 
-    cfg.ddmTransformer.transform(ddmIn).map(normalized) shouldBe Success(normalized(ddmIn))
+    cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddmIn))
     // TODO manually check logging of briefrapport
   }
 
@@ -203,7 +204,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         </ddm:dcmiMetadata>
     )
 
-    cfg.ddmTransformer.transform(ddmIn).map(normalized) shouldBe
+    cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(expectedDdm))
   }
 
@@ -219,7 +220,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         </ddm:dcmiMetadata>
     )
 
-    cfg.ddmTransformer.transform(ddmIn).map(normalized) shouldBe
+    cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Failure(InvalidBagException("rabarbera not found in ABR-period.csv; barbapappa not found in ABR-complex.csv"))
   }
 
@@ -259,7 +260,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         </ddm:dcmiMetadata>
     )
     // TODO these titles don't show up in target/test/TitlesSpec/matches-per-rce.txt
-    cfg.ddmTransformer.transform(ddmIn).map(normalized) shouldBe
+    cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(expectedDdm))
   }
 

@@ -95,13 +95,13 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ = logger.info(s"$bagInfo")
       ddmFile = bagDir / "metadata" / "dataset.xml"
       ddmIn <- loadXml(ddmFile)
-      ddmOut <- configuration.ddmTransformer.transform(ddmIn)
+      props <- depositPropertiesFactory.create(bagInfo, ddmIn)
+      datasetId = props.getString("identifier.fedora","")
+      ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
       _ = formatDiff(ddmIn, ddmOut).foreach(s => logger.info(s))
-      _ = ddmFile.writeText(ddmOut.serialize)
-      props <- depositPropertiesFactory.create(bagInfo, ddmOut)
-      _ = props.save((bagParentDir / "deposit.properties").toJava)
-      datasetId = props.getProperty("identifier.fedora").toString
       _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
+      _ = ddmFile.writeText(ddmOut.serialize)
+      _ = props.save((bagParentDir / "deposit.properties").toJava)
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ <- BagFacade.updateMetadata(bag)
       _ <- BagFacade.updateManifest(bag)
