@@ -1,0 +1,32 @@
+hiddenLabel,uuid,prefLabel
+RXX,8d15e910-2601-4e06-b1ae-8aafabdf8057,remote
+AXX,4e0dd439-480f-4039-bccc-4ce5ca2cbc05,archeologisch
+XXX,5e0fa4ad-82b0-4970-b43d-e0cdb6a97d73,verwervingswijze niet te bepalen
+NXX,64393867-4106-4bb1-8132-de74760e6531,niet-archeologisch
+IXX,6604c9fb-8efa-4571-8c83-097684f40e2e,indirect
+LUC,2f851932-e4a1-4a11-be5e-aa988fb39278,luchtfoto/remote sensing
+AHN,3c25ce24-2149-4d1a-ab97-d3783ab9b98b,aktueel hoogtemodel
+ANDXX,7a2a5dd7-4c94-4c79-b90e-e9eb13c905c9,non-destructief
+ADXX,09ae9be1-ee40-4112-beea-27672df67c18,destructief
+NBO,7fba08ea-17d7-4e26-be5f-0a330a5fc4d1,niet-archeologisch: boring
+NDE,cdc44e35-c06f-4eca-97c3-7a0a2dafc53b,niet-archeologisch: metaaldetector
+NGR,d303201f-d9c5-44d7-a57c-b65644fed2aa,niet-archeologisch: graafwerk
+NWA,e568523c-dae4-4f7c-a825-f4497a50fa00,niet-archeologisch: waterwerk en exploitatie
+NDU,30b38390-12b6-4cca-a74f-3d05db969e95,niet-archeologisch: duikactiviteiten
+NKA,5d3df4ad-c5bf-47f0-a165-d0452deea9f4,niet-archeologisch: kartering
+NBA,5e3bd93f-64ac-4983-b626-6e1061c2c44a,niet-archeologisch: baggerwerk
+IXX,7d85b20d-326e-439e-9696-2b136e11c77c,indirect: onbepaald
+IAR,b2997012-dac5-46fd-8e98-b29545ea0c48,indirect: archief
+ICO,b2aa3a32-1f79-4ddf-81b5-2cdd28ad4919,indirect: collectiebeschrijving
+ILI,ebe0169d-54fb-4425-a60c-869e3b3a4135,indirect: literatuur
+AIN,bd4d913f-1cab-4f08-ab00-77b64a6273e0,archeologisch: inspectie
+ABU,d4ecc89b-d52e-49a1-880a-296db5c2953e,archeologisch: bureauonderzoek
+ABO,e06a84fa-62e8-42ff-8f38-0ddfe9485a15,archeologisch: boring
+ADU,ed190348-f8c8-478d-8d31-2dc0a93ee13a,archeologisch: duikactiviteiten
+AGO,f045ae5d-e7cd-4919-8ffc-c2de384cba7a,archeologisch: geofysisch onderzoek
+AVE,00f0c58c-472d-4abd-91a3-e6df27bbfcf9,archeologisch: verwachtingskaart
+AKA,0bd089db-adf3-4246-8828-e64224e2324b,archeologisch: (veld)kartering
+ABE,5eff498d-2404-4386-8a20-de02a7de841e,archeologisch: begeleiding
+AOW,967bfdf8-c44d-4c69-8318-34ed1ab1e784,archeologisch: onderwaterarcheologie
+APP,a3354be9-15eb-4066-a4ec-40ed8895cb5a,archeologisch: proefputten/proefsleuven
+AOP,00714835-b307-4990-8f11-12b6d62bf1ba,archeologisch: opgraving

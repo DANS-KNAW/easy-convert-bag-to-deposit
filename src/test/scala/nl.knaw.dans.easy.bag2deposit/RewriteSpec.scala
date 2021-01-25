@@ -40,7 +40,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
           </dcx-dai:creatorDetails>
           <ddm:created>2013-03</ddm:created>
           <ddm:available>2013-04</ddm:available>
-          <ddm:audience>D35400</ddm:audience>
+          <ddm:audience>D37000</ddm:audience>
           <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
 
   "ABR-complex" should "be valid" in {
@@ -183,7 +183,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
   it should "add report number of profile to dcmiMetadata" in {
     val ddmIn = ddm(
         <ddm:profile>
-          <dc:title>Rapport 123</dc:title>
+          <dc:title>Rapport 123: blablabla</dc:title>
           { mandatoryInProfile }
         </ddm:profile>
         <ddm:dcmiMetadata>
@@ -191,7 +191,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
     )
     val expectedDdm = ddm(
         <ddm:profile>
-          <dc:title>Rapport 123</dc:title>
+          <dc:title>Rapport 123: blablabla</dc:title>
           { mandatoryInProfile }
         </ddm:profile>
         <ddm:dcmiMetadata>
@@ -201,6 +201,82 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
             subjectScheme="ABR Rapporten"
             reportNo="123"
           >Rapport 123</ddm:reportNumber>
+        </ddm:dcmiMetadata>
+    )
+
+    cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+      Success(normalized(expectedDdm))
+  }
+
+  it should "add acquisition methods of profile to dcmiMetadata" in {
+    val ddmIn = ddm(
+        <ddm:profile>
+          <dc:title>Een Inventariserend Veldonderzoek in de vorm van proefsleuven</dc:title>
+          { mandatoryInProfile }
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+          <dc:title>Bureauonderzoek en Inventariserend veldonderzoek (verkennende fase)</dc:title>
+        </ddm:dcmiMetadata>
+    )
+    val expectedDdm = ddm(
+        <ddm:profile>
+          <dc:title>Een Inventariserend Veldonderzoek in de vorm van proefsleuven</dc:title>
+          { mandatoryInProfile }
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+              <ddm:acquisitionMethod
+                schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/554ca1ec-3ed8-42d3-ae4b-47bcb848b238"
+                valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/d4ecc89b-d52e-49a1-880a-296db5c2953e" }
+                subjectScheme="ABR verwervingswijzen"
+              >Bureauonderzoek en Inventariserend veldonderzoek (verkennende fase)</ddm:acquisitionMethod>
+              <ddm:acquisitionMethod
+                schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/554ca1ec-3ed8-42d3-ae4b-47bcb848b238"
+                valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/bd4d913f-1cab-4f08-ab00-77b64a6273e0" }
+                subjectScheme="ABR verwervingswijzen"
+              >Bureauonderzoek en Inventariserend veldonderzoek (verkennende fase)</ddm:acquisitionMethod>
+              <ddm:acquisitionMethod
+                schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/554ca1ec-3ed8-42d3-ae4b-47bcb848b238"
+                valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/a3354be9-15eb-4066-a4ec-40ed8895cb5a" }
+                subjectScheme="ABR verwervingswijzen"
+              >Een Inventariserend Veldonderzoek in de vorm van proefsleuven</ddm:acquisitionMethod>
+        </ddm:dcmiMetadata>
+    )
+
+    cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+      Success(normalized(expectedDdm))
+  }
+
+
+  it should "add multiple acquisition methods of profile to dcmiMetadata" in {
+    val ddmIn = ddm(
+        <ddm:profile>
+          <dc:title>Archeologisch bureauonderzoek en gecombineerd verkennend en karterend booronderzoek</dc:title>
+          { mandatoryInProfile }
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+        </ddm:dcmiMetadata>
+    )
+    val expectedDdm = ddm(
+        <ddm:profile>
+          <dc:title>Archeologisch bureauonderzoek en gecombineerd verkennend en karterend booronderzoek</dc:title>
+          { mandatoryInProfile }
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+              <ddm:acquisitionMethod
+                schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/554ca1ec-3ed8-42d3-ae4b-47bcb848b238"
+                valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/d4ecc89b-d52e-49a1-880a-296db5c2953e" }
+                subjectScheme="ABR verwervingswijzen"
+              >Archeologisch bureauonderzoek en gecombineerd verkennend en karterend booronderzoek</ddm:acquisitionMethod>
+              <ddm:acquisitionMethod
+                schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/554ca1ec-3ed8-42d3-ae4b-47bcb848b238"
+                valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/bd4d913f-1cab-4f08-ab00-77b64a6273e0" }
+                subjectScheme="ABR verwervingswijzen"
+              >Archeologisch bureauonderzoek en gecombineerd verkennend en karterend booronderzoek</ddm:acquisitionMethod>
+              <ddm:acquisitionMethod
+                schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/554ca1ec-3ed8-42d3-ae4b-47bcb848b238"
+                valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/0bd089db-adf3-4246-8828-e64224e2324b" }
+                subjectScheme="ABR verwervingswijzen"
+              >Archeologisch bureauonderzoek en gecombineerd verkennend en karterend booronderzoek</ddm:acquisitionMethod>
         </ddm:dcmiMetadata>
     )
 
