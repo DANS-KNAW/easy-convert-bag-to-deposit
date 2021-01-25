@@ -25,7 +25,7 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import java.io.{ FileNotFoundException, IOException }
 import scala.collection.mutable.ListBuffer
 import scala.util.{ Failure, Success, Try }
-import scala.xml.{ Node, NodeSeq }
+import scala.xml.NodeSeq
 
 class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnhancedLogging {
 
@@ -79,7 +79,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       ddmFile = bagDir / "metadata" / "dataset.xml"
       ddmIn <- loadXml(ddmFile)
       props <- depositPropertiesFactory.create(bagInfo, ddmIn)
-      datasetId = props.getString("identifier.fedora","")
+      datasetId = props.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
       _ = Provenance(ddmIn, ddmOut, s"${ getClass.getSimpleName } ${ configuration.version }")
         .foreach(s => logger.info(s))
@@ -90,7 +90,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ <- BagFacade.updateMetadata(bag)
       _ <- BagFacade.updateManifest(bag)
       _ = maybeOutputDir.foreach(move(bagParentDir))
-      _ = logger.info(s"OK $datasetId ${bagParentDir.name}/${bagDir.name}")
+      _ = logger.info(s"OK $datasetId ${ bagParentDir.name }/${ bagDir.name }")
     } yield true
   }.recoverWith {
     case e: InvalidBagException =>

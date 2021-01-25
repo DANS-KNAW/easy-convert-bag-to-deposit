@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.bag2deposit
+package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.SchemaSupport
-import nl.knaw.dans.easy.bag2deposit.ddm.{ AbrRewriteRule, Provenance }
+import nl.knaw.dans.easy.bag2deposit.{ Configuration, EasyConvertBagToDepositApp, InvalidBagException, normalized, parseCsv }
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -124,36 +124,6 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
     )
 
     val app = new EasyConvertBagToDepositApp(cfg)
-    Provenance(ddmIn, expectedDDM, "EasyConvertBagToDepositApp x.y.z") shouldBe Some(
-      """===== only in old DDM
-        |
-        |<dc:title>Rapport 456</dc:title>
-        |<dcterms:temporal xsi:type="abr:ABRperiode">VMEA</dcterms:temporal>
-        |<dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject>
-        |<dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
-        |
-        |===== only in new DDM by EasyConvertBagToDepositApp x.y.z
-        |
-        |<ddm:reportNumber  schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f" subjectScheme="ABR Rapporten" reportNo="456">
-        | Rapport 456
-        |</ddm:reportNumber>
-        |<ddm:reportNumber  schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/90f3092a-818e-4db2-8467-35b64262c5b3" subjectScheme="ABR Rapporten" reportNo="2859">
-        | Transect-rapport 2859
-        |</ddm:reportNumber>
-        |<ddm:temporal  xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/330e7fe0-a1f7-43de-b448-d477898f6648" subjectScheme="Archeologisch Basis Register" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">
-        | Vroege Middeleeuwen A
-        |</ddm:temporal>
-        |<ddm:subject  xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/6ae3ab19-49ca-44a7-8b65-3a3395014bb9" subjectScheme="Archeologisch Basis Register" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">
-        | veenwinning (inclusief zouthoudend veen t.b.v. zoutproductie)
-        |</ddm:subject>
-        |<ddm:subject  xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/f182d72c-2d22-47ae-b799-26dea01e770c" subjectScheme="Archeologisch Basis Register" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">
-        | akker / tuin
-        |</ddm:subject>
-        |<ddm:reportNumber  schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f" subjectScheme="ABR Rapporten" reportNo="123">
-        | Rapport 123
-        |</ddm:reportNumber>
-        |""".stripMargin
-    )
 
     // a few steps of EasyConvertBagToDepositApp.addPropsToBags
     val datasetId = "easy-dataset:123"
