@@ -19,6 +19,7 @@ import better.files.File
 import better.files.File.CopyOptions
 import nl.knaw.dans.bag.v0.DansV0Bag
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
+import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import java.io.{ FileNotFoundException, IOException }
@@ -61,24 +62,6 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     }
   }
 
-  def formatDiff(generated: Node, modified: Node): Option[String] = {
-    val original = normalized(generated).split("\n")
-    val changed = normalized(modified).split("\n")
-    val diff1 = original.diff(changed).mkString("\n").trim
-    val diff2 = changed.diff(original).mkString("\n").trim
-    if (diff1.nonEmpty || diff2.nonEmpty)
-      Some(
-        s"""===== only in old DDM
-           |
-           |$diff1
-           |
-           |===== only in new DDM by ${ getClass.getSimpleName } ${ configuration.version }
-           |
-           |$diff2
-           |""".stripMargin)
-    else None
-  }
-
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
@@ -98,7 +81,8 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       props <- depositPropertiesFactory.create(bagInfo, ddmIn)
       datasetId = props.getString("identifier.fedora","")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
-      _ = formatDiff(ddmIn, ddmOut).foreach(s => logger.info(s))
+      _ = Provenance(ddmIn, ddmOut, s"${ getClass.getSimpleName } ${ configuration.version }")
+        .foreach(s => logger.info(s))
       _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = props.save((bagParentDir / "deposit.properties").toJava)

@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.SchemaSupport
-import nl.knaw.dans.easy.bag2deposit.ddm.AbrRewriteRule
+import nl.knaw.dans.easy.bag2deposit.ddm.{ AbrRewriteRule, Provenance }
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -123,8 +123,8 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         </ddm:dcmiMetadata>
     )
 
-    val app = new EasyConvertBagToDepositApp(cfg.copy(version = "x.y.z"))
-    app.formatDiff(ddmIn, expectedDDM) shouldBe Some(
+    val app = new EasyConvertBagToDepositApp(cfg)
+    Provenance(ddmIn, expectedDDM, "EasyConvertBagToDepositApp x.y.z") shouldBe Some(
       """===== only in old DDM
         |
         |<dc:title>Rapport 456</dc:title>
