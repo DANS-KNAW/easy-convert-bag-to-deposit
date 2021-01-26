@@ -16,27 +16,51 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.parseCsv
+import nl.knaw.dans.easy.bag2deposit.{ parseCsv, printer }
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
-import scala.xml.Node
+import scala.xml.{ Node, NodeSeq }
 import scala.xml.transform.RewriteRule
 
 case class LanguageRewriteRule(cfgFile: File) extends RewriteRule {
 
-  private val languageMap = parseCsv(cfgFile, 0).toSeq
+  private val freeLanguageToCodes = parseCsv(cfgFile, 0).toSeq
     .map(r => r.get(0) -> r.get(1).split(",").toSeq)
     .toMap
 
+  private val codeToElem = Map(
+    "nld" -> elem("Dutch")("dut"),
+    "dut" -> elem("Dutch")("dut"),
+    "eng" -> elem("English")("eng"),
+    "fre" -> elem("French")("fre"),
+    "fra" -> elem("French")("fre"),
+    "deu" -> elem("German")("ger"),
+    "ger" -> elem("German")("ger"),
+  )
+
   override def transform(node: Node): Seq[Node] = {
-    if (node.label != "language" || isProperLang(node))
-      node
-    else node +: languageMap.getOrElse(node.text, Seq.empty)
-      .map(lang =>
-        <ddm:language encodingScheme='ISO639-2' code={ lang }>{ node.text }</ddm:language>
-      )
+    def mapFreeLanguageValue = {
+      freeLanguageToCodes
+        .get(node.text)
+        .map(_.map(elem(node.text.trim)))
+        .getOrElse(node)
+    }
+
+    if (node.label != "language") node
+    else if (node.attributes.mkString.matches("(.*:)?ISO639-[23]."))
+           codeToElem.getOrElse(node.text.trim.toLowerCase, mapFreeLanguageValue)
+         else mapFreeLanguageValue
   }
 
-  private def isProperLang(node: Node) = {
-    node.attributes.prefixedKey == "xsi:type" && node.attributes.mkString("") == "dcterms:ISO639-2"
+  private def elem(value: String)(code: String) =
+    <ddm:language encodingScheme='ISO639-2' code={ code.toLowerCase }>{ value.trim }</ddm:language>
+}
+object LanguageRewriteRule extends DebugEnhancedLogging {
+  def logNotMapped(ddm: Node, datasetId: String): Unit = {
+    (ddm \\ "language").filter(
+      !_.attributes.mkString.contains("encodingScheme")
+    ).foreach(n =>
+      logger.info(s"NOT MAPPED $datasetId ${printer.format(n)}")
+    )
   }
 }

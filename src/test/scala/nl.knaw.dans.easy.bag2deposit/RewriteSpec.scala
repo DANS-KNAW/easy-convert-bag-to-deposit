@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.SchemaSupport
-import nl.knaw.dans.easy.bag2deposit.ddm.AbrRewriteRule
+import nl.knaw.dans.easy.bag2deposit.ddm.{ AbrRewriteRule, LanguageRewriteRule }
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -168,12 +168,14 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
           { mandatoryInProfile }
         </ddm:profile>
         <ddm:dcmiMetadata>
-          <dcterms:language>Nederlands</dcterms:language>
+          <dcterms:language>in het Nederlands</dcterms:language>
           <dc:language>Engels</dc:language>
-          <dc:language xsi:type='dcterms:ISO639-3'>nld</dc:language>
-          <dc:language xsi:type='dcterms:ISO639-2'>eng</dc:language>
+          <dc:language>ratjetoe</dc:language>
+          <dc:language xsi:type='dcterms:ISO639-3'> huh</dc:language>
+          <dc:language xsi:type='dcterms:ISO639-3'> nld </dc:language>
+          <dc:language xsi:type='dcterms:ISO639-2'>ENG</dc:language>
           <dcterms:language xsi:type='dcterms:ISO639-3'>deu</dcterms:language>
-          <dcterms:language xsi:type='dcterms:ISO639-2'>fre</dcterms:language>
+          <dcterms:language xsi:type='dcterms:ISO639-2'>fra</dcterms:language>
         </ddm:dcmiMetadata>
     )
     val expectedDDM = ddm(
@@ -182,19 +184,21 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
           { mandatoryInProfile }
         </ddm:profile>
         <ddm:dcmiMetadata>
-          <dcterms:language>Nederlands</dcterms:language>
-          <ddm:language encodingScheme="ISO639-2" code="dut">Nederlands</ddm:language>
-          <dc:language>Engels</dc:language>
+          <ddm:language encodingScheme="ISO639-2" code="dut">in het Nederlands</ddm:language>
           <ddm:language encodingScheme="ISO639-2" code="eng">Engels</ddm:language>
-          <dc:language xsi:type='dcterms:ISO639-3'>nld</dc:language>
-          <dc:language xsi:type='dcterms:ISO639-2'>eng</dc:language>
-          <ddm:language encodingScheme="ISO639-2" code="eng">eng</ddm:language>
-          <dcterms:language xsi:type='dcterms:ISO639-3'>deu</dcterms:language>
-          <dcterms:language xsi:type='dcterms:ISO639-2'>fre</dcterms:language>
+          <dc:language>ratjetoe</dc:language>
+          <dc:language xsi:type='dcterms:ISO639-3'> huh</dc:language>
+          <ddm:language encodingScheme='ISO639-2' code="dut">Dutch</ddm:language>
+          <ddm:language encodingScheme="ISO639-2" code="eng">English</ddm:language>
+          <ddm:language encodingScheme='ISO639-2' code="ger">German</ddm:language>
+          <ddm:language encodingScheme='ISO639-2' code="fre">French</ddm:language>
         </ddm:dcmiMetadata>
     )
     cfg.ddmTransformer.transform(ddmIn).map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
+
+    // TODO manually check logging of not mapped language fields
+    LanguageRewriteRule.logNotMapped(expectedDDM,"eas-dataset:123")
 
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())

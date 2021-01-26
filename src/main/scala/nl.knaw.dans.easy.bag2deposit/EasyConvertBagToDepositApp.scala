@@ -19,6 +19,8 @@ import better.files.File
 import better.files.File.CopyOptions
 import nl.knaw.dans.bag.v0.DansV0Bag
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
+import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule
+import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMapped
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import java.io.{ FileNotFoundException, IOException }
@@ -75,6 +77,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ = formatDiff(ddmIn, ddmOut).foreach(s => logger.info(s))
       _ = ddmFile.writeText(ddmOut.serialize)
       props <- depositPropertiesFactory.create(bagInfo, ddmOut)
+      _ = logNotMapped(ddmOut, props.getString("identifier.fedora", ""))
       _ = props.save((bagParentDir / "deposit.properties").toJava)
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ <- BagFacade.updateMetadata(bag)
