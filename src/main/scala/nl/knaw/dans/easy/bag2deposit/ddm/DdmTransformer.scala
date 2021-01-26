@@ -42,8 +42,8 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
     override def transform(n: Node): Seq[Node] = {
       if (n.label != "dcmiMetadata") n
       else <dcmiMetadata>
-             { archaeologyRuleTransformer(n).nonEmptyChildren }
              { fromFirstTitle }
+             { archaeologyRuleTransformer(n).nonEmptyChildren }
            </dcmiMetadata>.copy(prefix = n.prefix, attributes = n.attributes, scope = n.scope)
     }
   }

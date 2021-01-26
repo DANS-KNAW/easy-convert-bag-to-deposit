@@ -43,6 +43,12 @@ class ProvenanceSpec extends AnyFlatSpec with Matchers {
           <dc:title>Rapport 123</dc:title>
         </ddm:profile>
         <ddm:dcmiMetadata>
+            <ddm:reportNumber
+              schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
+              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f"
+              subjectScheme="ABR Rapporten"
+              reportNo="123"
+            >Rapport 123</ddm:reportNumber>
             <dc:title>blabla</dc:title>
             <ddm:reportNumber
               schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
@@ -74,12 +80,6 @@ class ProvenanceSpec extends AnyFlatSpec with Matchers {
                          subjectScheme="Archeologisch Basis Register"
                          schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed"
             >akker / tuin</ddm:subject>
-            <ddm:reportNumber
-              schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
-              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f"
-              subjectScheme="ABR Rapporten"
-              reportNo="123"
-            >Rapport 123</ddm:reportNumber>
         </ddm:dcmiMetadata>
       </ddm>
     Provenance(ddmIn, ddmOut, "EasyConvertBagToDepositApp x.y.z") shouldBe Some(
