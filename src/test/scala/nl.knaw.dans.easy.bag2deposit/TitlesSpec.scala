@@ -18,6 +18,7 @@ package nl.knaw.dans.easy.bag2deposit
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.FileSystemSupport
 import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule
+import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.nrRegexp
 import org.scalatest.flatspec.AnyFlatSpec
 
 class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
@@ -83,7 +84,7 @@ class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
     (testDir / "missed.txt").write(
       titlesPerDataset.map { case (id, t) =>
         t.filterNot(title => rule.reportMap.exists(m => title.toLowerCase.matches(".*" + m.regexp)))
-          .filter(_.toLowerCase.matches(s".*$keyword[^0-9]*${ rule.nrRegexp }(:.*)?"))
+          .filter(_.toLowerCase.matches(s".*$keyword[^0-9]*${ nrRegexp }(:.*)?"))
           .map(title => s"\n$id\t$title")
           .mkString("")
       }.mkString(""))
@@ -91,7 +92,7 @@ class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
     (testDir / "briefrapport.txt").write(
       (testDir / "missed.txt")
         .lines
-        .filter(_.toLowerCase.matches(s".*brief[^a-z]*rapport${ rule.nrRegexp }.*"))
+        .filter(_.toLowerCase.matches(s".*brief[^a-z]*rapport${ nrRegexp }.*"))
         .mkString("\n")
     )
   }

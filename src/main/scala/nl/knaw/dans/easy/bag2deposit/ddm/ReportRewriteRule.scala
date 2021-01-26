@@ -16,27 +16,16 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
+import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.{ missedRegExp, nrRegexp, nrTailRegexp, trailer }
 import nl.knaw.dans.easy.bag2deposit.parseCsv
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.xml.transform.RewriteRule
-import scala.xml.{ Elem, Node }
+import scala.xml.{ Elem, Node, NodeSeq }
 
 case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhancedLogging {
 
   case class ReportCfg(uuid: String, label: String, regexp: String)
-
-  private val digit = "[0-9]"
-
-  /** alpha numeric (and a little more) */
-  private val an = "[-_/.a-z0-9]"
-
-  /** just one that does not match easy-dataset:99840 "Arcadis Archeologische Rapporten [2017 - 116]" */
-  val nrRegexp = s"\\W+$an*$digit$an*"
-
-  private val trailer = "([.]|:.*)?"
-  val nrTailRegexp = s"$nrRegexp$trailer"
-  private val missedRegExp = s".*(notitie|rapport|bericht|publicat).*$nrRegexp$trailer"
 
   val reportMap: Seq[ReportCfg] = parseCsv(cfgDir / "ABR-reports.csv", 0)
     .map(r => ReportCfg(
@@ -69,5 +58,31 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
       subjectScheme="ABR Rapporten"
       reportNo={ titleValue.replaceAll(s".*($nrRegexp)$trailer", "$1").trim }
     >{ titleValue }</ddm:reportNumber>
+  }
+}
+object ReportRewriteRule extends DebugEnhancedLogging {
+
+  private val digit = "[0-9]"
+
+  /** alpha numeric (and a little more) */
+  private val an = "[-_/.a-z0-9]"
+
+  /** just one that does not match easy-dataset:99840 "Arcadis Archeologische Rapporten [2017 - 116]" */
+  val nrRegexp = s"\\W+$an*$digit$an*"
+
+  private val trailer = "([.]|:.*)?"
+  private val nrTailRegexp = s"$nrRegexp$trailer"
+  private val missedRegExp = s".*(notitie|rapport|bericht|publicat).*$nrRegexp$trailer"
+
+  def logBriefRapportTitles(notConvertedTitles: NodeSeq, ddmOut: Node, datasetId: String): Unit = {
+    // note: some of notConverted may have produced a reportNumber, the ones logged below won't
+    // a ReportRewriteRule instance knows that difference but has no datasetId/rightsHolder/publisher for its logging
+
+    // these titles need a more complex transformation or manual fix before the final export
+    notConvertedTitles.foreach { node =>
+      val title = node.text
+      if (title.toLowerCase.matches(s"brief[^a-z]*rapport$nrTailRegexp }"))
+        logger.info(s"$datasetId - briefrapport rightsHolder=[${ ddmOut \ "rightsHolder" }] publisher=[${ ddmOut \ "publisher" }] titles=[$title]")
+    }
   }
 }

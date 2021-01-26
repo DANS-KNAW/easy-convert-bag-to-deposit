@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.InvalidBagException
+import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.logBriefRapportTitles
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.util.{ Failure, Success, Try }
@@ -26,7 +27,7 @@ import scala.xml.{ Node, NodeSeq }
 case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
 
   val reportRewriteRule: ReportRewriteRule = ReportRewriteRule(cfgDir)
-  val acquisitionRewriteRule: AcquisitionRewriteRule = AcquisitionRewriteRule(cfgDir)
+  private val acquisitionRewriteRule: AcquisitionRewriteRule = AcquisitionRewriteRule(cfgDir)
   private val profileTitleRuleTransformer = new RuleTransformer(
     acquisitionRewriteRule,
     reportRewriteRule,
@@ -72,18 +73,6 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
         Failure(InvalidBagException(problems.map(_.text).mkString("; ")))
       else ddmOut.headOption.map(Success(_))
         .getOrElse(Failure(InvalidBagException("DDM transformation returned empty sequence")))
-    }
-  }
-
-  private def logBriefRapportTitles(notConvertedTitles: NodeSeq, ddmOut: Node, datasetId: String): Unit = {
-    // note: some of notConverted may have produced a reportNumber, the ones logged below won't
-    // ReportRewriteRule knows that difference but has no datasetId/rightsHolder/publisher for its logging
-
-    // these titles need a more complex transformation or manual fix before the final export
-    notConvertedTitles.foreach { node =>
-      val title = node.text
-      if (title.toLowerCase.matches(s"brief[^a-z]*rapport${ reportRewriteRule.nrTailRegexp } }"))
-        logger.info(s"$datasetId - briefrapport rightsHolder=[${ ddmOut \ "rightsHolder" }] publisher=[${ ddmOut \ "publisher" }] titles=[$title]")
     }
   }
 }
