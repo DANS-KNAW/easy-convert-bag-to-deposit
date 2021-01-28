@@ -56,7 +56,7 @@ case class LanguageRewriteRule(cfgFile: File) extends RewriteRule {
     <ddm:language encodingScheme='ISO639-2' code={ code.toLowerCase }>{ value.trim }</ddm:language>
 }
 object LanguageRewriteRule extends DebugEnhancedLogging {
-  def logNotMapped(ddm: Node, datasetId: String): Unit = {
+  def logNotMappedLanguages(ddm: Node, datasetId: String): Unit = {
     (ddm \\ "language").filter(
       !_.attributes.mkString.contains("encodingScheme")
     ).foreach(n =>

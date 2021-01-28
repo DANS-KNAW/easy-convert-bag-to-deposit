@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.SchemaSupport
+import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
 import nl.knaw.dans.easy.bag2deposit.{ Configuration, EasyConvertBagToDepositApp, InvalidBagException, normalized, parseCsv }
 import nl.knaw.dans.easy.bag2deposit.ddm.{ AbrRewriteRule, LanguageRewriteRule }
 import org.apache.commons.csv.CSVRecord
@@ -175,7 +176,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
 
     // TODO manually check logging of not mapped language fields
-    LanguageRewriteRule.logNotMapped(expectedDDM,datasetId)
+    logNotMappedLanguages(expectedDDM,datasetId)
 
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())

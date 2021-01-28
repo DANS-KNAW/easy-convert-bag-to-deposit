@@ -17,9 +17,11 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.InvalidBagException
+import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
 import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.logBriefRapportTitles
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
+import scala.collection.mutable.ListBuffer
 import scala.util.{ Failure, Success, Try }
 import scala.xml.transform.{ RewriteRule, RuleTransformer }
 import scala.xml.{ Node, NodeSeq }
@@ -39,6 +41,9 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
     AbrRewriteRule(cfgDir / "ABR-complex.csv", "subject", "ddm:subject"),
     LanguageRewriteRule(cfgDir / "languages.csv"),
   )
+  private val standardRuleTransformer = new RuleTransformer(
+    LanguageRewriteRule(cfgDir / "languages.csv"),
+  )
 
   private case class ArchaeologyRewriteRule(fromFirstTitle: NodeSeq) extends RewriteRule {
     override def transform(n: Node): Seq[Node] = {
@@ -52,8 +57,10 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
 
   def transform(ddmIn: Node, datasetId: String): Try[Node] = {
 
-    if (!(ddmIn \ "profile" \ "audience").text.contains("D37000"))
-      Success(ddmIn) // not archaeological
+    if (!(ddmIn \ "profile" \ "audience").text.contains("D37000")) {
+      // not archaeological
+      Success(standardRuleTransformer(ddmIn))
+    }
     else {
       // a title in the profile will not change but may produce something for dcmiMetadata
       val originalProfile = ddmIn \ "profile"
@@ -66,15 +73,20 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
       val ddmRuleTransformer = new RuleTransformer(ArchaeologyRewriteRule(fromFirstTitle))
       val ddmOut = ddmRuleTransformer(ddmIn)
 
-      // logging and error handling
+      // logging
       val notConvertedTitles = (ddmOut \ "dcmiMetadata" \ "title") ++ notConvertedFirstTitle
       logBriefRapportTitles(notConvertedTitles, ddmOut, datasetId)
-      val problems = ddmOut \\ "notImplemented" // fail slow trick
+
+      // error handling (fail slow on not found ABR period/complex)
+      val problems = ddmOut \\ "notImplemented"
       if (problems.nonEmpty)
         Failure(InvalidBagException(problems.map(_.text).mkString("; ")))
       else ddmOut.headOption.map(Success(_))
         .getOrElse(Failure(InvalidBagException("DDM transformation returned empty sequence")))
     }
+  }.map { ddm =>
+    logNotMappedLanguages(ddm, datasetId)
+    ddm
   }
 }
 
