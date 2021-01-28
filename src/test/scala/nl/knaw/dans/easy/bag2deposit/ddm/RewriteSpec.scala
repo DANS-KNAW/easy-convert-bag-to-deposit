@@ -70,7 +70,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         <ddm:dcmiMetadata>
             <dc:title>blabla</dc:title>
             <dc:title>Rapport 456</dc:title>
-            <dc:title>Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).</dc:title>
+            <dct:alternative>Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).</dct:alternative>
             <dc:title>rabarbera</dc:title>
             <dc:title>Archeologische Berichten Nijmegen – Briefrapport 21</dc:title>
             <dcterms:temporal xsi:type="abr:ABRperiode">VMEA</dcterms:temporal>
@@ -104,7 +104,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
               subjectScheme="ABR Rapporten"
               reportNo="2859"
             >Transect-rapport 2859</ddm:reportNumber>
-            <dc:title>Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).</dc:title>
+            <dct:alternative>Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).</dct:alternative>
             <dc:title>rabarbera</dc:title>
             <dc:title>Archeologische Berichten Nijmegen – Briefrapport 21</dc:title>
             <ddm:temporal xml:lang="nl"
