@@ -43,7 +43,7 @@ case class AcquisitionRewriteRule(cfgDir: File) extends RewriteRule with DebugEn
   }
 
   override def transform(n: Node): Seq[Node] = {
-    if (n.label != "title") n
+    if (n.label != "title" && n.label != "alternative") n
     else titleMap.get(n.text) // is an Option[Seq[UUID]]
       .map(_.map(toMethod(n.text)))
       .getOrElse(n) // TODO log if edit distance under some threshold? issues: spelling / word order

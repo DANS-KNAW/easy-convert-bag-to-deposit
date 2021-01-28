@@ -147,6 +147,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         <ddm:dcmiMetadata>
           <dcterms:language>in het Nederlands</dcterms:language>
           <dc:language>Engels</dc:language>
+          <dct:language>nld</dct:language>
           <dc:language>ratjetoe</dc:language>
           <dc:language xsi:type='dcterms:ISO639-3'> huh</dc:language>
           <dc:language xsi:type='dcterms:ISO639-3'> nld </dc:language>
@@ -163,6 +164,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         <ddm:dcmiMetadata>
           <ddm:language encodingScheme="ISO639-2" code="dut">in het Nederlands</ddm:language>
           <ddm:language encodingScheme="ISO639-2" code="eng">Engels</ddm:language>
+          <ddm:language encodingScheme="ISO639-2" code="dut">nld</ddm:language>
           <dc:language>ratjetoe</dc:language>
           <dc:language xsi:type='dcterms:ISO639-3'> huh</dc:language>
           <ddm:language encodingScheme='ISO639-2' code="dut">Dutch</ddm:language>

@@ -35,7 +35,7 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
     )).toSeq
 
   override def transform(n: Node): Seq[Node] = {
-    if (n.label != "title") n
+    if (n.label != "title" && n.label != "alternative") n
     else {
       val titleValue = n.text
       val lowerCaseTitle = titleValue.trim.toLowerCase
