@@ -18,6 +18,7 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.SchemaSupport
 import nl.knaw.dans.easy.bag2deposit.{ Configuration, EasyConvertBagToDepositApp, InvalidBagException, normalized, parseCsv }
+import nl.knaw.dans.easy.bag2deposit.ddm.{ AbrRewriteRule, LanguageRewriteRule }
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -29,7 +30,7 @@ import scala.xml.NodeBuffer
 class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
   private val cfg = Configuration(cfgDir.parent)
-  override val schema = "https://raw.githubusercontent.com/DANS-KNAW/easy-schema/9c2759d913cde537a2b49cbc0300532da56898c7/lib/src/main/resources/md/ddm/ddm.xsd"
+  override val schema = "https://raw.githubusercontent.com/DANS-KNAW/easy-schema/a7b54e1/lib/src/main/resources/md/ddm/ddm.xsd"
 
   private val mandatoryInProfile =
           <dct:description>YYY</dct:description>
@@ -59,7 +60,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
 
   private def getDuplicates(records: Iterable[CSVRecord]) = records.groupBy(_.get(0)).filter(_._2.size > 1)
 
-  "transform" should "convert" in {
+  "ABR rules" should "convert" in {
     val ddmIn = ddm(
         <ddm:profile>
           <dc:title>Rapport 123</dc:title>
@@ -127,10 +128,54 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
 
     // a few steps of EasyConvertBagToDepositApp.addPropsToBags
     val datasetId = "easy-dataset:123"
-    cfg.ddmTransformer.transform(ddmIn, datasetId).map(normalized) shouldBe
-      Success(normalized(expectedDDM))
+    cfg.ddmTransformer.transform(ddmIn, datasetId).map(normalized)
+      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
     app.registerMatchedReports(datasetId, expectedDDM \\ "reportNumber")
     app.logMatchedReports() // once for all datasets
+
+    assume(schemaIsAvailable)
+    validate(expectedDDM) shouldBe Success(())
+  }
+
+  "LanguageRewriteRule" should "convert" in {
+    val ddmIn = ddm(
+        <ddm:profile>
+          <dc:title>language test</dc:title>
+          { mandatoryInProfile }
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+          <dcterms:language>in het Nederlands</dcterms:language>
+          <dc:language>Engels</dc:language>
+          <dc:language>ratjetoe</dc:language>
+          <dc:language xsi:type='dcterms:ISO639-3'> huh</dc:language>
+          <dc:language xsi:type='dcterms:ISO639-3'> nld </dc:language>
+          <dc:language xsi:type='dcterms:ISO639-2'>ENG</dc:language>
+          <dcterms:language xsi:type='dcterms:ISO639-3'>deu</dcterms:language>
+          <dcterms:language xsi:type='dcterms:ISO639-2'>fra</dcterms:language>
+        </ddm:dcmiMetadata>
+    )
+    val expectedDDM = ddm(
+        <ddm:profile>
+          <dc:title>language test</dc:title>
+          { mandatoryInProfile }
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+          <ddm:language encodingScheme="ISO639-2" code="dut">in het Nederlands</ddm:language>
+          <ddm:language encodingScheme="ISO639-2" code="eng">Engels</ddm:language>
+          <dc:language>ratjetoe</dc:language>
+          <dc:language xsi:type='dcterms:ISO639-3'> huh</dc:language>
+          <ddm:language encodingScheme='ISO639-2' code="dut">Dutch</ddm:language>
+          <ddm:language encodingScheme="ISO639-2" code="eng">English</ddm:language>
+          <ddm:language encodingScheme='ISO639-2' code="ger">German</ddm:language>
+          <ddm:language encodingScheme='ISO639-2' code="fre">French</ddm:language>
+        </ddm:dcmiMetadata>
+    )
+    val datasetId = "eas-dataset:123"
+    cfg.ddmTransformer.transform(ddmIn, datasetId).map(normalized)
+      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
+
+    // TODO manually check logging of not mapped language fields
+    LanguageRewriteRule.logNotMapped(expectedDDM,datasetId)
 
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())
