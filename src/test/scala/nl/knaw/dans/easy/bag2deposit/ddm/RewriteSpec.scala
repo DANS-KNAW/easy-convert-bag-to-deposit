@@ -19,7 +19,6 @@ import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.SchemaSupport
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
 import nl.knaw.dans.easy.bag2deposit.{ Configuration, EasyConvertBagToDepositApp, InvalidBagException, normalized, parseCsv }
-import nl.knaw.dans.easy.bag2deposit.ddm.{ AbrRewriteRule, LanguageRewriteRule }
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -31,7 +30,7 @@ import scala.xml.NodeBuffer
 class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
   private val cfg = Configuration(cfgDir.parent)
-  override val schema = "https://raw.githubusercontent.com/DANS-KNAW/easy-schema/a7b54e1/lib/src/main/resources/md/ddm/ddm.xsd"
+  override val schema = "https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"
 
   private val mandatoryInProfile =
           <dct:description>YYY</dct:description>
@@ -178,7 +177,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
 
     // TODO manually check logging of not mapped language fields
-    logNotMappedLanguages(expectedDDM,datasetId)
+    logNotMappedLanguages(expectedDDM, datasetId)
 
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())
@@ -263,7 +262,6 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
     cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(expectedDdm))
   }
-
 
   it should "add multiple acquisition methods of profile to dcmiMetadata" in {
     val ddmIn = ddm(
