@@ -52,7 +52,7 @@ class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
     }
   }
 
-  it should "show matches and missed report numbers" in {
+  it should "show matches and missed report numbers" ignore {
     // slow because of various cross references of 135 regular expression
     // against 101322 distinct titles of 48675 archaeological datasets
     // TODO manually analyse generated files to analyse effectiveness and correctness of regexps in ABR-report.csv
