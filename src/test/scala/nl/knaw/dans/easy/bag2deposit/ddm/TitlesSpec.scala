@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.bag2deposit
+package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.FileSystemSupport
-import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule
+import nl.knaw.dans.easy.bag2deposit.ddm
 import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.nrRegexp
 import org.scalatest.flatspec.AnyFlatSpec
 
