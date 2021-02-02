@@ -40,6 +40,7 @@ class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
           .toSeq
       )
     }.toMap
+  private lazy val titles = titlesPerDataset.values.flatten.toSeq
 
   it should "show number of matches per RCE" ignore {
     rule.reportMap.foreach { m =>
@@ -50,44 +51,60 @@ class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
       (testDir / "number-of-matches-per-rce.txt").write(s"$n : \t${ m.label }")
     }
   }
-  it should "show matches and missed" in {
+
+  it should "show matches and missed report numbers" in {
     // slow because of various cross references of 135 regular expression
     // against 101322 distinct titles of 48675 archaeological datasets
     // TODO manually analyse generated files to analyse effectiveness and correctness of regexps in ABR-report.csv
-    def checks(m: rule.ReportCfg, regexp: String) = {
-      titlesPerDataset
-        .mapValues(_.filter(_.toLowerCase.matches(regexp)))
-        .filter(_._2.nonEmpty)
-        .map { case (id, t) => t.map(t => s"\n\t$id\t--- $t").mkString("\n") }
-        .toSeq.mkString(s"${ m.label }", "", "\n")
-    }
+    val titleToReport = titles.map { title =>
+      title -> rule.reportMap.filter(m => title.trim.toLowerCase.matches(m.regexp)).map(_.label)
+    }.toMap
 
-    (testDir / "matches-per-rce.txt").write(
-      rule
-        .reportMap.map(m => checks(m, m.regexp))
-        .mkString("")
+    val found = titleToReport
+      .filter(_._2.nonEmpty)
+      .groupBy(_._2)
+
+    (testDir / "titles-per-report.txt").write(
+      found.map { case (report, titleToReport) =>
+        titleToReport.keys.toSeq.sortBy(_.toLowerCase).distinct
+          .mkString(s"${ report.mkString("\t") }\n\t", "\n\t", "")
+      }.mkString("\n")
     )
+
+    val regexpToLabel = rule.reportMap.filterNot(_.label == "Rapport")
+      .map(m => ".+" + m.regexp -> m.label)
+      .toMap
+
+    val missedTitles = titleToReport
+      .filter(_._2.isEmpty)
+      .keys.toSeq
+
+    val missedLabelToTitles = missedTitles
+      .groupBy(title =>
+        regexpToLabel
+          .find(rToL => title.toLowerCase.matches(rToL._1))
+          .map(_._2)
+      )
 
     (testDir / "missed-at-end-of-title.txt").write(
-      rule
-        .reportMap.filterNot(_.label == "Rapport")
-        .map(m => checks(m, ".+" + m.regexp)).mkString("")
+      missedLabelToTitles
+        .filter(_._1.isDefined)
+        .map { case (Some(label), titles) =>
+          titles.mkString(s"$label\n\t", "\n\t", "")
+        }.mkString("\n")
     )
 
-    val keyword = "(notitie|rapport|bericht|publicat)"
+    val otherMissed = missedLabelToTitles
+      .filter(_._1.isEmpty)
+      .values.toList.flatten
+      .groupBy(_.toLowerCase.matches(".*(notitie|rapport|bericht|publicat).*"))
+
     (testDir / "without-missed-keyword.txt").write(
-      rule.reportMap.map(_.label)
-        .filterNot(_.toLowerCase.matches(s".*$keyword.*"))
-        .zipWithIndex.mkString("without keyword:\n\t", "\n\t", "")
+      otherMissed(false).mkString("\n")
     )
-
     (testDir / "missed.txt").write(
-      titlesPerDataset.map { case (id, t) =>
-        t.filterNot(title => rule.reportMap.exists(m => title.toLowerCase.matches(".*" + m.regexp)))
-          .filter(_.toLowerCase.matches(s".*$keyword[^0-9]*${ nrRegexp }(:.*)?"))
-          .map(title => s"\n$id\t$title")
-          .mkString("")
-      }.mkString(""))
+      otherMissed(true).mkString("\n")
+    )
 
     (testDir / "briefrapport.txt").write(
       (testDir / "missed.txt")

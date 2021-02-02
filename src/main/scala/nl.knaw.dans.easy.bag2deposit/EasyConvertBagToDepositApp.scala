@@ -56,7 +56,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
   def logMatchedReports(): Unit = {
     val uuidToReportLabel = configuration.ddmTransformer.reportRewriteRule.reportMap
       .map(r => r.uuid -> r.label).toMap
-    reportMatches.foreach { case (reportUuid, matches) =>
+    reportMatches.withFilter(_._2.isEmpty).foreach { case (reportUuid, matches) =>
       val label = uuidToReportLabel.getOrElse(reportUuid, reportUuid)
       logger.info(s"$label\n${ matches.mkString("\n") }")
     }
