@@ -15,8 +15,6 @@
  */
 package nl.knaw.dans.easy.bag2deposit.ddm
 
-import nl.knaw.dans.easy.bag2deposit.{ normalized, printer, XmlExtensions }
-
 import scala.xml.{ Elem, Node }
 
 object Provenance {

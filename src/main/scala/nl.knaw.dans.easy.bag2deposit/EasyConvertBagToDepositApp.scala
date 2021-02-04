@@ -82,7 +82,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       datasetId = props.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
       _ = Provenance(ddmIn, ddmOut, s"${ getClass.getSimpleName } ${ configuration.version }")
-        .foreach(xml => (bagDir / "metadata" / "prov.xml").writeText(xml.serialize))
+        .foreach(s => logger.info(s.serialize))
       _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = props.save((bagParentDir / "deposit.properties").toJava)
