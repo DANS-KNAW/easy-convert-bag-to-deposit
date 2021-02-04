@@ -58,9 +58,17 @@ object AbrRewriteRule {
     .withDelimiter(',')
     .withRecordSeparator('\n')
 
+  def temporalRewriteRule(cfgDir: File): AbrRewriteRule = {
+    new AbrRewriteRule("temporal", temporalMap(cfgDir))
+  }
+
+  def subjectRewriteRule(cfgDir: File): AbrRewriteRule = {
+    new AbrRewriteRule("subject", subjectMap(cfgDir))
+  }
+
   private def valueUri(uuid: String) = s"https://data.cultureelerfgoed.nl/term/id/abr/$uuid"
 
-  def temporalMap(cfgDir: File): Map[String, Elem] = {
+  private def temporalMap(cfgDir: File): Map[String, Elem] = {
     parseCsv(cfgDir / "ABR-period.csv", nrOfHeaderLines, csvFormat)
       .map(record => record.get("old") ->
         <ddm:temporal xml:lang="nl"
@@ -71,7 +79,7 @@ object AbrRewriteRule {
       ).toMap
   }
 
-  def subjectMap(cfgDir: File): Map[String, Elem] = {
+  private def subjectMap(cfgDir: File): Map[String, Elem] = {
     parseCsv(cfgDir / "ABR-complex.csv", nrOfHeaderLines, csvFormat)
       .map(record => record.get("old") ->
         <ddm:subject xml:lang="nl"

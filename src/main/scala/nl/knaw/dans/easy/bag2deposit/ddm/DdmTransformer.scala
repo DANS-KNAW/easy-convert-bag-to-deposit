@@ -36,8 +36,8 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
   private val archaeologyRuleTransformer = new RuleTransformer(
     acquisitionRewriteRule,
     reportRewriteRule,
-    AbrRewriteRule("temporal", AbrRewriteRule.temporalMap(cfgDir)),
-    AbrRewriteRule("subject", AbrRewriteRule.subjectMap(cfgDir)),
+    AbrRewriteRule.temporalRewriteRule(cfgDir),
+    AbrRewriteRule.subjectRewriteRule(cfgDir),
     LanguageRewriteRule(cfgDir / "languages.csv"),
   )
   private val standardRuleTransformer = new RuleTransformer(

@@ -48,15 +48,14 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
     val records = parseCsv(cfgDir / "ABR-complex.csv", AbrRewriteRule.nrOfHeaderLines)
     records.map(tryUuid).filter(_.isFailure) shouldBe empty
     getDuplicates(records) shouldBe empty
-    records.size shouldBe AbrRewriteRule.subjectMap(cfgDir).size
+    records.size shouldBe AbrRewriteRule.subjectRewriteRule(cfgDir).map.size
   }
 
   "ABR-period" should "be valid" in {
-    AbrRewriteRule.temporalMap(cfgDir)
     val records = parseCsv(cfgDir / "ABR-period.csv", AbrRewriteRule.nrOfHeaderLines)
     getDuplicates(records) shouldBe empty
     records.map(tryUuid).filter(_.isFailure) shouldBe empty
-    records.size shouldBe AbrRewriteRule.temporalMap(cfgDir).size
+    records.size shouldBe AbrRewriteRule.temporalRewriteRule(cfgDir).map.size
   }
 
   private def tryUuid(r: CSVRecord) = Try(UUID.fromString(r.get(2)))
