@@ -21,7 +21,6 @@ import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguag
 import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.logBriefRapportTitles
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
-import scala.collection.mutable.ListBuffer
 import scala.util.{ Failure, Success, Try }
 import scala.xml.transform.{ RewriteRule, RuleTransformer }
 import scala.xml.{ Node, NodeSeq }
@@ -37,8 +36,8 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
   private val archaeologyRuleTransformer = new RuleTransformer(
     acquisitionRewriteRule,
     reportRewriteRule,
-    AbrRewriteRule(cfgDir / "ABR-period.csv", "temporal", "ddm:temporal", "ABR Periodes", "https://data.cultureelerfgoed.nl/term/id/abr/9b688754-1315-484b-9c89-8817e87c1e84"),
-    AbrRewriteRule(cfgDir / "ABR-complex.csv", "subject", "ddm:subject", "ABR Complextypen", "https://data.cultureelerfgoed.nl/term/id/abr/e9546020-4b28-4819-b0c2-29e7c864c5c0"),
+    AbrRewriteRule("temporal", AbrRewriteRule.temporalMap(cfgDir)),
+    AbrRewriteRule("subject", AbrRewriteRule.subjectMap(cfgDir)),
     LanguageRewriteRule(cfgDir / "languages.csv"),
   )
   private val standardRuleTransformer = new RuleTransformer(
@@ -56,7 +55,6 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
   }
 
   def transform(ddmIn: Node, datasetId: String): Try[Node] = {
-
     if (!(ddmIn \ "profile" \ "audience").text.contains("D37000")) {
       // not archaeological
       Success(standardRuleTransformer(ddmIn))

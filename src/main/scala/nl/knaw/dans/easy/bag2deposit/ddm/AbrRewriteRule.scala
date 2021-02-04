@@ -16,18 +16,15 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.ddm.AbrRewriteRule.parse
 import nl.knaw.dans.easy.bag2deposit.parseCsv
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.apache.commons.csv.CSVRecord
+import org.apache.commons.csv.CSVFormat
 
 import scala.util.matching.Regex
 import scala.xml.transform.RewriteRule
 import scala.xml.{ Elem, Node }
 
-case class AbrRewriteRule(cfgFile: File, oldLabel: String, newLabel: String, scheme: String, schemeURI: String) extends RewriteRule with DebugEnhancedLogging {
-  private val map = parse(cfgFile, newLabel, scheme, schemeURI)
-
+case class AbrRewriteRule(oldLabel: String, map: Map[String, Elem]) extends RewriteRule with DebugEnhancedLogging {
   private def getAbrCode(value: String): String = {
     val matchBetweenBrackets: Regex = raw"\((.*)\)".r
     matchBetweenBrackets.findFirstMatchIn(value) match {
@@ -35,11 +32,12 @@ case class AbrRewriteRule(cfgFile: File, oldLabel: String, newLabel: String, sch
       case None => value
     }
   }
+
   override def transform(node: Node): Seq[Node] = {
     if (!isAbr(node)) node
     else {
       val key = getAbrCode(node.text)
-      map.getOrElse(key, <notImplemented>{ s"$key not found in ${ cfgFile.name }" }</notImplemented>)
+      map.getOrElse(key, <notImplemented>{ s"$oldLabel $key not found" }</notImplemented>)
     }
   }
 
@@ -48,29 +46,39 @@ case class AbrRewriteRule(cfgFile: File, oldLabel: String, newLabel: String, sch
     node.label == oldLabel &&
       (
         (attr.prefixedKey == "xsi:type" && attr.value.mkString("").startsWith("abr:ABR")) ||
-        (attr.get("valueURI").mkString("").startsWith("http://www.rnaproject.org/"))
-      )
+          (attr.get("valueURI").mkString("").startsWith("http://www.rnaproject.org/"))
+        )
   }
 }
 
 object AbrRewriteRule {
   val nrOfHeaderLines = 2
-
-  private def parse(file: File, label: String, scheme: String, schemeURI: String): Map[String, Elem] = {
-    parseCsv(file, nrOfHeaderLines)
-      .map(toXml(label, scheme, schemeURI))
-      .toMap
-  }
+  private val csvFormat = CSVFormat.RFC4180
+    .withHeader("old", "new", "uuid", "description")
+    .withDelimiter(',')
+    .withRecordSeparator('\n')
 
   private def valueUri(uuid: String) = s"https://data.cultureelerfgoed.nl/term/id/abr/$uuid"
 
-  private def toXml(label: String, scheme: String, schemeURI: String)(record: CSVRecord): (String, Elem) = {
-    val xml = <label xml:lang="nl"
-                           valueURI={ valueUri(record.get(2)) }
-                           subjectScheme={ scheme }
-                           schemeURI={ schemeURI }
-              >{ record.get(3) }</label>
+  def temporalMap(cfgDir: File): Map[String, Elem] = {
+    parseCsv(cfgDir / "ABR-period.csv", nrOfHeaderLines, csvFormat)
+      .map(record => record.get("old") ->
+        <ddm:temporal xml:lang="nl"
+           valueURI={ valueUri(record.get("uuid")) }
+           subjectScheme={ "ABR Periodes" }
+           schemeURI={ "https://data.cultureelerfgoed.nl/term/id/abr/9b688754-1315-484b-9c89-8817e87c1e84" }
+        >{ record.get("description") }</ddm:temporal>
+      ).toMap
+  }
 
-    (record.get(0), xml.copy(label = label))
+  def subjectMap(cfgDir: File): Map[String, Elem] = {
+    parseCsv(cfgDir / "ABR-complex.csv", nrOfHeaderLines, csvFormat)
+      .map(record => record.get("old") ->
+        <ddm:subject xml:lang="nl"
+          valueURI={ valueUri(record.get("uuid")) }
+          subjectScheme={ "ABR Complextypen" }
+          schemeURI={ "https://data.cultureelerfgoed.nl/term/id/abr/e9546020-4b28-4819-b0c2-29e7c864c5c0" }
+        >{ record.get("description") }</ddm:subject>
+      ).toMap
   }
 }

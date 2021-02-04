@@ -48,12 +48,15 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
     val records = parseCsv(cfgDir / "ABR-complex.csv", AbrRewriteRule.nrOfHeaderLines)
     records.map(tryUuid).filter(_.isFailure) shouldBe empty
     getDuplicates(records) shouldBe empty
+    records.size shouldBe AbrRewriteRule.subjectMap(cfgDir).size
   }
 
   "ABR-period" should "be valid" in {
+    AbrRewriteRule.temporalMap(cfgDir)
     val records = parseCsv(cfgDir / "ABR-period.csv", AbrRewriteRule.nrOfHeaderLines)
     getDuplicates(records) shouldBe empty
     records.map(tryUuid).filter(_.isFailure) shouldBe empty
+    records.size shouldBe AbrRewriteRule.temporalMap(cfgDir).size
   }
 
   private def tryUuid(r: CSVRecord) = Try(UUID.fromString(r.get(2)))
@@ -319,7 +322,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
     )
 
     cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
-      Failure(InvalidBagException("rabarbera not found in ABR-period.csv; barbapappa not found in ABR-complex.csv"))
+      Failure(InvalidBagException("temporal rabarbera not found; subject barbapappa not found"))
   }
 
   it should "match alkmaar variants" in {

@@ -38,8 +38,8 @@ package object bag2deposit {
 
   private val xsiURI = "http://www.w3.org/2001/XMLSchema-instance"
 
-  def parseCsv(file: File, nrOfHeaderLines: Int): Iterable[CSVRecord] = {
-    managed(CSVParser.parse(file.toJava, defaultCharset(), CSVFormat.RFC4180))
+  def parseCsv(file: File, nrOfHeaderLines: Int, format: CSVFormat = CSVFormat.RFC4180): Iterable[CSVRecord] = {
+    managed(CSVParser.parse(file.toJava, defaultCharset(), format))
       .map(_.asScala.filter(_.asScala.nonEmpty).drop(nrOfHeaderLines))
       .tried.unsafeGetOrThrow
   }
