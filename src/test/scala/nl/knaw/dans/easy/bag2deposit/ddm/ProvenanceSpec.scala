@@ -16,6 +16,7 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import nl.knaw.dans.easy.bag2deposit.Fixture.FixedCurrentDateTimeSupport
+import nl.knaw.dans.easy.bag2deposit.normalized
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -63,17 +64,17 @@ class ProvenanceSpec extends AnyFlatSpec with Matchers with FixedCurrentDateTime
             <dc:title>Archeologische Berichten Nijmegen – Briefrapport 21</dc:title>
             <ddm:temporal xml:lang="nl"
                           valueURI="https://data.cultureelerfgoed.nl/term/id/abr/330e7fe0-a1f7-43de-b448-d477898f6648"
-                          subjectScheme="Archeologisch Basis Register"
+                          subjectScheme="ABR Perioden"
                           schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed"
             >Vroege Middeleeuwen A</ddm:temporal>
             <ddm:subject xml:lang="nl"
                          valueURI="https://data.cultureelerfgoed.nl/term/id/abr/6ae3ab19-49ca-44a7-8b65-3a3395014bb9"
-                         subjectScheme="Archeologisch Basis Register"
+                         subjectScheme="ABR Complextypen"
                          schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed"
             >veenwinning (inclusief zouthoudend veen t.b.v. zoutproductie)</ddm:subject>
             <ddm:subject xml:lang="nl"
                          valueURI="https://data.cultureelerfgoed.nl/term/id/abr/f182d72c-2d22-47ae-b799-26dea01e770c"
-                         subjectScheme="Archeologisch Basis Register"
+                         subjectScheme="ABR Complextypen"
                          schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed"
             >akker / tuin</ddm:subject>
             <ddm:reportNumber
@@ -90,7 +91,7 @@ class ProvenanceSpec extends AnyFlatSpec with Matchers with FixedCurrentDateTime
       <prov:provenance xsi:schemaLocation="
         http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
         http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
-        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ ./provenance.xsd
+        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
         " xmlns:dct="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
             <prov:old>
