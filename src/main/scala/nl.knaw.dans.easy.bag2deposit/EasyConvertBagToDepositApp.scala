@@ -62,6 +62,10 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     }
   }
 
+  private val provenance = new Provenance(
+    app = getClass.getSimpleName,
+    version = configuration.version
+  )
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
@@ -81,8 +85,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       props <- depositPropertiesFactory.create(bagInfo, ddmIn)
       datasetId = props.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
-      _ = Provenance(ddmIn, ddmOut, s"${ getClass.getSimpleName } ${ configuration.version }")
-        .foreach(s => logger.info(s.serialize))
+      _ = provenance.xml(ddmIn, ddmOut).foreach(s => logger.info(s.serialize))
       _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = props.save((bagParentDir / "deposit.properties").toJava)
