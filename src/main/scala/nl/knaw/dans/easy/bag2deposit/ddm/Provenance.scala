@@ -41,7 +41,7 @@ class Provenance(app: String, version: String) {
         xsi:schemaLocation="
         http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
         http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
-        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ ./provenance.xsd
+        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
         ">
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
             <prov:old>
