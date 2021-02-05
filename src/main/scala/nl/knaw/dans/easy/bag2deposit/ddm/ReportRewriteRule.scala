@@ -25,50 +25,92 @@ import scala.xml.{ Elem, Node, NodeSeq }
 
 case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhancedLogging {
 
-  case class ReportCfg(uuid: String, label: String, regexp: String)
+  case class ReportCfg(uuid: String, label: String, regexpWithNr: String, regexp: String)
 
   val reportMap: Seq[ReportCfg] = parseCsv(cfgDir / "ABR-reports.csv", 0)
     .map(r => ReportCfg(
       uuid = r.get(0),
       label = r.get(1),
-      regexp = r.get(2).trim + nrTailRegexp,
+      regexpWithNr = r.get(2).trim + nrTailRegexp,
+      regexp = r.get(2).trim,
     )).toSeq
 
-  override def transform(n: Node): Seq[Node] = {
-    if (n.label != "title" && n.label != "alternative") n
+  val nodeLabels = Seq("title", "alternative", "identifier")
+
+  override def transform(node: Node): Seq[Node] = {
+    if (!nodeLabels.contains(node.label) || !node.text.contains(" ")) node
     else {
-      val titleValue = n.text
-      val lowerCaseTitle = titleValue.trim.toLowerCase
-      val reports = reportMap
-        .filter(cfg => lowerCaseTitle.matches(cfg.regexp))
-        .map(cfg => toReportNr(titleValue.replaceAll(":.*", ""), cfg.uuid))
-        .theSeq
-      if (reports.isEmpty && lowerCaseTitle.matches(missedRegExp))
-        logger.info(s"potential report number: $titleValue")
-      if (titleValue == reports.text)
+      val value = node.text
+      val lowerCaseValue = value.trim.toLowerCase
+      val reports = toReport(node.label == "identifier", value, lowerCaseValue).theSeq
+      if (reports.isEmpty && lowerCaseValue.matches(missedRegExp))
+        logger.info(s"potential report number: $value")
+      if (value == reports.text)
         reports
-      else reports :+ n
+      else reports :+ node
     }
   }
 
-  private def toReportNr(titleValue: String, uuid: String): Elem = {
+  private def toReport(isId: Boolean, value: String, lowerCaseValue: String) = {
+    if (!isId)
+      transformTitle(value, lowerCaseValue)
+    else if (value.contains("("))
+               transformIdWithBrackets(value, lowerCaseValue)
+         else transformId(value, lowerCaseValue)
+  }
+
+  private def transformId(value: String, lowerCaseValue: String) = {
+    mapToReport(
+      nr = value.replaceAll(s".*$nrRegexp", "").trim,
+      originalNameWithNr = value,
+      lowerCaseName = lowerCaseValue
+        .replaceAll(s":?$nrRegexp", "")
+    )
+  }
+
+  private def transformIdWithBrackets(value: String, lowerCaseValue: String) = {
+    mapToReport(
+      nr = value.replaceAll(s" *[(].*", "").trim,
+      originalNameWithNr = value,
+      lowerCaseName = lowerCaseValue
+        .replaceAll(" *[(](.*)[)].*", "$1")
+    )
+  }
+
+  private def transformTitle(value: String, lowerCaseValue: String) = {
+    mapToReport(
+      nr = value.replaceAll(s".*($nrRegexp)$trailer", "$1").trim,
+      originalNameWithNr = value.replaceAll(":.*", ""),
+      lowerCaseName = lowerCaseValue
+        .replaceAll(trailer + "$", "")
+        .replaceAll(nrRegexp + "$", "")
+    )
+  }
+
+  private def mapToReport(nr: String, originalNameWithNr: String, lowerCaseName: String) = {
+    reportMap
+      .filter(cfg => lowerCaseName.matches(cfg.regexp))
+      .map(cfg => toReportNr(originalNameWithNr, nr, cfg.uuid))
+  }
+
+  private def toReportNr(originalNameWithNr: String, nr: String, uuid: String): Elem = {
     <ddm:reportNumber
       schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
       valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/$uuid" }
       subjectScheme="ABR Rapporten"
-      reportNo={ titleValue.replaceAll(s".*($nrRegexp)$trailer", "$1").trim }
-    >{ titleValue }</ddm:reportNumber>
+      reportNo={ nr }
+    >{ originalNameWithNr }</ddm:reportNumber>
   }
 }
 object ReportRewriteRule extends DebugEnhancedLogging {
 
-  private val digit = "[0-9]"
+  val digit = "[0-9]"
 
   /** alpha numeric (and a little more) */
-  private val an = "[-_/.a-z0-9]"
+  val an = "[-_/.a-zA-Z0-9]"
 
   /** just one that does not match easy-dataset:99840 "Arcadis Archeologische Rapporten [2017 - 116]" */
-  val nrRegexp = s"\\W+$an*$digit$an*"
+  val nrRegexp = s" +$an*$digit$an*"
 
   private val trailer = "([.]|:.*)?"
   private val nrTailRegexp = s"$nrRegexp$trailer"

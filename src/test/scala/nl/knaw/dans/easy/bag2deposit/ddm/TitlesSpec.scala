@@ -46,7 +46,7 @@ class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
     rule.reportMap.foreach { m =>
 
       val n = titlesPerDataset
-        .mapValues(_.filter(_.toLowerCase.matches(m.regexp)))
+        .mapValues(_.filter(_.toLowerCase.matches(m.regexpWithNr)))
         .count(_._2.nonEmpty)
       (testDir / "number-of-matches-per-rce.txt").write(s"$n : \t${ m.label }")
     }
@@ -57,7 +57,7 @@ class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
     // against 101322 distinct titles of 48675 archaeological datasets
     // TODO manually analyse generated files to analyse effectiveness and correctness of regexps in ABR-report.csv
     val titleToReport = titles.map { title =>
-      title -> rule.reportMap.filter(m => title.trim.toLowerCase.matches(m.regexp)).map(_.label)
+      title -> rule.reportMap.filter(m => title.trim.toLowerCase.matches(m.regexpWithNr)).map(_.label)
     }.toMap
 
     val found = titleToReport
@@ -72,7 +72,7 @@ class TitlesSpec extends AnyFlatSpec with FileSystemSupport {
     )
 
     val regexpToLabel = rule.reportMap.filterNot(_.label == "Rapport")
-      .map(m => ".+" + m.regexp -> m.label)
+      .map(m => ".+" + m.regexpWithNr -> m.label)
       .toMap
 
     val missedTitles = titleToReport
