@@ -33,7 +33,7 @@ e69128ab-ed32-4759-9bf1-f4e7280273f7,"ArcheoSynthese-rapport","ar(ch|g)a?eosynth
 88126702-ddb5-4bda-b02a-548dcb9ffa0b,"Archeowest-rapport","ar(ch|g)a?eowest[^a-z]+rapport[a-z.]*"
 572a2286-d075-4638-8187-70a63c365132,"Archol-rapport","archol[^a-z]+rapport[a-z.]*"
 cce09325-0f34-473e-bf0e-65bc813a2982,"ArGeoBoor rapport","argeoboor[^a-z]+rapport[a-z.]*"
-4e73a072-78da-4ab6-94d8-39af689de499,"Argo-rapport","(argo[^a-z]+rapport[a-z.:]*|Rapport[a-z.:]* argo)"
+4e73a072-78da-4ab6-94d8-39af689de499,"Argo-rapport","(argo[^a-z]+rapport[a-z.:]*|rapport[a-z.:]* argo)"
 253c1e90-25fc-477b-bfce-51cb8d44fe67,"Arnhemse Archeologische Rapporten","arnhemse[^a-z]+ar(ch|g)a?eologi[a-z]+[^a-z]+rapport[a-z.]*en"
 f0f39e48-c687-4206-84a4-0135b637d03d,"Arnicon/Archeomedia-rapport","arnicon[^a-z]+ar(ch|g)a?eomedia[^a-z]+rapport[a-z.]*"
 e1c3ae95-ff64-4b38-9e50-7bc97a28e606,"Artefact-rapport","artefact[^a-z]+rapport[a-z.]*"

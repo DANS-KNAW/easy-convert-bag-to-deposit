@@ -61,10 +61,10 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
 
   private def transformId(value: String, lowerCaseValue: String) = {
     mapToReport(
-      nr = value.replaceAll(s".*$nrRegexp", "").trim,
+      nr = value.replaceAll(s".*( +:)?$nrRegexp", "").trim,
       originalNameWithNr = value,
       lowerCaseName = lowerCaseValue
-        .replaceAll(s":?$nrRegexp", "")
+        .replaceAll(s"( +:)?$nrRegexp", "")
     )
   }
 
