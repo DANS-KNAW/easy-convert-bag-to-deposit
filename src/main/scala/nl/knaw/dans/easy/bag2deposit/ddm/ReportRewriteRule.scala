@@ -38,25 +38,25 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
   val nodeLabels = Seq("title", "alternative", "identifier")
 
   override def transform(node: Node): Seq[Node] = {
-    if (!nodeLabels.contains(node.label) || !node.text.contains(" ")) node
-    else {
-      val value = node.text
-      val lowerCaseValue = value.trim.toLowerCase
-      val reports = toReport(node.label == "identifier", value, lowerCaseValue).theSeq
-      if (reports.isEmpty && lowerCaseValue.matches(missedRegExp))
-        logger.info(s"potential report number: $value")
-      if (value == reports.text)
-        reports
-      else reports :+ node
+    val value = node.text
+    lazy val lowerCaseValue = value.trim.toLowerCase
+    val reports = node.label match {
+      case "title" | "alternative" =>
+        transformTitle(value, lowerCaseValue)
+      case _ if value.contains("(") =>
+        transformIdWithBrackets(value, lowerCaseValue)
+      case _ if !lowerCaseValue.matches(".*(isbn|project|vindplaats|code).*")
+        // a word at the start/end or in the middle:
+        && lowerCaseValue.matches("([a-z]+ .*|.* [a-z]+|.*[( ][a-z]+[ )].*)") =>
+        // these two checks prevent 135 for more than 50% of the identifiers
+        transformId(value, lowerCaseValue)
+      case _ => node
     }
-  }
-
-  private def toReport(isId: Boolean, value: String, lowerCaseValue: String) = {
-    if (!isId)
-      transformTitle(value, lowerCaseValue)
-    else if (value.contains("("))
-               transformIdWithBrackets(value, lowerCaseValue)
-         else transformId(value, lowerCaseValue)
+    if (reports.isEmpty && lowerCaseValue.matches(missedRegExp))
+      logger.info(s"potential report number: $value")
+    if (value == reports.text)
+      reports
+    else reports :+ node
   }
 
   private def transformId(value: String, lowerCaseValue: String) = {
