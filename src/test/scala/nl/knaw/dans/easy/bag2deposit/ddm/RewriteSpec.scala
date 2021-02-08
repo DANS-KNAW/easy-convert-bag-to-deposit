@@ -71,9 +71,6 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         <ddm:dcmiMetadata>
             <dc:title>blabla</dc:title>
             <dc:title>Rapport 456</dc:title>
-            <dct:alternative>Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).</dct:alternative>
-            <dc:title>rabarbera</dc:title>
-            <dc:title>Archeologische Berichten Nijmegen – Briefrapport 21</dc:title>
             <dcterms:temporal xsi:type="abr:ABRperiode">VMEA</dcterms:temporal>
             <dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject>
             <dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
@@ -100,15 +97,6 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
               subjectScheme="ABR Rapporten"
               reportNo="456"
             >Rapport 456</ddm:reportNumber>
-            <ddm:reportNumber
-              schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
-              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/90f3092a-818e-4db2-8467-35b64262c5b3"
-              subjectScheme="ABR Rapporten"
-              reportNo="2859"
-            >Transect-rapport 2859</ddm:reportNumber>
-            <dct:alternative>Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).</dct:alternative>
-            <dc:title>rabarbera</dc:title>
-            <dc:title>Archeologische Berichten Nijmegen – Briefrapport 21</dc:title>
             <ddm:temporal xml:lang="nl"
                           valueURI="https://data.cultureelerfgoed.nl/term/id/abr/330e7fe0-a1f7-43de-b448-d477898f6648"
                           subjectScheme="ABR Periodes"
