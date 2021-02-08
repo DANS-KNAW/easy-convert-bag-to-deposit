@@ -38,25 +38,27 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
   val nodeLabels = Seq("title", "alternative", "identifier")
 
   override def transform(node: Node): Seq[Node] = {
-    val value = node.text
+    lazy val value = node.text
     lazy val lowerCaseValue = value.trim.toLowerCase
+
+    def logIfMissed(reports: Seq[Elem]) = {
+      if (reports.isEmpty && lowerCaseValue.matches(missedRegExp))
+        logger.info(s"potential report number: $value")
+      reports
+    }
+
     val reports = node.label match {
       case "title" | "alternative" =>
-        transformTitle(value, lowerCaseValue)
+        logIfMissed(transformTitle(value, lowerCaseValue))
       case _ if value.contains("(") =>
-        transformIdWithBrackets(value, lowerCaseValue)
-      case _ if !lowerCaseValue.matches(".*(isbn|project|vindplaats|code).*")
-        // a word at the start/end or in the middle:
-        && lowerCaseValue.matches("([a-z]+ .*|.* [a-z]+|.*[( ][a-z]+[ )].*)") =>
-        // these two checks prevent 135 for more than 50% of the identifiers
-        transformId(value, lowerCaseValue)
+        logIfMissed(transformIdWithBrackets(value, lowerCaseValue))
+      case _ if value.contains(" ") =>
+        logIfMissed(transformId(value, lowerCaseValue))
       case _ => node
     }
-    if (reports.isEmpty && lowerCaseValue.matches(missedRegExp))
-      logger.info(s"potential report number: $value")
-    if (value == reports.text)
-      reports
-    else reports :+ node
+    if (value != reports.text)
+      reports :+ node
+    else reports
   }
 
   private def transformId(value: String, lowerCaseValue: String) = {
@@ -68,19 +70,20 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
     )
   }
 
-  private def transformIdWithBrackets(value: String, lowerCaseValue: String) = {
+  private def transformIdWithBrackets(originalContent: String, lowerCaseContent: String) = {
     mapToReport(
-      nr = value.replaceAll(s" *[(].*", "").trim,
-      originalNameWithNr = value,
-      lowerCaseName = lowerCaseValue
-        .replaceAll(" *[(](.*)[)].*", "$1")
+      nr = originalContent.replaceAll(s" *[(].*", "").trim,
+      originalNameWithNr = originalContent,
+      lowerCaseName = lowerCaseContent
+        .replaceAll(".*[(]", "")
+        .replaceAll("[)].*", "")
     )
   }
 
-  private def transformTitle(value: String, lowerCaseValue: String) = {
+  private def transformTitle(originalContent: String, lowerCaseValue: String) = {
     mapToReport(
-      nr = value.replaceAll(s".*($nrRegexp)$trailer", "$1").trim,
-      originalNameWithNr = value.replaceAll(":.*", ""),
+      nr = originalContent.replaceAll(s".*($nrRegexp)$trailer", "$1").trim,
+      originalNameWithNr = originalContent.replaceAll(":.*", ""),
       lowerCaseName = lowerCaseValue
         .replaceAll(trailer + "$", "")
         .replaceAll(nrRegexp + "$", "")

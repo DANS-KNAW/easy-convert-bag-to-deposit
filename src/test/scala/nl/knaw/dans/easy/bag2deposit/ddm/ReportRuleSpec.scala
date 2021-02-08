@@ -10,28 +10,26 @@ class ReportRuleSpec extends AnyFlatSpec with Matchers with FileSystemSupport {
   private val rule: ReportRewriteRule = ddm.ReportRewriteRule(File("src/main/assembly/dist/cfg"))
   private val uuidToPreferredLabel = rule.reportMap.map(r => r.uuid -> r.label).toMap
   private val identifiers = File("src/test/resources/possibleArchaeologyIdentifiers.txt")
-    .lines // reducing 48713 to 20448 TODO what about "rapportcode" and ISBDs?
-    .filterNot(_.toLowerCase.matches(".*(isbn|project|vindplaats|code).*"))
-    .filter(_.toLowerCase.matches("([a-z]+ .*|.* [a-z]+|.*[( ][a-z]+[ )].*)")) // a word at the start/end in the middle
-  // File("target/tmp.txt").writeText(identifiers.mkString("\n"))
+    .lines.filter(_.matches(".*[ (].*"))
 
   "identifiers" should "return proper numbers" in {
     val transformed = Seq(
+      "A07_A010 (Periplus Archeomare rapport)",
       "Archol 145 (rapportnummer)",
       "Archol rapport 152",
       "DHS32 (Archol)",
       "Archol-rapport 127",
       "Rapportnr.: Argo 183",
       "KSP Rapport : 18382",
-      "A07_A010 (Periplus Archeomare rapport)",
     ).flatMap(id =>
       rule.transform(<identifier>{ id }</identifier>)
     )
     transformed
       .map(node => (node \@ "valueURI").replaceAll(".*/", ""))
       .sortBy(identity).distinct
-      .map(uuidToPreferredLabel.getOrElse(_, "")) shouldBe
-      Seq("", "KSP-rapport", "Argo-rapport", "Archol-rapport") // TODO Periplus
+      .map(uuidToPreferredLabel.getOrElse(_, ""))
+      .sortBy(identity) shouldBe
+      Seq("", "Archol-rapport", "Argo-rapport", "KSP-rapport", "Periplus / Archeomare Rapport", "Rapport")
 
     transformed.map(node => (node \@ "reportNo")) shouldBe
       List("152", "127", "183", "18382", "A07_A010")
