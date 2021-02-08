@@ -109,7 +109,7 @@ a881708a-4545-4ca3-ac5e-bc096e98e9f7,"RCE Rapportage Archeologische Monumentenzo
 4fead13b-62c1-4b2a-ad58-b2f6e8582da1,"Rijswijkse Archeologische Rapporten","rijswijkse[^a-z]+ar(ch|g)a?eologi[a-z]+[^a-z]+(rapport|project)[a-z.]*en"
 6dc71ece-9aca-4fd0-a5cf-04ce384bfa18,"Rubicon Erfgoed Rapport","rubicon[^a-z]+erfgoed[^a-z]+(rapport|project)[a-z.]*"
 7e6723b9-0bf2-4d84-8e98-c612b00c7b14,"SAA rapport","saa[^a-z]+(rapport|project)[a-z.]*"
-d7cfe250-c580-4bc7-a486-462cc9457fbe,"Salisbury Archeologische Rapporten","salisbury[^a-z]+ar(ch|g)a?eologi[a-z]+[^a-z]+(rapport|project)[a-z.]*en"
+d7cfe250-c580-4bc7-a486-462cc9457fbe,"Salisbury Archeologische Rapporten","salisbury[^a-z]+ar(ch|g)a?eologi[a-z]+[^a-z]+(rapport|project)[a-z.]*"
 446ec98e-4679-45f8-b33e-7d46e3bb84e9,"SCEZ-rapport","scez[^a-z]+(rapport|project)[a-z.]*"
 cfb0eb61-da07-4d8d-abdd-a6b6e6a82620,"SOB Research-rapport","sob[^a-z]+(research[^a-z]+)?(rapport|project)[a-z.]*"
 e18ef6ac-a8b8-4ec5-a0ed-4c6c60ca5b13,"Stadse Fratsen","stadse[^a-z]+fratsen"
