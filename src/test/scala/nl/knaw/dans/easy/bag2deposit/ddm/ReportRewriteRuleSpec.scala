@@ -39,13 +39,13 @@ class ReportRewriteRuleSpec extends AnyFlatSpec with Matchers with FileSystemSup
       "Archol rapport 152",
       "DHS32 (Archol)",
       "Archol-rapport 127",
-      "Rapportnr.: Argo 183",
+      "Rapportnr.: Argo 183", // "rapportnr.:" only 7 times in identifiers, one time in titles
       "KSP Rapport : 18382",
     ).flatMap(id =>
       rule.transform(<identifier>{ id }</identifier>)
     )
     toPreferredLabel(transformed) shouldBe
-      Seq("", "Archol-rapport", "Argo-rapport", "KSP-rapport", "Periplus / Archeomare Rapport", "Rapport")
+      Seq("", "Archol-rapport", "KSP-rapport", "Periplus / Archeomare Rapport", "Rapport")
 
     transformed.map(node => (node \@ "reportNo")) shouldBe
       List("152", "127", "183", "18382", "A07_A010")
@@ -72,7 +72,7 @@ class ReportRewriteRuleSpec extends AnyFlatSpec with Matchers with FileSystemSup
   it should "return proper numbers" in {
     // difference between titles in the profile/dcmiMedata section are tested with RewriteSpec
     val results = Seq(
-      <alternative>rapportnr.: 123</alternative>,
+      <alternative>rapportnr. 123</alternative>,
       <title>Rapport 456</title>,
       <alternative>Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).</alternative>,
     ).flatMap(rule.transform)
@@ -83,10 +83,13 @@ class ReportRewriteRuleSpec extends AnyFlatSpec with Matchers with FileSystemSup
       .sortBy(identity) shouldBe
       Seq("123", "2859", "456")
     transformed.map(_.text).sortBy(identity) shouldBe
-      Seq("Rapport 456", "Transect-rapport 2859", "rapportnr.")
+      Seq(
+        "Rapport 456",
+        "Transect-rapport 2859",
+        "rapportnr. 123"
+      )
     results.filter(_.label != "reportNumber").map(_.text) shouldBe
       Seq(
-        "rapportnr.: 123", // TODO why treated like <report-nr> : <rest-of-title> ?
         "Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).",
       )
   }
