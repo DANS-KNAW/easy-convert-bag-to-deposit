@@ -50,7 +50,7 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
     val reports = node.label match {
       case "title" | "alternative" =>
         logIfMissed(transformTitle(value, lowerCaseValue))
-      case _ if value.contains("(") =>
+      case _ if value.matches(s"$nrRegexp *[(].*") =>
         logIfMissed(transformIdWithBrackets(value, lowerCaseValue))
       case _ if value.contains(" ") =>
         logIfMissed(transformId(value, lowerCaseValue))
@@ -63,10 +63,10 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
 
   private def transformId(value: String, lowerCaseValue: String) = {
     mapToReport(
-      nr = value.replaceAll(s".*( +:)?$nrRegexp", "").trim,
+      nr = value.replaceAll(s".*( +:)? +($nrRegexp)", "$2").trim,
       originalNameWithNr = value,
       lowerCaseName = lowerCaseValue
-        .replaceAll(s"( +:)?$nrRegexp", "")
+        .replaceAll(s"( +:)? +$nrRegexp", "")
     )
   }
 
@@ -82,11 +82,11 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
 
   private def transformTitle(originalContent: String, lowerCaseValue: String) = {
     mapToReport(
-      nr = originalContent.replaceAll(s".*($nrRegexp)$trailer", "$1").trim,
+      nr = originalContent.replaceAll(s".*( +$nrRegexp)$trailer", "$1").trim,
       originalNameWithNr = originalContent.replaceAll(":.*", ""),
       lowerCaseName = lowerCaseValue
         .replaceAll(trailer + "$", "")
-        .replaceAll(nrRegexp + "$", "")
+        .replaceAll(s" +$nrRegexp$$", "")
     )
   }
 
@@ -113,11 +113,11 @@ object ReportRewriteRule extends DebugEnhancedLogging {
   val an = "[-_/.a-zA-Z0-9]"
 
   /** just one that does not match easy-dataset:99840 "Arcadis Archeologische Rapporten [2017 - 116]" */
-  val nrRegexp = s" +$an*$digit$an*"
+  val nrRegexp = s"$an*$digit$an*"
 
   private val trailer = "([.]|:.*)?"
-  private val nrTailRegexp = s"$nrRegexp$trailer"
-  private val missedRegExp = s".*(notitie|rapport|bericht|publicat).*$nrRegexp$trailer"
+  private val nrTailRegexp = s" +$nrRegexp$trailer"
+  private val missedRegExp = s".*(notitie|rapport|bericht|publicat).* +$nrRegexp$trailer"
 
   def logBriefRapportTitles(notConvertedTitles: NodeSeq, ddmOut: Node, datasetId: String): Unit = {
     // note: some of notConverted may have produced a reportNumber, the ones logged below won't

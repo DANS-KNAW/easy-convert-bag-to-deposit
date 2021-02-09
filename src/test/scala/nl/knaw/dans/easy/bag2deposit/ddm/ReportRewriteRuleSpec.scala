@@ -1,12 +1,26 @@
+/**
+ * Copyright (C) 2020 DANS - Data Archiving and Networked Services (info@dans.knaw.nl)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.FileSystemSupport
 import nl.knaw.dans.easy.bag2deposit.ddm
+import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.nrRegexp
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
-import scala.xml.Node
 
 class ReportRewriteRuleSpec extends AnyFlatSpec with Matchers with FileSystemSupport {
   private val rule: ReportRewriteRule = ddm.ReportRewriteRule(File("src/main/assembly/dist/cfg"))
@@ -32,34 +46,31 @@ class ReportRewriteRuleSpec extends AnyFlatSpec with Matchers with FileSystemSup
     }.toMap
   private lazy val titles = titlesPerDataset.values.flatten.toSeq
 
-  "identifiers" should "return proper numbers" in {
-    val transformed = Seq(
+  "transform <identifier>" should "convert haags" in {
+    val input = Seq(
+      "1503 (Haagse Archeologische Rapportage)",
       "A07_A010 (Periplus Archeomare rapport)",
-      "Archol 145 (rapportnummer)",
-      "Archol rapport 152",
-      "DHS32 (Archol)",
       "Archol-rapport 127",
-      "Rapportnr.: Argo 183", // "rapportnr.:" only 7 times in identifiers, one time in titles
+      "Archol rapport 152",
       "KSP Rapport : 18382",
-    ).flatMap(id =>
-      rule.transform(<identifier>{ id }</identifier>)
-    )
-    toPreferredLabel(transformed) shouldBe
-      Seq("", "Archol-rapport", "KSP-rapport", "Periplus / Archeomare Rapport", "Rapport")
+    ).map(s => <identifier>{ s }</identifier>)
 
-    transformed.map(node => (node \@ "reportNo")) shouldBe
-      List("152", "127", "183", "18382", "A07_A010")
+    input.flatMap(rule.transform)
+      .map(_ \@ "reportNo") shouldBe
+      Seq("1503", "A07_A010", "127", "152", "18382")
+  }
+  it should "not convert" in {
+    val input = Seq(
+      "Archol 145 (rapportnummer)",
+      "DHS32 (Archol)",
+      "Rapportnr.: Argo 183",
+      // "rapportnr.:" only 7 times in identifiers, one time in titles
+    ).map(s => <identifier>{s}</identifier>)
+
+    input.flatMap(rule.transform) shouldBe input
   }
 
-  private def toPreferredLabel(transformed: Seq[Node]) = {
-    transformed
-      .map(node => (node \@ "valueURI").replaceAll(".*/", ""))
-      .sortBy(identity).distinct
-      .map(uuidToPreferredLabel.getOrElse(_, ""))
-      .sortBy(identity)
-  }
-
-  "titles" should "not change" in {
+  "transform <title>" should "not change" in {
     val input = Seq(
       <title>blabla</title>,
       <title>blablabla : rapport 21</title>,
@@ -94,7 +105,7 @@ class ReportRewriteRuleSpec extends AnyFlatSpec with Matchers with FileSystemSup
       )
   }
 
-  it should "produce identifier checklists" in {
+  "transform" should "produce identifier checklists" in {
     val results = identifiers.flatMap(id =>
       rule.transform(<identifier>{ id }</identifier>)
     ).groupBy(_.label)
@@ -112,6 +123,9 @@ class ReportRewriteRuleSpec extends AnyFlatSpec with Matchers with FileSystemSup
     )
   }
   it should "produce title checklists" in {
+    // this test takes a minute
+    // keep it last to interrupt interactive test cycles
+    // while executing all other tests
     val results = titles.flatMap(id =>
       rule.transform(<title>{ id }</title>)
     ).groupBy(_.label)
@@ -119,7 +133,7 @@ class ReportRewriteRuleSpec extends AnyFlatSpec with Matchers with FileSystemSup
       results("reportNumber").map(_.text).mkString("\n")
     )
     val missed = results("title").groupBy(title => rule.reportMap.exists(cfg =>
-      title.text.toLowerCase.matches(".*" + cfg.regexp + ReportRewriteRule.nrRegexp))
+      title.text.toLowerCase.matches(s".*${ cfg.regexp } +$nrRegexp"))
     )
     (testDir / "titles-missed-at-end").writeText(
       missed(true).map(_.text).mkString("\n")
