@@ -18,7 +18,7 @@ object CheckLists extends App {
       results("reportNumber").map(_.text).mkString("\n")
     )
     val missed = results("identifier").groupBy(
-      _.text.toLowerCase.matches(".*(notitie|rapport|bericht|publicat).*")
+      _.text.toLowerCase.matches(".*(notitie|rapport|bericht|publicat|synthegra|grontmij).*")
     )
     (testDir / "identifiers-missed-with-keyword").writeText(
       missed(true).map(_.text).mkString("\n")
@@ -48,7 +48,8 @@ object CheckLists extends App {
       }.toMap
     lazy val titles = titlesPerDataset.values.flatten.toSeq
     val results = titles.flatMap(id =>
-      rule.transform(<title>{ id }</title>)
+      // a title with more than a report may follow the new element
+      rule.transform(<title>{ id }</title>).head
     ).groupBy(_.label)
     (testDir / "titles-matched").writeText(
       results("reportNumber").map(_.text).mkString("\n")
@@ -60,7 +61,7 @@ object CheckLists extends App {
       missed(true).map(_.text).mkString("\n")
     )
     val missedInTheMiddle = missed(false).groupBy(
-      _.text.toLowerCase.matches(".*(notitie|rapport|bericht|publicat|synthegra|grontmij).*")
+      _.text.toLowerCase.matches(".*(notitie|rapport|bericht|publicat).*")
     )
     (testDir / "titles-missed-with-keyword").writeText(
       missedInTheMiddle(true).map(_.text).mkString("\n")
