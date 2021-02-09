@@ -82,11 +82,9 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
 
   private def transformTitle(originalContent: String, lowerCaseValue: String) = {
     mapToReport(
-      nr = originalContent.replaceAll(s".*( +$nrRegexp)$trailer", "$1").trim,
-      originalNameWithNr = originalContent.replaceAll(":.*", ""),
-      lowerCaseName = lowerCaseValue
-        .replaceAll(trailer + "$", "")
-        .replaceAll(s" +$nrRegexp$$", "")
+      nr = originalContent.replaceAll(s".* ($nrRegexp)$trailer", "$1").trim,
+      originalNameWithNr = originalContent.replaceAll(trailer + "$", ""),
+      lowerCaseName = lowerCaseValue.replaceAll(s" +$nrRegexp$trailer$$", "")
     )
   }
 
