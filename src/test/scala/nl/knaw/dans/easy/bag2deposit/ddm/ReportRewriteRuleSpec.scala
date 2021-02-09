@@ -87,6 +87,7 @@ class ReportRewriteRuleSpec extends AnyFlatSpec with Matchers {
   it should "return proper numbers" in {
     // difference between titles in the profile/dcmiMedata section are tested with RewriteSpec
     val results = Seq(
+      <alternative>Greenhouse Advies 789</alternative>,
       <alternative>rapportnr. 123</alternative>,
       <title>Rapport 456</title>,
       <alternative>Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).</alternative>,
@@ -96,15 +97,18 @@ class ReportRewriteRuleSpec extends AnyFlatSpec with Matchers {
     transformed
       .map(node => node \@ "reportNo")
       .sortBy(identity) shouldBe
-      Seq("123", "2859", "456")
-    transformed.map(_.text).sortBy(identity) shouldBe
+      Seq("123", "2859", "456", "789", "789")
+    transformed.map(_.text) shouldBe
       Seq(
+        "Greenhouse Advies 789",
+        "Greenhouse Advies 789",
+        "rapportnr. 123",
         "Rapport 456",
         "Transect-rapport 2859",
-        "rapportnr. 123"
       )
     results.filter(_.label != "reportNumber").map(_.text) shouldBe
       Seq(
+        "Greenhouse Advies 789", // TODO wich greenhouse uuid to keep?
         "Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).",
       )
   }
