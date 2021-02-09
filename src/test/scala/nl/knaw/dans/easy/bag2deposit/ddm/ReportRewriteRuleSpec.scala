@@ -24,7 +24,6 @@ import org.scalatest.matchers.should.Matchers
 
 class ReportRewriteRuleSpec extends AnyFlatSpec with Matchers with FileSystemSupport {
   private val rule: ReportRewriteRule = ddm.ReportRewriteRule(File("src/main/assembly/dist/cfg"))
-  private val uuidToPreferredLabel = rule.reportMap.map(r => r.uuid -> r.label).toMap
   private val identifiers = File("src/test/resources/possibleArchaeologyIdentifiers.txt")
     .lines.filter(_.matches(".*[ (].*"))
   private val titlesPerDataset = File("src/test/resources/archeologischeTitels.txt")
