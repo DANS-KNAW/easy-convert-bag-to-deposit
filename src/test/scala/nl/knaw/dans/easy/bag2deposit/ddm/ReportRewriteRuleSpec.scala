@@ -16,14 +16,40 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.Fixture.FileSystemSupport
 import nl.knaw.dans.easy.bag2deposit.ddm
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class ReportRewriteRuleSpec extends AnyFlatSpec with Matchers with FileSystemSupport {
+class ReportRewriteRuleSpec extends AnyFlatSpec with Matchers {
   private val rule: ReportRewriteRule = ddm.ReportRewriteRule(File("src/main/assembly/dist/cfg"))
 
+  "each regexp" should "have proper optional nr. suffix for rapport/project/code/notitie" in {
+    val nrSuffix = "[a-z.]*"
+    rule.reportMap.map(_.regexp)
+      .filter(_.contains("(rapport|project)"))
+      .filterNot(_.contains(s"(rapport|project)$nrSuffix")) shouldBe empty
+    rule.reportMap.map(_.regexp)
+      .filter(_.contains("notitie"))
+      .filterNot(_.contains(s"notitie$nrSuffix")) shouldBe empty
+    rule.reportMap.map(_.regexp)
+      .filter(_.contains(nrSuffix))
+      .filterNot(str =>
+        str.contains(s"(rapport|project)$nrSuffix") ||
+          str.contains(s"(rapport|project|code)$nrSuffix") ||
+          str.contains(s"notitie$nrSuffix") ||
+          str.contains(s"publicatie$nrSuffix")
+      ) shouldBe empty
+  }
+  it should "allow enough spelling/suffix variants for archaeology" in {
+    rule.reportMap.map(_.regexp)
+      .filter(_.contains("eolog"))
+      .filterNot(_.contains("ar(ch|g)a?eolog[a-z]+")) shouldBe empty
+  }
+  it should "provide quantifiers for character classes" in {
+    rule.reportMap.filter(
+      _.regexp.split("]").tail.exists(_.matches("[^+*?].*"))
+    ) shouldBe empty
+  }
   "transform <identifier>" should "convert" in {
     val input = Seq(
       "1503 (Haagse Archeologische Rapportage)",
