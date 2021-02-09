@@ -60,7 +60,7 @@ object CheckLists extends App {
       missed(true).map(_.text).mkString("\n")
     )
     val missedInTheMiddle = missed(false).groupBy(
-      _.text.toLowerCase.matches(".*(notitie|rapport|bericht|publicat).*")
+      _.text.toLowerCase.matches(".*(notitie|rapport|bericht|publicat|synthegra|grontmij).*")
     )
     (testDir / "titles-missed-with-keyword").writeText(
       missedInTheMiddle(true).map(_.text).mkString("\n")
