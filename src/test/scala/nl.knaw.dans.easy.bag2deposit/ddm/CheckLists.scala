@@ -26,20 +26,22 @@ object CheckLists extends App {
   def identifiersLists = {
     val identifiers = File("src/test/resources/possibleArchaeologyIdentifiers.txt")
       .lines.filter(_.matches(".*[ (].*"))
-    val results = identifiers.flatMap(id =>
-      rule.transform(<identifier>{ id }</identifier>)
-    ).groupBy(_.label)
+    val (matched, missed) = identifiers
+      .flatMap(id => rule.transform(<identifier>{ id }</identifier>))
+      .partition(_.label == "reportNumber")
+    val (withKeyword, noKeyword) = missed
+      .partition(
+        _.text.toLowerCase.matches(".*(notitie|rapport|bericht|publicat|synthegra|grontmij).*")
+      )
+
     (testDir / "identifiers-matched").writeText(
-      results("reportNumber").map(_.text).mkString("\n")
-    )
-    val missed = results("identifier").groupBy(
-      _.text.toLowerCase.matches(".*(notitie|rapport|bericht|publicat|synthegra|grontmij).*")
+      matched.map(_.text).mkString("\n")
     )
     (testDir / "identifiers-missed-with-keyword").writeText(
-      missed(true).map(_.text).mkString("\n")
+      withKeyword.map(_.text).mkString("\n")
     )
     (testDir / "identifiers-missed-otherwise").writeText(
-      missed(false).map(_.text).mkString("\n")
+      noKeyword.map(_.text).mkString("\n")
     )
   }
 
