@@ -48,6 +48,14 @@
             <groupId>nl.knaw.dans.lib</groupId>
             <artifactId>dans-bag-lib_2.12</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.yourmediashelf.fedora.client</groupId>
+            <artifactId>fedora-client-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.typelevel</groupId>
+            <artifactId>cats-core_2.12</artifactId>
+        </dependency>
 
         <!-- testing -->
         <dependency>
