@@ -5,16 +5,18 @@ import cats.instances.list._
 import cats.instances.try_._
 import cats.syntax.traverse._
 import nl.knaw.dans.lib.error.TryExtensions
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import org.apache.commons.configuration.PropertiesConfiguration
 import org.apache.commons.csv.CSVFormat.RFC4180
 import org.apache.commons.csv.{ CSVFormat, CSVParser, CSVRecord }
 import resource.managed
 
 import java.nio.charset.Charset.defaultCharset
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
-import scala.util.Try
+import scala.util.{ Failure, Try }
 import scala.xml.{ Elem, XML }
 
-object Collections {
+object Collections extends DebugEnhancedLogging {
   val resolver: Resolver = Resolver()
 
   private def parseCsv(file: File, format: CSVFormat): Try[Iterable[CSVRecord]] = {
@@ -43,6 +45,24 @@ object Collections {
         >{ r.get("prefLabel") }</ddm:inCollection>
   }
 
+  def getCollectionsMap(cfgPath: File, properties: PropertiesConfiguration): Map[String, Elem] = {
+    val result: Map[String, Elem] = Try(FedoraProvider(properties).map { provider =>
+      memberDatasetIdToInCollection(collectionDatasetIdToInCollection(cfgPath), provider)
+    }.getOrElse(Map.empty)
+    ).recoverWith { case e =>
+      logger.warn(s"No <inCollection> added to DDM, fedora was configured but caused $e")
+      Failure(e)
+    }.getOrElse {
+      logger.info(s"No <inCollection> added to DDM, no fedora was configured")
+      Map.empty
+    }
+    result.foreach { case (datasetId, inCollection: Elem) =>
+      val x = (inCollection \@ "valueURI").replaceAll(".*/", "")
+      logger.info(s"$datasetId $x")
+    }
+    result
+  }
+
   def collectionDatasetIdToInCollection(cfgDir: File): Seq[(String, Elem)] = {
 
     val skosMap = parseCsv(cfgDir / "excel2skos-collecties.csv", skosCsvFormat)
@@ -67,14 +87,14 @@ object Collections {
       }
   }
 
-  def memberDatasetIdToInCollection(collectionDatasetIdToInCollection: Seq[(String, Elem)], fedoraProvider: FedoraProvider): Seq[(String, Elem)] = {
+  def memberDatasetIdToInCollection(collectionDatasetIdToInCollection: Seq[(String, Elem)], fedoraProvider: FedoraProvider): Map[String, Elem] = {
 
     collectionDatasetIdToInCollection
       .flatMap { case (datasetId, inCollection) =>
         membersOf(datasetId, fedoraProvider)
           .unsafeGetOrThrow
           .map(_ -> inCollection)
-      }
+      }.toMap
   }
 
   def membersOf(datasetId: String, fedoraProvider: FedoraProvider): Try[Seq[String]] = {

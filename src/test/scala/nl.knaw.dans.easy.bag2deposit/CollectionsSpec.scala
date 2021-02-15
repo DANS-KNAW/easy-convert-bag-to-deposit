@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.FileSystemSupport
+import nl.knaw.dans.easy.bag2deposit.collections.Collections.getCollectionsMap
 import nl.knaw.dans.easy.bag2deposit.collections.{ Collections, FedoraProvider }
 import nl.knaw.dans.lib.error.TryExtensions
 import org.apache.commons.configuration.PropertiesConfiguration
@@ -115,10 +116,17 @@ class CollectionsSpec extends AnyFlatSpec with Matchers with FileSystemSupport w
       setDelimiterParsingDisabled(true)
     }) shouldBe None
   }
-  it should "return Some even id not available" in {
+  it should "return Some, even if not available" in {
     FedoraProvider(new PropertiesConfiguration() {
       setDelimiterParsingDisabled(true)
       load("src/main/assembly/dist/cfg/application.properties")
     }) shouldBe a[Some[_]]
+  }
+  "getCollectionsMap" should "" in {
+    // TODO manual check: logging should contain "Connection refused"
+    getCollectionsMap(File("src/test/resources/debug-config"), new PropertiesConfiguration() {
+      setDelimiterParsingDisabled(true)
+      load((cfgDir / "application.properties").toJava)
+    }) shouldBe Map.empty
   }
 }

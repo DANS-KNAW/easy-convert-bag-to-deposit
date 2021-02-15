@@ -23,9 +23,9 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.util.{ Failure, Success, Try }
 import scala.xml.transform.{ RewriteRule, RuleTransformer }
-import scala.xml.{ Node, NodeSeq }
+import scala.xml.{ Elem, Node, NodeSeq }
 
-case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
+case class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty) extends DebugEnhancedLogging {
 
   val reportRewriteRule: ReportRewriteRule = ReportRewriteRule(cfgDir)
   private val acquisitionRewriteRule: AcquisitionRewriteRule = AcquisitionRewriteRule(cfgDir)
@@ -44,11 +44,11 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
     LanguageRewriteRule(cfgDir / "languages.csv"),
   )
 
-  private case class ArchaeologyRewriteRule(fromFirstTitle: NodeSeq) extends RewriteRule {
+  private case class ArchaeologyRewriteRule(additionalElements: NodeSeq) extends RewriteRule {
     override def transform(n: Node): Seq[Node] = {
       if (n.label != "dcmiMetadata") n
       else <dcmiMetadata>
-             { fromFirstTitle }
+             { additionalElements }
              { archaeologyRuleTransformer(n).nonEmptyChildren }
            </dcmiMetadata>.copy(prefix = n.prefix, attributes = n.attributes, scope = n.scope)
     }
@@ -57,9 +57,12 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
   def transform(ddmIn: Node, datasetId: String): Try[Node] = {
     if (!(ddmIn \ "profile" \ "audience").text.contains("D37000")) {
       // not archaeological
+      // TODO additional element inCollection
       Success(standardRuleTransformer(ddmIn))
     }
     else {
+      val inCollection = collectionsMap.get(datasetId).toSeq
+
       // a title in the profile will not change but may produce something for dcmiMetadata
       val originalProfile = ddmIn \ "profile"
       val transformedProfile = originalProfile.flatMap(profileTitleRuleTransformer)
@@ -68,7 +71,7 @@ case class DdmTransformer(cfgDir: File) extends DebugEnhancedLogging {
       val notConvertedFirstTitle = transformedProfile \ "title"
 
       // the transformation
-      val ddmRuleTransformer = new RuleTransformer(ArchaeologyRewriteRule(fromFirstTitle))
+      val ddmRuleTransformer = new RuleTransformer(ArchaeologyRewriteRule(fromFirstTitle ++ inCollection))
       val ddmOut = ddmRuleTransformer(ddmIn)
 
       // logging

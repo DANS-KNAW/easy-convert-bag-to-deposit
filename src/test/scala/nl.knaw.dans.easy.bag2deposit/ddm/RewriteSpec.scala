@@ -193,6 +193,30 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
     // TODO manually check logging of briefrapport
   }
 
+  it should "add inCollection" in {
+    val ddmIn = ddm(
+        <ddm:profile>
+          <dc:title>blabla</dc:title>
+          { mandatoryInProfile }
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+        </ddm:dcmiMetadata>
+    )
+
+    val transformer = cfg.ddmTransformer
+      .copy(collectionsMap = Map("easy-dataset:123" -> <inCollection/>))
+    transformer.transform(ddmIn, "easy-dataset:456").map(normalized) shouldBe Success(normalized(ddmIn))
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddm(
+        <ddm:profile>
+          <dc:title>blabla</dc:title>
+          { mandatoryInProfile }
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+          <inCollection/>
+        </ddm:dcmiMetadata>
+    )))
+  }
+
   it should "add report number of profile to dcmiMetadata" in {
     val ddmIn = ddm(
         <ddm:profile>
