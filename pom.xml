@@ -56,6 +56,11 @@
             <groupId>org.typelevel</groupId>
             <artifactId>cats-core_2.12</artifactId>
         </dependency>
+        <dependency>
+            <groupId>net.ruippeixotog</groupId>
+            <artifactId>scala-scraper_2.12</artifactId>
+            <version>2.2.0</version>
+        </dependency>
 
         <!-- testing -->
         <dependency>

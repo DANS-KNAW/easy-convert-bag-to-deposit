@@ -1,9 +1,27 @@
+/**
+ * Copyright (C) 2020 DANS - Data Archiving and Networked Services (info@dans.knaw.nl)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package nl.knaw.dans.easy.bag2deposit.collections
 
 import better.files.File
 import cats.instances.list._
 import cats.instances.try_._
 import cats.syntax.traverse._
+import net.ruippeixotog.scalascraper.browser.JsoupBrowser
+import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
+import net.ruippeixotog.scalascraper.dsl.DSL._
 import nl.knaw.dans.lib.error.TryExtensions
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration
@@ -12,12 +30,15 @@ import org.apache.commons.csv.{ CSVFormat, CSVParser, CSVRecord }
 import resource.managed
 
 import java.nio.charset.Charset.defaultCharset
+import java.nio.charset.StandardCharsets
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 import scala.util.{ Failure, Try }
-import scala.xml.{ Elem, XML }
+import scala.xml.Elem
 
 object Collections extends DebugEnhancedLogging {
-  val resolver: Resolver = Resolver()
+
+  private val browser = JsoupBrowser()
+  private val resolver: Resolver = Resolver()
 
   private def parseCsv(file: File, format: CSVFormat): Try[Iterable[CSVRecord]] = {
     managed(CSVParser.parse(
@@ -97,14 +118,21 @@ object Collections extends DebugEnhancedLogging {
       }.toMap
   }
 
-  def membersOf(datasetId: String, fedoraProvider: FedoraProvider): Try[Seq[String]] = {
+  private def membersOf(datasetId: String, fedoraProvider: FedoraProvider): Try[Seq[String]] = {
     for {
       maybeJumpoffId <- jumpoff(datasetId, fedoraProvider)
       jumpoffId = maybeJumpoffId.getOrElse(throw new Exception(s"no jumpoff for $datasetId"))
-      html <- fedoraProvider
+      doc <- fedoraProvider
         .disseminateDatastream(jumpoffId, "HTML_MU")
-        .map(XML.load).tried
-      ids <- members(html)
+        .map(browser.parseInputStream(_, StandardCharsets.UTF_8.name())).tried
+      items = doc >> elementList("a")
+      hrefs = items
+        .withFilter(_.hasAttr("href"))
+        .map(_.attr("href"))
+        .sortBy(identity)
+        .distinct
+      filtered = hrefs.filter(_.matches("(?s).*(doi.org.*dans|urn:nbn:nl:ui:13-).*"))
+      ids <- filtered.traverse(toDatasetId)
     } yield ids
   }
 
@@ -114,21 +142,6 @@ object Collections extends DebugEnhancedLogging {
       jumpofId = ids.find(_.startsWith("dans-jumpoff:"))
     } yield jumpofId
   }
-
-  /**
-   *
-   * @param xhtml content of jump off stream, for example
-   *              http://easy.dans.knaw.nl:8080/fedora/objects/dans-jumpoff:3931/datastreams/HTML_MU/content
-   * @return links to doi/urn-s resolved to dataset IDs
-   */
-  def members(xhtml: Elem): Try[List[String]] = (xhtml \\ "a")
-    .map(_ \@ "href")
-    .filter(_.matches(".*(doi.org.*dans|urn:nbn:nl:ui:13-).*"))
-    .toList
-    // duplicates like // urn:nbn:nl:ui:13-6wni-xz in easy-dataset:34359
-    // and lots in easy-dataset:6460 by name, by interview nr and hidden ones with [ZWNBSP]
-    .sortBy(identity).distinct
-    .traverse(id => toDatasetId(id))
 
   private def toDatasetId(str: String) = {
     val trimmed = str
