@@ -25,24 +25,12 @@ import org.scalatest.matchers.should.Matchers
 
 import java.util.UUID
 import scala.util.{ Failure, Success, Try }
-import scala.xml.NodeBuffer
+import scala.xml.Elem
 
 class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
   private val cfg = Configuration(cfgDir.parent)
   override val schema = "https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"
-
-  private val mandatoryInProfile =
-          <dct:description>YYY</dct:description>
-          <dcx-dai:creatorDetails>
-            <dcx-dai:organization>
-              <dcx-dai:name>DANS</dcx-dai:name>
-            </dcx-dai:organization>
-          </dcx-dai:creatorDetails>
-          <ddm:created>2013-03</ddm:created>
-          <ddm:available>2013-04</ddm:available>
-          <ddm:audience>D37000</ddm:audience>
-          <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
 
   "ABR-complex" should "be valid" in {
     val records = parseCsv(cfgDir / "ABR-complex.csv", AbrRewriteRule.nrOfHeaderLines)
@@ -63,11 +51,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
   private def getDuplicates(records: Iterable[CSVRecord]) = records.groupBy(_.get(0)).filter(_._2.size > 1)
 
   "ABR rules" should "convert" in {
-    val ddmIn = ddm(
-        <ddm:profile>
-          <dc:title>Rapport 123</dc:title>
-          { mandatoryInProfile }
-        </ddm:profile>
+    val ddmIn = ddm(title = "Rapport 123", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
             <dc:title>blabla</dc:title>
             <dc:title>Rapport 456</dc:title>
@@ -78,11 +62,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
         </ddm:dcmiMetadata>
     )
 
-    val expectedDDM = ddm(
-        <ddm:profile>
-          <dc:title>Rapport 123</dc:title>
-          { mandatoryInProfile }
-        </ddm:profile>
+    val expectedDDM = ddm(title = "Rapport 123", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
             <ddm:reportNumber
               schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
@@ -133,12 +113,20 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
     validate(expectedDDM) shouldBe Success(())
   }
 
-  "LanguageRewriteRule" should "convert" in {
-    val ddmIn = ddm(
-        <ddm:profile>
-          <dc:title>language test</dc:title>
-          { mandatoryInProfile }
-        </ddm:profile>
+  it should "complain about invalid period/subject" in {
+    val ddmIn = ddm(title = "blablabla", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+            <dcterms:temporal xsi:type="abr:ABRperiode">rabarbera</dcterms:temporal>
+            <dc:subject xsi:type="abr:ABRcomplex">barbapappa</dc:subject>
+        </ddm:dcmiMetadata>
+    )
+
+    cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+      Failure(InvalidBagException("temporal rabarbera not found; subject barbapappa not found"))
+  }
+
+  "languageRewriteRule" should "convert" in {
+    val ddmIn = ddm(title = "language test", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
           <dcterms:language>in het Nederlands</dcterms:language>
           <dc:language>Engels</dc:language>
@@ -151,11 +139,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
           <dcterms:language xsi:type='dcterms:ISO639-2'>fra</dcterms:language>
         </ddm:dcmiMetadata>
     )
-    val expectedDDM = ddm(
-        <ddm:profile>
-          <dc:title>language test</dc:title>
-          { mandatoryInProfile }
-        </ddm:profile>
+    val expectedDDM = ddm(title = "language test", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
           <ddm:language encodingScheme="ISO639-2" code="dut">in het Nederlands</ddm:language>
           <ddm:language encodingScheme="ISO639-2" code="eng">Engels</ddm:language>
@@ -179,12 +163,8 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
     validate(expectedDDM) shouldBe Success(())
   }
 
-  it should "leave briefrapport untouched" in {
-    val ddmIn = ddm(
-        <ddm:profile>
-          <dc:title>Briefrapport 123</dc:title>
-          { mandatoryInProfile }
-        </ddm:profile>
+  "reportRewriteRule" should "leave briefrapport untouched" in {
+    val ddmIn = ddm(title = "Briefrapport 123", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
         </ddm:dcmiMetadata>
     )
@@ -193,44 +173,12 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
     // TODO manually check logging of briefrapport
   }
 
-  it should "add inCollection" in {
-    val ddmIn = ddm(
-        <ddm:profile>
-          <dc:title>blabla</dc:title>
-          { mandatoryInProfile }
-        </ddm:profile>
-        <ddm:dcmiMetadata>
-        </ddm:dcmiMetadata>
-    )
-
-    val transformer = cfg.ddmTransformer
-      .copy(collectionsMap = Map("easy-dataset:123" -> <inCollection/>))
-    transformer.transform(ddmIn, "easy-dataset:456").map(normalized) shouldBe Success(normalized(ddmIn))
-    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddm(
-        <ddm:profile>
-          <dc:title>blabla</dc:title>
-          { mandatoryInProfile }
-        </ddm:profile>
-        <ddm:dcmiMetadata>
-          <inCollection/>
-        </ddm:dcmiMetadata>
-    )))
-  }
-
   it should "add report number of profile to dcmiMetadata" in {
-    val ddmIn = ddm(
-        <ddm:profile>
-          <dc:title>Rapport 123: blablabla</dc:title>
-          { mandatoryInProfile }
-        </ddm:profile>
+    val ddmIn = ddm(title = "Rapport 123: blablabla", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
         </ddm:dcmiMetadata>
     )
-    val expectedDdm = ddm(
-        <ddm:profile>
-          <dc:title>Rapport 123: blablabla</dc:title>
-          { mandatoryInProfile }
-        </ddm:profile>
+    val expectedDdm = ddm(title = "Rapport 123: blablabla", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
           <ddm:reportNumber
             schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
@@ -245,21 +193,45 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
       Success(normalized(expectedDdm))
   }
 
-  it should "add acquisition methods of profile to dcmiMetadata" in {
-    val ddmIn = ddm(
-        <ddm:profile>
-          <dc:title>Een Inventariserend Veldonderzoek in de vorm van proefsleuven</dc:title>
-          { mandatoryInProfile }
-        </ddm:profile>
+  it should "match Alkmaar variants" in {
+    val ddmIn = ddm(title = "blablabla", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+            <dc:title>Rapporten over de Alkmaarse Monumenten en Archeologie 18</dc:title>
+            <dc:title> RAMA 13</dc:title>
+            <dc:title>Rapporten over de Alkmaarse Monumentenzorg en Archeologie RAMA 12</dc:title>
+        </ddm:dcmiMetadata>
+    )
+    val expectedDdm = ddm(title = "blablabla", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+            <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
+                              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/05c754af-7944-4971-8280-9e1b4e474a8d"
+                              subjectScheme="ABR Rapporten" reportNo="18">
+              Rapporten over de Alkmaarse Monumenten en Archeologie 18
+            </ddm:reportNumber>
+            <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
+                              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/05c754af-7944-4971-8280-9e1b4e474a8d"
+                              subjectScheme="ABR Rapporten" reportNo="13">
+              RAMA 13
+            </ddm:reportNumber>
+            <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
+                              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/05c754af-7944-4971-8280-9e1b4e474a8d"
+                              subjectScheme="ABR Rapporten" reportNo="12">
+              Rapporten over de Alkmaarse Monumentenzorg en Archeologie RAMA 12
+            </ddm:reportNumber>
+        </ddm:dcmiMetadata>
+    )
+    // TODO these titles don't show up in target/test/TitlesSpec/matches-per-rce.txt
+    cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+      Success(normalized(expectedDdm))
+  }
+
+  "acquisitionRewriteRule" should "add acquisition methods of profile to dcmiMetadata" in {
+    val ddmIn = ddm(title = "Een Inventariserend Veldonderzoek in de vorm van proefsleuven", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
           <dc:title>Bureauonderzoek en Inventariserend veldonderzoek (verkennende fase)</dc:title>
         </ddm:dcmiMetadata>
     )
-    val expectedDdm = ddm(
-        <ddm:profile>
-          <dc:title>Een Inventariserend Veldonderzoek in de vorm van proefsleuven</dc:title>
-          { mandatoryInProfile }
-        </ddm:profile>
+    val expectedDdm = ddm(title = "Een Inventariserend Veldonderzoek in de vorm van proefsleuven", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
               <ddm:acquisitionMethod
                 schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/554ca1ec-3ed8-42d3-ae4b-47bcb848b238"
@@ -284,19 +256,11 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
   }
 
   it should "add multiple acquisition methods of profile to dcmiMetadata" in {
-    val ddmIn = ddm(
-        <ddm:profile>
-          <dc:title>Archeologisch bureauonderzoek en gecombineerd verkennend en karterend booronderzoek</dc:title>
-          { mandatoryInProfile }
-        </ddm:profile>
+    val ddmIn = ddm(title = "Archeologisch bureauonderzoek en gecombineerd verkennend en karterend booronderzoek", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
         </ddm:dcmiMetadata>
     )
-    val expectedDdm = ddm(
-        <ddm:profile>
-          <dc:title>Archeologisch bureauonderzoek en gecombineerd verkennend en karterend booronderzoek</dc:title>
-          { mandatoryInProfile }
-        </ddm:profile>
+    val expectedDdm = ddm(title = "Archeologisch bureauonderzoek en gecombineerd verkennend en karterend booronderzoek", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
               <ddm:acquisitionMethod
                 schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/554ca1ec-3ed8-42d3-ae4b-47bcb848b238"
@@ -320,63 +284,41 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
       Success(normalized(expectedDdm))
   }
 
-  it should "complain about invalid period/subject" in {
-    val ddmIn = ddm(
-        <ddm:profile>
-          <dc:title>blablabla</dc:title>
-          { mandatoryInProfile }
-        </ddm:profile>
+  "ddmTransformer" should "add inCollection for archaeology" in {
+    val ddmIn = ddm(title = "blabla", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
-            <dcterms:temporal xsi:type="abr:ABRperiode">rabarbera</dcterms:temporal>
-            <dc:subject xsi:type="abr:ABRcomplex">barbapappa</dc:subject>
         </ddm:dcmiMetadata>
     )
 
-    cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
-      Failure(InvalidBagException("temporal rabarbera not found; subject barbapappa not found"))
+    val transformer = cfg.ddmTransformer
+      .copy(collectionsMap = Map("easy-dataset:123" -> <inCollection/>))
+    transformer.transform(ddmIn, "easy-dataset:456").map(normalized) shouldBe Success(normalized(ddmIn))
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
+      ddm(title = "blabla", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <inCollection/>
+        </ddm:dcmiMetadata>
+      )))
   }
 
-  it should "match alkmaar variants" in {
-    val ddmIn = ddm(
-        <ddm:profile>
-          <dc:title>blablabla</dc:title>
-          { mandatoryInProfile }
-        </ddm:profile>
+  it should "add inCollection for other than archaeology" in pendingUntilFixed {
+    val ddmIn = ddm(title = "blabla", audience = "Z99000", dcmi =
         <ddm:dcmiMetadata>
-            <dc:title>Rapporten over de Alkmaarse Monumenten en Archeologie 18</dc:title>
-            <dc:title> RAMA 13</dc:title>
-            <dc:title>Rapporten over de Alkmaarse Monumentenzorg en Archeologie RAMA 12</dc:title>
         </ddm:dcmiMetadata>
     )
-    val expectedDdm = ddm(
-        <ddm:profile>
-          <dc:title>blablabla</dc:title>
-          { mandatoryInProfile }
-        </ddm:profile>
+
+    val transformer = cfg.ddmTransformer
+      .copy(collectionsMap = Map("easy-dataset:123" -> <inCollection/>))
+    transformer.transform(ddmIn, "easy-dataset:456").map(normalized) shouldBe Success(normalized(ddmIn))
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
+      ddm(title = "blabla", audience = "Z99000", dcmi =
         <ddm:dcmiMetadata>
-            <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
-                              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/05c754af-7944-4971-8280-9e1b4e474a8d"
-                              subjectScheme="ABR Rapporten" reportNo="18">
-              Rapporten over de Alkmaarse Monumenten en Archeologie 18
-            </ddm:reportNumber>
-            <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
-                              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/05c754af-7944-4971-8280-9e1b4e474a8d"
-                              subjectScheme="ABR Rapporten" reportNo="13">
-              RAMA 13
-            </ddm:reportNumber>
-            <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
-                              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/05c754af-7944-4971-8280-9e1b4e474a8d"
-                              subjectScheme="ABR Rapporten" reportNo="12">
-              Rapporten over de Alkmaarse Monumentenzorg en Archeologie RAMA 12
-            </ddm:reportNumber>
+          <inCollection/>
         </ddm:dcmiMetadata>
-    )
-    // TODO these titles don't show up in target/test/TitlesSpec/matches-per-rce.txt
-    cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
-      Success(normalized(expectedDdm))
+      )))
   }
 
-  private def ddm(dcmi: NodeBuffer) =
+  private def ddm(title: String, audience: String, dcmi: Elem) =
       <ddm:DDM xmlns:dcx="http://easy.dans.knaw.nl/schemas/dcx/"
          xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -392,6 +334,20 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers {
          http://www.w3.org/2001/XMLSchema-instance http://easy.dans.knaw.nl/schemas/md/emd/2013/11/xml.xsd
          http://purl.org/dc/terms/ http://easy.dans.knaw.nl/schemas/emd/2013/11/qdc.xsd
          http://purl.org/dc/elements/1.1/ http://dublincore.org/schemas/xmls/qdc/dc.xsd
-      "> { dcmi }
+      ">
+        <ddm:profile>
+          <dc:title>{ title }</dc:title>
+          <dct:description>YYY</dct:description>
+          <dcx-dai:creatorDetails>
+            <dcx-dai:organization>
+              <dcx-dai:name>DANS</dcx-dai:name>
+            </dcx-dai:organization>
+          </dcx-dai:creatorDetails>
+          <ddm:created>2013-03</ddm:created>
+          <ddm:available>2013-04</ddm:available>
+          <ddm:audience>{ audience }</ddm:audience>
+          <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
+        </ddm:profile>
+        { dcmi }
       </ddm:DDM>
 }
