@@ -97,19 +97,17 @@ class ReportRewriteRuleSpec extends AnyFlatSpec with Matchers {
     transformed
       .map(node => node \@ "reportNo")
       .sortBy(identity) shouldBe
-      Seq("123", "2859", "456", "789", "789")
-    transformed.map(_.text) shouldBe
-      Seq(
-        "Greenhouse Advies 789",
-        "Greenhouse Advies 789",
-        "rapportnr. 123",
-        "Rapport 456",
-        "Transect-rapport 2859",
-      )
-    results.filter(_.label != "reportNumber").map(_.text) shouldBe
-      Seq(
-        "Greenhouse Advies 789", // TODO wich greenhouse uuid to keep?
-        "Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).",
-      )
+      Seq("123", "2859", "456", "789")
+
+    transformed.map(_.text) shouldBe Seq(
+      "Greenhouse Advies 789",
+      "rapportnr. 123",
+      "Rapport 456",
+      "Transect-rapport 2859",
+    )
+    // title kept because it contains more than the report number:
+    results.filter(_.label != "reportNumber").map(_.text) shouldBe Seq(
+      "Transect-rapport 2859: Een Archeologisch Bureauonderzoek. Ellecom, glasvezeltracé Eikenstraat, Gemeente Rheden (GD).",
+    )
   }
 }

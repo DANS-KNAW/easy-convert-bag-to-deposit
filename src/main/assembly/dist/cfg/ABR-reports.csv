@@ -68,7 +68,6 @@ ae4888e5-e365-4e6e-8474-c91920bb73fe,"Diachron notitie","diachron[^a-z]+notitie[
 52798c8a-e5cd-48f0-a1d4-6c881e1164e5,"Gent, Rapport Universiteit","gent[^a-z]+(rapport|project)[a-z.]*[^a-z]+universiteit"
 9de2dcf5-669e-402a-bb10-2c57ca98706b,"Geo-Logical-reeks","geo[^a-z]+logical[^a-z]+reeks"
 260d84c4-34e2-4c79-86fb-ee5b598b5fc2,"Greenhouse Advies","greenhouse[^a-z]+advies"
-86db4707-a7e7-4ab9-b546-a8f1fa356a08,"Greenhouse Advies","greenhouse[^a-z]+advies"
 594d74d3-1cff-4a2f-adb5-e1830c24be40,"Grondsporen","grondsporen"
 0f6cab08-d72a-4cdc-adcb-b12456a2e793,"Groningen, Rapport Universiteit Groningen","groningen[^a-z]+(rapport|project)[a-z.]*[^a-z]+universiteit[^a-z]+groningen"
 b7f8cf1f-dc4f-45aa-8703-0a3961cd6caa,"Grontmij Archeologische Rapporten","grontmij[^a-z]+ar(ch|g)a?eolog[a-z]+[^a-z]+(rapport|project)[a-z.]*en"
