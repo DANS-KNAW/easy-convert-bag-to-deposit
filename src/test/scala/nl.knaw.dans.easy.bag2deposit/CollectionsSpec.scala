@@ -16,6 +16,7 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
+import com.sun.jersey.api.client.ClientHandlerException
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ DdmSupport, FileSystemSupport, SchemaSupport }
 import nl.knaw.dans.easy.bag2deposit.collections.Collections.getCollectionsMap
 import nl.knaw.dans.easy.bag2deposit.collections.{ Collections, FedoraProvider }
@@ -27,7 +28,7 @@ import org.scalatest.matchers.should.Matchers
 import resource.managed
 
 import java.net.UnknownHostException
-import scala.util.{ Success, Try }
+import scala.util.{ Failure, Success, Try }
 
 class CollectionsSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with Matchers with FileSystemSupport with MockFactory {
   override val schema = "https://raw.githubusercontent.com/DANS-KNAW/easy-schema/eade34a3c05669d05ec8cdbeb91a085d83c6c030/lib/src/main/resources/md/2021/02/ddm.xsd"
@@ -117,19 +118,27 @@ class CollectionsSpec extends AnyFlatSpec with DdmSupport with SchemaSupport wit
       setDelimiterParsingDisabled(true)
     }) shouldBe None
   }
+  it should "return Node if empty URL configured" in {
+    FedoraProvider(new PropertiesConfiguration() {
+      setDelimiterParsingDisabled(true)
+      addProperty("fcrepo.url", "")
+    }) shouldBe None
+  }
   it should "return Some, even if not available" in {
     FedoraProvider(new PropertiesConfiguration() {
       setDelimiterParsingDisabled(true)
       load("src/main/assembly/dist/cfg/application.properties")
     }) shouldBe a[Some[_]]
   }
-  "getCollectionsMap" should "" in {
-    // TODO manual check: logging contains
-    //  WARN  No <inCollection> added to DDM, fedora was configured but caused  ... Connection refused ...
-    //  INFO  No <inCollection> added to DDM, no fedora was configured
-    getCollectionsMap(File("src/test/resources/debug-config"), new PropertiesConfiguration() {
+  "getCollectionsMap" should "cause an exception when called to create a Configuration object" in {
+    Try(getCollectionsMap(File("src/test/resources/debug-config"), new PropertiesConfiguration() {
       setDelimiterParsingDisabled(true)
-      load((cfgDir / "application.properties").toJava)
-    }) shouldBe Map.empty
+      addProperty("fcrepo.url", "https://does.not.exist.dans.knaw.nl")
+      addProperty("fcrepo.user", "mocked")
+      addProperty("fcrepo.password", "mocked")
+    })) should matchPattern {
+      case Failure(e) if e.getCause.isInstanceOf[ClientHandlerException] &&
+        e.getCause.getCause.isInstanceOf[UnknownHostException] =>
+    }
   }
 }

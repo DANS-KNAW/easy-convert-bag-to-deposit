@@ -58,12 +58,14 @@ class FedoraProvider(fedoraClient: FedoraClient) {
 }
 object FedoraProvider {
   def apply(properties: PropertiesConfiguration): Option[FedoraProvider] = {
-    Option(properties.getString("fcrepo.url")).map(url =>
-      new FedoraProvider(new FedoraClient(new FedoraCredentials(
-        new URL(url),
-        properties.getString("fcrepo.user"),
-        properties.getString("fcrepo.password"),
-      )))
-    )
+    Option(properties.getString("fcrepo.url"))
+      .toSeq.filter(_.trim.nonEmpty)
+      .map(url =>
+        new FedoraProvider(new FedoraClient(new FedoraCredentials(
+          new URL(url),
+          properties.getString("fcrepo.user"),
+          properties.getString("fcrepo.password"),
+        )))
+      ).headOption
   }
 }

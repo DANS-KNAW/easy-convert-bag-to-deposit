@@ -32,7 +32,7 @@ import resource.managed
 import java.nio.charset.Charset.defaultCharset
 import java.nio.charset.StandardCharsets
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
-import scala.util.{ Failure, Try }
+import scala.util.Try
 import scala.xml.Elem
 
 object Collections extends DebugEnhancedLogging {
@@ -67,16 +67,14 @@ object Collections extends DebugEnhancedLogging {
   }
 
   def getCollectionsMap(cfgPath: File, properties: PropertiesConfiguration): Map[String, Elem] = {
-    val result: Map[String, Elem] = Try(FedoraProvider(properties).map { provider =>
-      memberDatasetIdToInCollection(collectionDatasetIdToInCollection(cfgPath), provider)
-    }.getOrElse(Map.empty)
-    ).recoverWith { case e =>
-      logger.warn(s"No <inCollection> added to DDM, fedora was configured but caused $e")
-      Failure(e)
-    }.getOrElse {
-      logger.info(s"No <inCollection> added to DDM, no fedora was configured")
-      Map.empty
-    }
+    val result: Map[String, Elem] = FedoraProvider(properties)
+      .map { provider =>
+        memberDatasetIdToInCollection(collectionDatasetIdToInCollection(cfgPath), provider)
+      }
+      .getOrElse {
+        logger.info(s"No <inCollection> added to DDM, no fedora was configured")
+        Map.empty
+      }
     result.foreach { case (datasetId, inCollection: Elem) =>
       val x = (inCollection \@ "valueURI").replaceAll(".*/", "")
       logger.info(s"$datasetId $x")
