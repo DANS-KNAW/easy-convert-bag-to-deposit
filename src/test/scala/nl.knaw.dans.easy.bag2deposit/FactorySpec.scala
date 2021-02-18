@@ -57,8 +57,8 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |bag-store.bag-name = bag-revision-1
          |bag-store.bag-id = $uuid
          |dataverse.sword-token = $uuid
-         |dataverse.bag-id = urn:uuid:$uuid
          |dataverse.nbn = urn:nbn:nl:ui:13-00-3haq
+         |dataverse.bag-id = urn:uuid:$uuid
          |dataverse.id-protocol = doi
          |dataverse.id-identifier = dans-2xg-umq8
          |dataverse.id-authority = 10.80270
@@ -109,8 +109,8 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |bag-store.bag-name = bag-name
          |bag-store.bag-id = $bagUUID
          |dataverse.sword-token = $baseUUID
-         |dataverse.bag-id = urn:uuid:$bagUUID
          |dataverse.nbn = urn:nbn:nl:ui:13-z4-f8cm
+         |dataverse.bag-id = urn:uuid:$bagUUID
          |dataverse.id-protocol = urn
          |dataverse.id-identifier = z4-f8cm
          |dataverse.id-authority = nbn:nl:ui:13
@@ -144,6 +144,7 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |identifier.urn = urn:nbn:nl:ui:13-00-3haq
          |identifier.fedora = easy-dataset:162288
          |dataverse.nbn = urn:nbn:nl:ui:13-rabarbera
+         |dataverse.bag-id = urn:uuid:$bagUUID
          |dataverse.id-protocol = urn
          |dataverse.id-identifier = rabarbera
          |dataverse.id-authority = nbn:nl:ui:13
@@ -180,8 +181,8 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |bag-store.bag-name = bag-name
          |bag-store.bag-id = $bagUUID
          |dataverse.sword-token = $bagUUID
-         |dataverse.bag-id = urn:uuid:$bagUUID
          |dataverse.nbn = urn:nbn:nl:ui:13-00-3haq
+         |dataverse.bag-id = urn:uuid:$bagUUID
          |dataverse.other-id = https://doi.org/10.12345/foo-bar
          |dataverse.id-protocol = urn
          |dataverse.id-identifier = 00-3haq
