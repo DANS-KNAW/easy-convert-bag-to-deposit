@@ -17,19 +17,27 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ DdmSupport, SchemaSupport }
+import nl.knaw.dans.easy.bag2deposit.collections.Collections.getCollectionsMap
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
-import nl.knaw.dans.easy.bag2deposit.{ Configuration, EasyConvertBagToDepositApp, InvalidBagException, normalized, parseCsv }
+import nl.knaw.dans.easy.bag2deposit.{ BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, normalized, parseCsv }
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.net.URI
 import java.util.UUID
 import scala.util.{ Failure, Success, Try }
 import scala.xml.Elem
 
 class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmSupport {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
-  private val cfg = Configuration(cfgDir.parent)
+  private val cfg = new Configuration(
+    "test version",
+    dansDoiPrefixes = "10.17026/,10.5072/".split(","),
+    dataverseIdAutority = "10.80270",
+    bagIndex = BagIndex(new URI("http://localhost:20120/")),
+    ddmTransformer = DdmTransformer(cfgDir, Map.empty),
+  )
   override val schema = "https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"
 
   "ABR-complex" should "be valid" in {
@@ -289,16 +297,18 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
         <ddm:dcmiMetadata>
         </ddm:dcmiMetadata>
     )
+    val transformer = cfg.ddmTransformer.copy(
+      collectionsMap = Map("easy-dataset:123" -> <inCollection>mocked</inCollection>)
+    )
 
-    val transformer = cfg.ddmTransformer
-      .copy(collectionsMap = Map("easy-dataset:123" -> <inCollection/>))
     transformer.transform(ddmIn, "easy-dataset:456").map(normalized) shouldBe Success(normalized(ddmIn))
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
       ddm(title = "blabla", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
-          <inCollection/>
+          <inCollection>mocked</inCollection>
         </ddm:dcmiMetadata>
       )))
+    // content of the <inCollection> element is validated in CollectionsSpec.collectionDatasetIdToInCollection
   }
 
   it should "add inCollection for other than archaeology" in pendingUntilFixed {
@@ -306,15 +316,17 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
         <ddm:dcmiMetadata>
         </ddm:dcmiMetadata>
     )
+    val transformer = cfg.ddmTransformer.copy(
+      collectionsMap = Map("easy-dataset:123" -> <inCollection>mocked</inCollection>)
+    )
 
-    val transformer = cfg.ddmTransformer
-      .copy(collectionsMap = Map("easy-dataset:123" -> <inCollection/>))
     transformer.transform(ddmIn, "easy-dataset:456").map(normalized) shouldBe Success(normalized(ddmIn))
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
       ddm(title = "blabla", audience = "Z99000", dcmi =
         <ddm:dcmiMetadata>
-          <inCollection/>
+          <inCollection>mocked</inCollection>
         </ddm:dcmiMetadata>
       )))
+    // content of the <inCollection> element is validated in CollectionsSpec.collectionDatasetIdToInCollection
   }
 }

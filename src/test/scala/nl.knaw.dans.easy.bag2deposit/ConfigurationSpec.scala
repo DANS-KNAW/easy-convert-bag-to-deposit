@@ -16,11 +16,37 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
+import com.sun.jersey.api.client.ClientHandlerException
+import nl.knaw.dans.easy.bag2deposit.Fixture.FileSystemSupport
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class ConfigurationSpec extends AnyFlatSpec with Matchers {
-  "dist" should "succeed" in {
-    Configuration(File("src/main/assembly/dist")) shouldBe a[Configuration]
+import java.net.UnknownHostException
+import scala.util.{ Failure, Try }
+
+class ConfigurationSpec extends AnyFlatSpec with FileSystemSupport with Matchers {
+  "constructor" should "create empty collectionsMap for ddmTransformer when fedora is not configured" in {
+    distDir(fedoraUrl = "")
+    Configuration(home = testDir / "dist").ddmTransformer
+      .collectionsMap shouldBe Map.empty
+  }
+
+  it should "fail when fedora is configured but not available" in {
+    distDir(fedoraUrl = "https://does.not.exist.dans.knaw.nl")
+
+    Try(Configuration(home = testDir / "dist")) should matchPattern {
+      case Failure(e) if e.getCause.isInstanceOf[ClientHandlerException] &&
+        e.getCause.getCause.isInstanceOf[UnknownHostException] &&
+        e.getCause.getCause.getMessage.contains("does.not.exist.dans.knaw.nl") =>
+    }
+  }
+
+  private def distDir(fedoraUrl: String) = {
+    val distSrc = File("src/main/assembly/dist")
+    distSrc.copyToDirectory(testDir)
+    (testDir / "dist" / "cfg" / "application.properties").writeText(
+      (distSrc / "cfg" / "application.properties").contentAsString
+        .replace("http://localhost:20120/", fedoraUrl)
+    )
   }
 }
