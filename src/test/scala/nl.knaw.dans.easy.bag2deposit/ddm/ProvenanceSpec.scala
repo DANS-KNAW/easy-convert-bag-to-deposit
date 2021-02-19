@@ -16,7 +16,6 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import nl.knaw.dans.easy.bag2deposit.Fixture.FixedCurrentDateTimeSupport
-import nl.knaw.dans.easy.bag2deposit.normalized
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -87,7 +86,7 @@ class ProvenanceSpec extends AnyFlatSpec with Matchers with FixedCurrentDateTime
       </ddm>
    }
 
-    new Provenance("EasyConvertBagToDepositApp","1.0.5").xml(ddmIn, ddmOut) shouldBe Some(
+    new Provenance("EasyConvertBagToDepositApp", "1.0.5").xml(ddmIn, ddmOut) shouldBe Some(
       <prov:provenance xsi:schemaLocation="
         http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
         http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd

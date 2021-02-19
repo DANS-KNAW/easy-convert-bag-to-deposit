@@ -17,15 +17,12 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import better.files.File.root
-import nl.knaw.dans.easy.bag2deposit.collections.Collections.{ collectionDatasetIdToInCollection, getCollectionsMap, memberDatasetIdToInCollection }
-import nl.knaw.dans.easy.bag2deposit.collections.FedoraProvider
+import nl.knaw.dans.easy.bag2deposit.collections.Collections.getCollectionsMap
 import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration
 
 import java.net.URI
-import scala.util.{ Failure, Try }
-import scala.xml.Elem
 
 case class Configuration(version: String,
                          dansDoiPrefixes: Seq[String],

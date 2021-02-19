@@ -19,7 +19,7 @@ import better.files.File
 import nl.knaw.dans.easy.bag2deposit.{ parseCsv, printer }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
-import scala.xml.{ Node, NodeSeq }
+import scala.xml.Node
 import scala.xml.transform.RewriteRule
 
 case class LanguageRewriteRule(cfgFile: File) extends RewriteRule {
@@ -60,7 +60,7 @@ object LanguageRewriteRule extends DebugEnhancedLogging {
     (ddm \\ "language").filter(
       !_.attributes.mkString.contains("encodingScheme")
     ).foreach(n =>
-      logger.info(s"NOT MAPPED $datasetId ${printer.format(n)}")
+      logger.info(s"NOT MAPPED $datasetId ${ printer.format(n) }")
     )
   }
 }

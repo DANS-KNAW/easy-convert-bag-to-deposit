@@ -17,7 +17,6 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ DdmSupport, SchemaSupport }
-import nl.knaw.dans.easy.bag2deposit.collections.Collections.getCollectionsMap
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
 import nl.knaw.dans.easy.bag2deposit.{ BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, normalized, parseCsv }
 import org.apache.commons.csv.CSVRecord
@@ -27,7 +26,6 @@ import org.scalatest.matchers.should.Matchers
 import java.net.URI
 import java.util.UUID
 import scala.util.{ Failure, Success, Try }
-import scala.xml.Elem
 
 class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmSupport {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
