@@ -6,7 +6,7 @@ easy-convert-bag-to-deposit
 SYNOPSIS
 --------
 
-    easy-convert-bag-to-deposit { --dir | --uuid } <directory> -t { URN | DOI } [ -o <staged-IP-dir> ]
+    easy-convert-bag-to-deposit { --dir | --uuid } <directory> -t { URN | DOI } -s { FEDORA | VAULT } [ -o <staged-IP-dir> ]
 
 DESCRIPTION
 -----------
