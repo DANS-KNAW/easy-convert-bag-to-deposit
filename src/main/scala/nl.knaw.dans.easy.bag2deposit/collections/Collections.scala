@@ -131,7 +131,7 @@ object Collections extends DebugEnhancedLogging {
         .distinct
       filtered = hrefs.filter(_.matches("(?s).*(doi.org.*dans|urn:nbn:nl:ui:13-).*"))
       ids <- filtered.traverse(toDatasetId)
-    } yield ids
+    } yield ids.filter(_.isDefined).map(_.get)
   }
 
   private def jumpoff(datasetId: String, fedoraProvider: FedoraProvider): Try[Option[String]] = {

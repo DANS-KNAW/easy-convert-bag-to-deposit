@@ -15,28 +15,35 @@
  */
 package nl.knaw.dans.easy.bag2deposit.collections
 
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import scalaj.http.Http
 
 import scala.util.{ Failure, Success, Try }
 
-case class Resolver() {
+case class Resolver() extends DebugEnhancedLogging{
 
-  def getDatasetId(id: String): Try[String] = {
+  def getDatasetId(id: String): Try[Option[String]] = {
     id.slice(0, 3) match {
-      case "eas" => Success(id)
+      case "eas" => Success(Some(id))
       case "urn" => resolve(s"http://www.persistent-identifier.nl/?identifier=$id")
       case "10." => resolve(s"https://doi.org/$id")
-      case id => Failure(new IllegalArgumentException(s"not expected type of ID for a dataset: $id"))
+      case id =>
+        logger.error(s"not expected type of ID for a dataset: $id")
+        Success(None)
     }
   }
 
   private def resolve(url: String) = {
     Try(Http(url).asString).map {
+      case response if response.code == 404 =>
+        logger.error(s"not found: $url")
+        None
       case response if response.code == 302 =>
-        response
+        Some(response
           .header("Location")
           .map(_.replaceAll(".*/", "").replace("%3A", ":"))
           .getOrElse(throw new Exception(s"no location header returned by $url - ${ response.body }"))
+        )
       case response =>
         throw new Exception(s"Not expected response code from '$url' ${ response.code } - ${ response.body }", null)
     }
