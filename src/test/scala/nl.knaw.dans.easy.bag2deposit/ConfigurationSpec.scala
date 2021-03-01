@@ -16,28 +16,40 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
-import com.sun.jersey.api.client.ClientHandlerException
 import nl.knaw.dans.easy.bag2deposit.Fixture.FileSystemSupport
+import nl.knaw.dans.easy.bag2deposit.collections.FedoraProviderException
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.net.UnknownHostException
-import scala.util.{ Failure, Try }
+import scala.util.{ Failure, Success, Try }
 
 class ConfigurationSpec extends AnyFlatSpec with FileSystemSupport with Matchers {
-  "constructor" should "create empty collectionsMap for ddmTransformer when fedora is not configured" in {
+  "constructor" should "get past the first transformation when fedora is not configured" in {
     distDir(fedoraUrl = "")
-    Configuration(home = testDir / "dist").ddmTransformer
-      .collectionsMap shouldBe Map.empty
+    val transformer = Configuration(home = testDir / "dist").ddmTransformer
+
+    transformer.transform(
+      <ddm><profile><audience>D37000</audience></profile></ddm>,
+      "easy-dataset:123",
+    ) shouldBe a[Success[_]]
   }
 
-  it should "fail when fedora is configured but not available" in {
+  it should "fail on the first transformation when fedora is not available" in {
     distDir(fedoraUrl = "https://does.not.exist.dans.knaw.nl")
 
-    Try(Configuration(home = testDir / "dist")) should matchPattern {
-      case Failure(e) if e.getCause.isInstanceOf[ClientHandlerException] &&
-        e.getCause.getCause.isInstanceOf[UnknownHostException] &&
-        e.getCause.getCause.getMessage.contains("does.not.exist.dans.knaw.nl") =>
+    val transformer = Configuration(home = testDir / "dist").ddmTransformer
+    // the lazy constructor argument throws an exception
+    // breaking through the Try of the first call that needs it
+    // this is not handled within the context of a for comprehension
+    val triedTriedNode = Try(transformer.transform(
+      <ddm><profile><audience>D37000</audience></profile></ddm>,
+      "easy-dataset:123",
+    ))
+    triedTriedNode should matchPattern {
+      case Failure(FedoraProviderException(_, e)) if
+      e.getCause.isInstanceOf[UnknownHostException] &&
+        e.getMessage.contains("does.not.exist.dans.knaw.nl") =>
     }
   }
 

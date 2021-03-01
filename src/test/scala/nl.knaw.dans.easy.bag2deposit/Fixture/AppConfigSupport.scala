@@ -27,7 +27,7 @@ trait AppConfigSupport extends BagIndexSupport {
       dansDoiPrefixes = Seq("10.17026/", "10.5072/"),
       dataverseIdAutority = "10.80270",
       bagIndex = bagIndex,
-      ddmTransformer = DdmTransformer(cfgFile)
+      ddmTransformer = new DdmTransformer(cfgFile)
     )
   }
 }

@@ -47,7 +47,7 @@ class FedoraProvider(fedoraClient: FedoraClient) {
       .tried
       .recoverWith {
         case t: Throwable =>
-          Failure(new Exception(s"$this, query '$query' failed, cause: ${ t.getMessage }", t))
+          Failure(new FedoraProviderException(query, t))
       }
   }
 
@@ -56,6 +56,8 @@ class FedoraProvider(fedoraClient: FedoraClient) {
       .flatMap(response => managed(response.getEntityInputStream))
   }
 }
+case class FedoraProviderException(query: String, cause: Throwable) extends Exception(s"query '$query' failed, cause: ${ cause.getMessage }", cause)
+
 object FedoraProvider {
   def apply(properties: PropertiesConfiguration): Option[FedoraProvider] = {
     Option(properties.getString("fcrepo.url"))

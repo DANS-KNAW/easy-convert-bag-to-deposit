@@ -53,7 +53,7 @@ object Configuration extends DebugEnhancedLogging {
       dansDoiPrefixes = properties.getStringArray("dans-doi.prefixes"),
       dataverseIdAutority = properties.getString("dataverse.id-authority"),
       bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
-      ddmTransformer = DdmTransformer(cfgPath, getCollectionsMap(cfgPath, properties)),
+      ddmTransformer = new DdmTransformer(cfgPath, getCollectionsMap(cfgPath, properties)),
     )
   }
 }

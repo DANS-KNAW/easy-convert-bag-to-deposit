@@ -29,13 +29,8 @@ import scala.util.{ Failure, Success, Try }
 
 class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmSupport {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
-  private val cfg = new Configuration(
-    "test version",
-    dansDoiPrefixes = "10.17026/,10.5072/".split(","),
-    dataverseIdAutority = "10.80270",
-    bagIndex = BagIndex(new URI("http://localhost:20120/")),
-    ddmTransformer = DdmTransformer(cfgDir, Map.empty),
-  )
+  private val transformer: DdmTransformer = new DdmTransformer(cfgDir, Map.empty)
+
   override val schema = "https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"
 
   "ABR-complex" should "be valid" in {
@@ -106,11 +101,17 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
         </ddm:dcmiMetadata>
     )
 
-    val app = new EasyConvertBagToDepositApp(cfg)
+    val app = new EasyConvertBagToDepositApp(new Configuration(
+      "test version",
+      dansDoiPrefixes = "10.17026/,10.5072/".split(","),
+      dataverseIdAutority = "10.80270",
+      bagIndex = BagIndex(new URI("http://localhost:20120/")),
+      ddmTransformer = transformer,
+    ))
 
     // a few steps of EasyConvertBagToDepositApp.addPropsToBags
     val datasetId = "easy-dataset:123"
-    cfg.ddmTransformer.transform(ddmIn, datasetId).map(normalized)
+    transformer.transform(ddmIn, datasetId).map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
     app.registerMatchedReports(datasetId, expectedDDM \\ "reportNumber")
     app.logMatchedReports() // once for all datasets
@@ -127,7 +128,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
         </ddm:dcmiMetadata>
     )
 
-    cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Failure(InvalidBagException("temporal rabarbera not found; subject barbapappa not found"))
   }
 
@@ -159,7 +160,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
         </ddm:dcmiMetadata>
     )
     val datasetId = "eas-dataset:123"
-    cfg.ddmTransformer.transform(ddmIn, datasetId).map(normalized)
+    transformer.transform(ddmIn, datasetId).map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
 
     // TODO manually check logging of not mapped language fields
@@ -175,7 +176,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
         </ddm:dcmiMetadata>
     )
 
-    cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddmIn))
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddmIn))
     // TODO manually check logging of briefrapport
   }
 
@@ -195,7 +196,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
         </ddm:dcmiMetadata>
     )
 
-    cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(expectedDdm))
   }
 
@@ -227,7 +228,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
         </ddm:dcmiMetadata>
     )
     // TODO these titles don't show up in target/test/TitlesSpec/matches-per-rce.txt
-    cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(expectedDdm))
   }
 
@@ -257,7 +258,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
         </ddm:dcmiMetadata>
     )
 
-    cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(expectedDdm))
   }
 
@@ -286,7 +287,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
         </ddm:dcmiMetadata>
     )
 
-    cfg.ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(expectedDdm))
   }
 
@@ -295,8 +296,9 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
         <ddm:dcmiMetadata>
         </ddm:dcmiMetadata>
     )
-    val transformer = cfg.ddmTransformer.copy(
-      collectionsMap = Map("easy-dataset:123" -> <inCollection>mocked</inCollection>)
+    val transformer = new DdmTransformer(
+      cfgDir,
+      Map("easy-dataset:123" -> <inCollection>mocked</inCollection>)
     )
 
     transformer.transform(ddmIn, "easy-dataset:456").map(normalized) shouldBe Success(normalized(ddmIn))
@@ -314,8 +316,9 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
         <ddm:dcmiMetadata>
         </ddm:dcmiMetadata>
     )
-    val transformer = cfg.ddmTransformer.copy(
-      collectionsMap = Map("easy-dataset:123" -> <inCollection>mocked</inCollection>)
+    val transformer = new DdmTransformer(
+      cfgDir,
+      Map("easy-dataset:123" -> <inCollection>mocked</inCollection>)
     )
 
     transformer.transform(ddmIn, "easy-dataset:456").map(normalized) shouldBe Success(normalized(ddmIn))
