@@ -6,7 +6,7 @@ easy-convert-bag-to-deposit
 SYNOPSIS
 --------
 
-    easy-convert-bag-to-deposit { --dir | --uuid } <directory> -t { URN | DOI } -s { FEDORA | VAULT } [ -o <staged-IP-dir> ]
+    easy-convert-bag-to-deposit { --dir | --uuid } <directory> -t { URN | DOI } -s { FEDORA | VAULT } [ -o <output-dir> ]
 
 DESCRIPTION
 -----------
@@ -16,6 +16,8 @@ These [properties](depositproperties.md) are used in the processing of the depos
 The bag in each directory should be a bag created with the `get` 
 subcommand of [easy-bag-store](https://dans-knaw.github.io/easy-bag-store/).
 
+The state of a bag is undefined when it has a `deposit.properties` but is not moved to `<output-dir>`:
+the `metadata.xml`, `bag-info.txt` and manifests may or may not have been changed. 
 
 ARGUMENTS
 ---------

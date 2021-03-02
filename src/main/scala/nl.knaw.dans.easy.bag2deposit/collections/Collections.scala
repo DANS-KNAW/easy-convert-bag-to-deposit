@@ -24,7 +24,6 @@ import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
 import net.ruippeixotog.scalascraper.dsl.DSL._
 import nl.knaw.dans.lib.error.TryExtensions
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.apache.commons.configuration.PropertiesConfiguration
 import org.apache.commons.csv.CSVFormat.RFC4180
 import org.apache.commons.csv.{ CSVFormat, CSVParser, CSVRecord }
 import resource.managed
@@ -66,8 +65,8 @@ object Collections extends DebugEnhancedLogging {
         >{ r.get("prefLabel") }</ddm:inCollection>
   }
 
-  def getCollectionsMap(cfgPath: File, properties: PropertiesConfiguration): Map[String, Elem] = {
-    val result: Map[String, Elem] = FedoraProvider(properties)
+  def getCollectionsMap(cfgPath: File, maybeFedoraProvider: Option[FedoraProvider]): Map[String, Elem] = {
+    val result: Map[String, Elem] = maybeFedoraProvider
       .map { provider =>
         memberDatasetIdToInCollection(collectionDatasetIdToInCollection(cfgPath), provider)
       }
