@@ -34,18 +34,18 @@ case class Resolver() extends DebugEnhancedLogging{
   }
 
   private def resolve(url: String) = {
-    Try(Http(url).asString).map {
+    Try(Http(url).asString).flatMap {
       case response if response.code == 404 =>
         logger.error(s"not found: $url")
-        None
+        Success(None)
       case response if response.code == 302 =>
-        Some(response
+        Success(Some(response
           .header("Location")
           .map(_.replaceAll(".*/", "").replace("%3A", ":"))
           .getOrElse(throw new Exception(s"no location header returned by $url - ${ response.body }"))
-        )
+        ))
       case response =>
-        throw new Exception(s"Not expected response code from '$url' ${ response.code } - ${ response.body }", null)
+        Failure(new Exception(s"Not expected response code from '$url' ${ response.code } - ${ response.body }", null))
     }
   }
 }

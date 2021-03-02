@@ -128,6 +128,10 @@ object Collections extends DebugEnhancedLogging {
         .map(_.attr("href"))
         .sortBy(identity)
         .distinct
+      // (?s) matches multiline values like https://github.com/DANS-KNAW/easy-convert-bag-to-deposit/blob/57e4ab9513d536c16121ad8916058d4102154138/src/test/resources/sample-jumpoff/3931-for-dataset-34359.html#L168-L169
+      // looking for links with containing eiter of
+      //   doi.org.*dans
+      //   urn:nbn:nl:ui:13-
       filtered = hrefs.filter(_.matches("(?s).*(doi.org.*dans|urn:nbn:nl:ui:13-).*"))
       ids <- filtered.traverse(toDatasetId)
     } yield ids.filter(_.isDefined).map(_.get)
