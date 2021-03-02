@@ -82,7 +82,7 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
         case _ =>
       }
       addProperty("dataverse.bag-id", "urn:uuid:" + bagInfo.uuid)
-      if (!configuration.dansDoiPrefixes.contains(doi.replaceAll("/.*", "/"))) {
+      if (!configuration.dansDoiPrefixes.contains(doi.replaceAll("/.*", ""))) {
         // not DANS hence other than dataverse.id-identifier
         addProperty("dataverse.other-id", "https://doi.org/" + doi)
       }
