@@ -25,6 +25,9 @@ import scala.util.Try
 import scala.xml.{ Node, NodeSeq }
 
 case class DepositPropertiesFactory(configuration: Configuration, idType: IdType, bagSource: BagSource) extends DebugEnhancedLogging {
+  private val dansDoiPrefixes: Seq[String] = configuration.dansDoiPrefixes
+  private val bagIndex = configuration.bagIndex
+  private val dataverseIdAuthority = configuration.dataverseIdAuthority
 
   def create(bagInfo: BagInfo, ddm: Node): Try[PropertiesConfiguration] = Try {
     val ddmIds: NodeSeq = ddm \ "dcmiMetadata" \ "identifier"
@@ -43,7 +46,7 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
 
     val basePids: BasePids = bagInfo.versionOf.map { uuid =>
       bagSource match {
-        case VAULT => configuration.bagIndex.gePIDs(uuid).unsafeGetOrThrow
+        case VAULT => bagIndex.gePIDs(uuid).unsafeGetOrThrow
         case FEDORA => bagInfo.basePids.getOrElse(throw InvalidBagException(
           s"bag-info.txt should have the ${ BagInfo.baseUrnKey } and ${ BagInfo.baseDoiKey } of ${ bagInfo.versionOf }")
         )
@@ -51,7 +54,7 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
     }.getOrElse(BasePids(urn, doi))
 
     def checkSequence(): Unit = {
-      val seqLength = configuration.bagIndex
+      val seqLength = bagIndex
         .getSeqLength(bagInfo.uuid)
         .getOrRecover {
           case InvalidBagException(_) => 0 // not found
@@ -82,7 +85,7 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
         case _ =>
       }
       addProperty("dataverse.bag-id", "urn:uuid:" + bagInfo.uuid)
-      if (!configuration.dansDoiPrefixes.contains(doi.replaceAll("/.*", ""))) {
+      if (!dansDoiPrefixes.contains(doi.replaceAll("/.*", ""))) {
         // not DANS hence other than dataverse.id-identifier
         addProperty("dataverse.other-id", "https://doi.org/" + doi)
       }
@@ -93,7 +96,7 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
           addProperty("dataverse.id-authority", "nbn:nl:ui:13")
         case DOI =>
           addProperty("dataverse.id-identifier", basePids.doi.replaceAll(".*/", ""))
-          addProperty("dataverse.id-authority", configuration.dataverseIdAutority)
+          addProperty("dataverse.id-authority", dataverseIdAuthority)
       }
     }
   }

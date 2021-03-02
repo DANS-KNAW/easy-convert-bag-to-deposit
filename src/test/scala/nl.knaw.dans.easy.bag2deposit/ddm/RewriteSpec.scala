@@ -104,7 +104,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
     val app = new EasyConvertBagToDepositApp(new Configuration(
       "test version",
       dansDoiPrefixes = "10.17026/,10.5072/".split(","),
-      dataverseIdAutority = "10.80270",
+      dataverseIdAuthority = "10.80270",
       bagIndex = BagIndex(new URI("http://localhost:20120/")),
       ddmTransformer = transformer,
     ))
