@@ -60,7 +60,12 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
             <dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject>
             <dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
             <ddm:subject xml:lang="nl" valueURI="http://www.rnaproject.org/data/39a61516-5ebd-43ad-9cde-98b5089c71ff" subjectScheme="Archeologisch Basis Register" schemeURI="http://www.rnaproject.org">Onbekend (XXX)</ddm:subject>
-        </ddm:dcmiMetadata>
+            <ddm:subject xml:lang="nl"
+                         valueURI="http://www.rnaproject.org/data/54f419f0-d185-4ea5-a188-57e25493a5e0"
+                         subjectScheme="Archeologisch Basis Register"
+                         schemeURI="http://www.rnaproject.org"
+            >Religie - Klooster(complex) (RKLO)</ddm:subject>
+            </ddm:dcmiMetadata>
     )
 
     val expectedDDM = ddm(title = "Rapport 123", audience = "D37000", dcmi =
@@ -98,6 +103,11 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
                          subjectScheme="ABR Complextypen"
                          schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/e9546020-4b28-4819-b0c2-29e7c864c5c0"
             >complextype niet te bepalen</ddm:subject>
+            <ddm:subject xml:lang="nl"
+                         valueURI="https://data.cultureelerfgoed.nl/term/id/abr/28e58033-875e-4f90-baa2-7b1c1c147574"
+                         subjectScheme="ABR Complextypen"
+                         schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/e9546020-4b28-4819-b0c2-29e7c864c5c0"
+            >klooster</ddm:subject>
         </ddm:dcmiMetadata>
     )
 

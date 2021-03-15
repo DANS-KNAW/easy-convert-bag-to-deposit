@@ -25,19 +25,15 @@ import scala.xml.transform.RewriteRule
 import scala.xml.{ Elem, Node }
 
 case class AbrRewriteRule(oldLabel: String, map: Map[String, Elem]) extends RewriteRule with DebugEnhancedLogging {
-  private def getAbrCode(value: String): String = {
-    val matchBetweenBrackets: Regex = raw"\((.*)\)".r
-    matchBetweenBrackets.findFirstMatchIn(value) match {
-      case Some(m) => m.group(1)
-      case None => value
-    }
-  }
-
   override def transform(node: Node): Seq[Node] = {
     if (!isAbr(node)) node
     else {
-      val key = getAbrCode(node.text)
-      map.getOrElse(key, <notImplemented>{ s"$oldLabel $key not found" }</notImplemented>)
+      val value = node.text
+      // extract last expression between brackets
+      val key = value.trim.replaceAll(".*[(]","").replace(")","").trim
+      if (key.isEmpty)
+        <notImplemented>{ value }</notImplemented>
+      else map.getOrElse(key, <notImplemented>{ s"$oldLabel $key not found" }</notImplemented>)
     }
   }
 
