@@ -22,6 +22,10 @@ object SplitNrRewriteRule extends RewriteRule {
 
   override def transform(node: Node): Seq[Node] = {
     node match {
+      case Elem(_, "identifier", _, _, Text(value)) if node.attributes.toString.contains("id-type:ARCHIS-") =>
+        value.split("[,;] *").map(nr =>
+          node.asInstanceOf[Elem].copy(child = new Text(nr)
+        ))
       case Elem(_, "identifier", _, _, Text(value)) if value.toLowerCase.matches(".*;.*[(]archis.*") =>
         val Array(nrs, trailer) = value.split(" *[(]", 2)
         nrs.split("[,;] *").map(nr =>

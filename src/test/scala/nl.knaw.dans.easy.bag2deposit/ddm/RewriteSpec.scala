@@ -343,8 +343,13 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
   it should "split archis nrs" in {
     val ddmIn = ddm(title = "blabla", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
-          <dct:identifier scheme="blabla">411047; 411049; 411050 (Archis-vondstmeldingsnr.)</dct:identifier>
+          <dct:identifier scheme="blabla">411047; 411049; 411050;  (Archis-vondstmeldingsnr.)</dct:identifier>
           <dct:identifier>52427; 52429; 52431; 52433; 52435; 52437; 52439; 52441; 52462 (RAAP) (Archis waarneming)</dct:identifier>
+          <dct:identifier xsi:type="id-type:ARCHIS-WAARNEMING">441832; 1234</dct:identifier>
+          <dct:identifier xsi:type="id-type:ARCHIS-ZAAK-IDENTIFICATIE">567; 89</dct:identifier>
+          <dct:identifier xsi:type="id-type:ARCHIS-VONDSTMELDING">1011; 1213</dct:identifier>
+          <dct:identifier xsi:type="id-type:ARCHIS-MONUMENT">1415; 1617</dct:identifier>
+          <dct:identifier xsi:type="id-type:ARCHIS-ONDERZOEK">443456; 789; </dct:identifier>
         </ddm:dcmiMetadata>
     )
     val transformer = new DdmTransformer(
@@ -367,6 +372,16 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
           <dct:identifier>52439 (RAAP) (Archis waarneming)</dct:identifier>
           <dct:identifier>52441 (RAAP) (Archis waarneming)</dct:identifier>
           <dct:identifier>52462 (RAAP) (Archis waarneming)</dct:identifier>
+          <dct:identifier xsi:type="id-type:ARCHIS-WAARNEMING">441832</dct:identifier>
+          <dct:identifier xsi:type="id-type:ARCHIS-WAARNEMING">1234</dct:identifier>
+          <dct:identifier xsi:type="id-type:ARCHIS-ZAAK-IDENTIFICATIE">567</dct:identifier>
+          <dct:identifier xsi:type="id-type:ARCHIS-ZAAK-IDENTIFICATIE">89</dct:identifier>
+          <dct:identifier xsi:type="id-type:ARCHIS-VONDSTMELDING">1011</dct:identifier>
+          <dct:identifier xsi:type="id-type:ARCHIS-VONDSTMELDING">1213</dct:identifier>
+          <dct:identifier xsi:type="id-type:ARCHIS-MONUMENT">1415</dct:identifier>
+          <dct:identifier xsi:type="id-type:ARCHIS-MONUMENT">1617</dct:identifier>
+          <dct:identifier xsi:type="id-type:ARCHIS-ONDERZOEK">443456</dct:identifier>
+          <dct:identifier xsi:type="id-type:ARCHIS-ONDERZOEK">789</dct:identifier>
         </ddm:dcmiMetadata>
       )))
   }
