@@ -340,4 +340,34 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
       )))
     // content of the <inCollection> element is validated in CollectionsSpec.collectionDatasetIdToInCollection
   }
+  it should "split archis nrs" in {
+    val ddmIn = ddm(title = "blabla", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <dct:identifier scheme="blabla">411047; 411049; 411050 (Archis-vondstmeldingsnr.)</dct:identifier>
+          <dct:identifier>52427; 52429; 52431; 52433; 52435; 52437; 52439; 52441; 52462 (RAAP) (Archis waarneming)</dct:identifier>
+        </ddm:dcmiMetadata>
+    )
+    val transformer = new DdmTransformer(
+      cfgDir,
+      Map.empty,
+    )
+
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
+      ddm(title = "blabla", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <dct:identifier scheme="blabla">411047 (Archis-vondstmeldingsnr.)</dct:identifier>
+          <dct:identifier scheme="blabla">411049 (Archis-vondstmeldingsnr.)</dct:identifier>
+          <dct:identifier scheme="blabla">411050 (Archis-vondstmeldingsnr.)</dct:identifier>
+          <dct:identifier>52427 (RAAP) (Archis waarneming)</dct:identifier>
+          <dct:identifier>52429 (RAAP) (Archis waarneming)</dct:identifier>
+          <dct:identifier>52431 (RAAP) (Archis waarneming)</dct:identifier>
+          <dct:identifier>52433 (RAAP) (Archis waarneming)</dct:identifier>
+          <dct:identifier>52435 (RAAP) (Archis waarneming)</dct:identifier>
+          <dct:identifier>52437 (RAAP) (Archis waarneming)</dct:identifier>
+          <dct:identifier>52439 (RAAP) (Archis waarneming)</dct:identifier>
+          <dct:identifier>52441 (RAAP) (Archis waarneming)</dct:identifier>
+          <dct:identifier>52462 (RAAP) (Archis waarneming)</dct:identifier>
+        </ddm:dcmiMetadata>
+      )))
+  }
 }

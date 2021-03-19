@@ -28,12 +28,14 @@ import scala.xml.{ Elem, Node, NodeSeq }
 class DdmTransformer(cfgDir: File, collectionsMap: => Map[String, Elem] = Map.empty) extends DebugEnhancedLogging {
 
   val reportRewriteRule: ReportRewriteRule = ReportRewriteRule(cfgDir)
+  private val splitNrRewriteRule = SplitNrRewriteRule()
   private val acquisitionRewriteRule: AcquisitionRewriteRule = AcquisitionRewriteRule(cfgDir)
   private val profileTitleRuleTransformer = new RuleTransformer(
     acquisitionRewriteRule,
     reportRewriteRule,
   )
   private val archaeologyRuleTransformer = new RuleTransformer(
+    splitNrRewriteRule,
     acquisitionRewriteRule,
     reportRewriteRule,
     AbrRewriteRule.temporalRewriteRule(cfgDir),
