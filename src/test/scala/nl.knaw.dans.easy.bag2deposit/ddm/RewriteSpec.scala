@@ -370,4 +370,23 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
         </ddm:dcmiMetadata>
       )))
   }
+  it should "drop empty relation" in {
+    val ddmIn = ddm(title = "blabla", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <dct:isFormatOf scheme="blabla"></dct:isFormatOf>
+          <ddm:isRequiredBy href="http://does.not.exist.dans.knaw.nl"></ddm:isRequiredBy>
+        </ddm:dcmiMetadata>
+    )
+    val transformer = new DdmTransformer(
+      cfgDir,
+      Map.empty,
+    )
+
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+      Success(normalized(ddm(
+        title = "blabla",
+        audience = "D37000",
+        dcmi = <ddm:dcmiMetadata></ddm:dcmiMetadata>,
+      )))
+  }
 }

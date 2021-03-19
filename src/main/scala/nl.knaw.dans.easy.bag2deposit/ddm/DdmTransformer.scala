@@ -28,22 +28,24 @@ import scala.xml.{ Elem, Node, NodeSeq }
 class DdmTransformer(cfgDir: File, collectionsMap: => Map[String, Elem] = Map.empty) extends DebugEnhancedLogging {
 
   val reportRewriteRule: ReportRewriteRule = ReportRewriteRule(cfgDir)
-  private val splitNrRewriteRule = SplitNrRewriteRule()
   private val acquisitionRewriteRule: AcquisitionRewriteRule = AcquisitionRewriteRule(cfgDir)
+  private val languageRewriteRule = LanguageRewriteRule(cfgDir / "languages.csv")
   private val profileTitleRuleTransformer = new RuleTransformer(
     acquisitionRewriteRule,
     reportRewriteRule,
   )
   private val archaeologyRuleTransformer = new RuleTransformer(
-    splitNrRewriteRule,
+    SplitNrRewriteRule,
     acquisitionRewriteRule,
     reportRewriteRule,
     AbrRewriteRule.temporalRewriteRule(cfgDir),
     AbrRewriteRule.subjectRewriteRule(cfgDir),
-    LanguageRewriteRule(cfgDir / "languages.csv"),
+    DropEmptyRewriteRule,
+    languageRewriteRule,
   )
   private val standardRuleTransformer = new RuleTransformer(
-    LanguageRewriteRule(cfgDir / "languages.csv"),
+    DropEmptyRewriteRule,
+    languageRewriteRule,
   )
 
   private case class ArchaeologyRewriteRule(additionalElements: NodeSeq) extends RewriteRule {

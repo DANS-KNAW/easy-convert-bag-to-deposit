@@ -15,20 +15,31 @@
  */
 package nl.knaw.dans.easy.bag2deposit.ddm
 
+import scala.xml.Node
 import scala.xml.transform.RewriteRule
-import scala.xml.{ Elem, Node, Text }
 
-object SplitNrRewriteRule extends RewriteRule {
+object DropEmptyRewriteRule extends RewriteRule {
+  private val labels = Seq(
+    "linkedRelation",
+    "conformsTo",
+    "hasFormat",
+    "hasPart",
+    "hasVersion",
+    "isFormatOf",
+    "isPartOf",
+    "isReferencedBy",
+    "isReplacedBy",
+    "isRequiredBy",
+    "isVersionOf",
+    "references",
+    "replaces",
+    "requires",
+  )
 
   override def transform(node: Node): Seq[Node] = {
-    node match {
-      case Elem(_, "identifier", _, _, Text(value)) if value.toLowerCase.matches(".*;.*[(]archis.*") =>
-        val Array(nrs, trailer) = value.split(" *[(]", 2)
-        nrs.split("[,;] *").map(nr =>
-          node.asInstanceOf[Elem].copy(child = new Text(s"$nr ($trailer"))
-        )
-      case _ => node
-    }
+    if (node.text.trim.isEmpty && labels.contains(node.label))
+      Seq.empty
+    else node
   }
 }
 
