@@ -401,7 +401,9 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
       Success(normalized(ddm(
         title = "blabla",
         audience = "D37000",
-        dcmi = <ddm:dcmiMetadata></ddm:dcmiMetadata>,
+        dcmi = <ddm:dcmiMetadata>
+                 <ddm:isRequiredBy href="http://does.not.exist.dans.knaw.nl">http://does.not.exist.dans.knaw.nl</ddm:isRequiredBy>
+               </ddm:dcmiMetadata>,
       )))
   }
 }

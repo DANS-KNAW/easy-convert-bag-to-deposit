@@ -15,8 +15,8 @@
  */
 package nl.knaw.dans.easy.bag2deposit.ddm
 
-import scala.xml.Node
 import scala.xml.transform.RewriteRule
+import scala.xml.{ Elem, Node, Text }
 
 object DropEmptyRewriteRule extends RewriteRule {
   private val labels = Seq(
@@ -37,9 +37,13 @@ object DropEmptyRewriteRule extends RewriteRule {
   )
 
   override def transform(node: Node): Seq[Node] = {
-    if (node.text.trim.isEmpty && labels.contains(node.label))
-      Seq.empty
-    else node
+    if (node.text.trim.nonEmpty) node
+    else if (!labels.contains(node.label)) node
+         else {
+           val href = node.attribute("href").toSeq.flatten.text
+           if (href.isEmpty) Seq.empty
+           else node.asInstanceOf[Elem].copy(child = new Text(href))
+         }
   }
 }
 
