@@ -16,23 +16,60 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import scala.xml.transform.RewriteRule
-import scala.xml.{ Elem, Node, Text }
+import scala.xml.{ Elem, Node, PrefixedAttribute, Text }
 
 object SplitNrRewriteRule extends RewriteRule {
 
+  val regexpMap = Seq(
+    ".*archis[^a-z]vondstmelding.*" -> "VONDSTMELDING",
+    ".*archis[^a-z]waarneming.*" -> "WAARNEMING",
+    ".*archis[^a-z]monument.*" -> "ONDERZOEK",
+    ".*archis[^a-z]onderzoek.*" -> "VONDSTMELDING",
+    ".*archis[^a-z]onderzoek.*" -> "ZAAK-IDENTIFICATIE",
+  )
+
   override def transform(node: Node): Seq[Node] = {
+
+    def typeAttr(value: String) = {
+      new PrefixedAttribute("xsi", "type", s"id-type:ARCHIS-$value", node.attributes)
+    }
+
+    def typedIds(strings: Array[String], attr: PrefixedAttribute): Seq[Elem] = {
+      strings.map(nr =>
+        node.asInstanceOf[Elem].copy(child = new Text(nr), attributes = attr)
+      )
+    }
+
+    def plainIds(strings: Array[String], trailer: String): Seq[Elem] = {
+      strings.map(nr =>
+        node.asInstanceOf[Elem].copy(child = new Text(s"$nr ($trailer"))
+      )
+    }
+
     node match {
-      case Elem(_, "identifier", _, _, Text(value)) if node.attributes.toString.contains("id-type:ARCHIS-") =>
+      case Elem(_, "identifier", _, _, Text(value)) if isTypedArchis(node) =>
         value.split("[,;] *").map(nr =>
           node.asInstanceOf[Elem].copy(child = new Text(nr)
-        ))
-      case Elem(_, "identifier", _, _, Text(value)) if value.toLowerCase.matches(".*;.*[(]archis.*") =>
+          ))
+      case Elem(_, "identifier", _, _, Text(value)) if isPlainArchis(value) =>
         val Array(nrs, trailer) = value.split(" *[(]", 2)
-        nrs.split("[,;] *").map(nr =>
-          node.asInstanceOf[Elem].copy(child = new Text(s"$nr ($trailer"))
-        )
+        val strings = nrs.split("[,;] *")
+        regexpMap
+          .find { case (regexp, _) =>
+            trailer.toLowerCase().matches(regexp)
+          }
+          .map { case (_, value) => typedIds(strings, typeAttr(value)) }
+          .getOrElse(plainIds(strings, trailer))
       case _ => node
     }
+  }
+
+  private def isTypedArchis(node: Node) = {
+    node.attributes.toString.contains("id-type:ARCHIS-")
+  }
+
+  private def isPlainArchis(value: String) = {
+    value.toLowerCase.matches(".*;.*[(]archis.*")
   }
 }
 
