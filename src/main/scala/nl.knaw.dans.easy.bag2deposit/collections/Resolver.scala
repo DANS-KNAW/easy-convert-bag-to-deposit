@@ -45,7 +45,8 @@ case class Resolver() extends DebugEnhancedLogging{
           .getOrElse(throw new Exception(s"no location header returned by $url - ${ response.body }"))
         ))
       case response =>
-        Failure(new Exception(s"Not expected response code from '$url' ${ response.code } - ${ response.body }", null))
+        logger.error(s"Not expected response code from '$url' ${ response.code } - ${ response.body }")
+        Success(None)
     }
   }
 }
