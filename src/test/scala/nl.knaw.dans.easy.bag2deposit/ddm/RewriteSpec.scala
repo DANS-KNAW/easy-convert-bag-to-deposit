@@ -352,10 +352,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
           <dct:identifier xsi:type="id-type:ARCHIS-ONDERZOEK">443456; 789; </dct:identifier>
         </ddm:dcmiMetadata>
     )
-    val transformer = new DdmTransformer(
-      cfgDir,
-      Map.empty,
-    )
+    val transformer = new DdmTransformer(cfgDir, Map.empty)
 
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
       ddm(title = "blabla", audience = "D37000", dcmi =
@@ -384,6 +381,21 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
           <dct:identifier xsi:type="id-type:ARCHIS-ONDERZOEK">789</dct:identifier>
         </ddm:dcmiMetadata>
       )))
+  }
+  it should "create type-id from archis description" in {
+    val transformer = new DdmTransformer(cfgDir, Map.empty)
+    val archisIds = File("src/test/resources/possibleArchaeologyIdentifiers.txt")
+      .lines
+      .filter(_.toLowerCase.contains("archis"))
+      .map(id => <dct:identifier>{id}</dct:identifier>)
+    val ddmIn = ddm(title = "blabla", audience = "D37000", dcmi =
+          <ddm:dcmiMetadata>{ archisIds }</ddm:dcmiMetadata>
+    )
+    val triedNode = transformer.transform(ddmIn, "easy-dataset:123")
+    val ddmOut = triedNode.getOrElse(fail("not expecting a conversion failure"))
+    val strings = (ddmOut \\ "identifier").map(_.text)
+    archisIds.size shouldNot be(strings.size)
+    strings.filter(_.matches(".*[^0-9].*")) shouldBe Seq("10HZ-18 (Objectcode Archis)", "36141 (ARCHIS rapportnummer)", " 405800 (Archis nummers)", "http://livelink.archis.nl/Livelink/livelink.exe?func=ll&objId=4835986&objAction=browse (URI)", "66510 (Archisnummer)", "ARCHIS2: 63389", "Onderzoeksnaam Archis: 4042 Den Haag", "Objectnummer Archis: 1121031", "Archis2 nummer 65495", "3736 (RAAP) (Archis art. 41)", "6663 (ADC) (Archis art. 41)", "2866 (RAAP) (Archis art. 41)", "7104 (ADC) (Archis art. 41)", "16065 (BeVdG) (Archis art. 41)", "Archis2: CIS-code: 25499 (Tjeppenboer) en 25500 (Hilaard)")
   }
   it should "drop empty relation" in {
     val ddmIn = ddm(title = "blabla", audience = "D37000", dcmi =

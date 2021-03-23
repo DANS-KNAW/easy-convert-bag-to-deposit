@@ -21,11 +21,12 @@ import scala.xml.{ Elem, Node, PrefixedAttribute, Text }
 object SplitNrRewriteRule extends RewriteRule {
 
   val regexpMap = Seq(
-    ".*archis[^a-z]vondstmelding.*" -> "VONDSTMELDING",
-    ".*archis[^a-z]waarneming.*" -> "WAARNEMING",
-    ".*archis[^a-z]monument.*" -> "ONDERZOEK",
-    ".*archis[^a-z]onderzoek.*" -> "VONDSTMELDING",
-    ".*archis[^a-z]onderzoek.*" -> "ZAAK-IDENTIFICATIE",
+    ".*archis ?2?[^a-z](vondst?|aan)?melding.*" -> "VONDSTMELDING",
+    ".*archis ?2?[^a-z]waarneming.*" -> "WAARNEMING",
+    ".*archis ?2?[^a-z]onderzoek.*" -> "ONDERZOEK",
+    ".*onderzoek[a-z]*[^a-z]archis ?2?.*" -> "ONDERZOEK",
+    ".*archis ?2?[^a-z]monument.*" -> "MONUMENT",
+    ".*archis ?2?[^a-z]zaak[^a-z]identificatie.*" -> "ZAAK-IDENTIFICATIE",
   )
 
   override def transform(node: Node): Seq[Node] = {
@@ -46,30 +47,35 @@ object SplitNrRewriteRule extends RewriteRule {
       )
     }
 
-    node match {
-      case Elem(_, "identifier", _, _, Text(value)) if isTypedArchis(node) =>
-        value.split("[,;] *").map(nr =>
-          node.asInstanceOf[Elem].copy(child = new Text(nr)
-          ))
-      case Elem(_, "identifier", _, _, Text(value)) if isPlainArchis(value) =>
-        val Array(nrs, trailer) = value.split(" *[(]", 2)
-        val strings = nrs.split("[,;] *")
-        regexpMap
-          .find { case (regexp, _) =>
-            trailer.toLowerCase().matches(regexp)
-          }
-          .map { case (_, value) => typedIds(strings, typeAttr(value)) }
-          .getOrElse(plainIds(strings, trailer))
-      case _ => node
+    def splitTypedNrs = {
+      node.text.split("[,;] *").map(nr =>
+        node.asInstanceOf[Elem].copy(child = new Text(nr)
+        ))
     }
-  }
 
-  private def isTypedArchis(node: Node) = {
-    node.attributes.toString.contains("id-type:ARCHIS-")
-  }
+    def isTypedArchis = {
+      node.attributes.toString.contains("id-type:ARCHIS-")
+    }
 
-  private def isPlainArchis(value: String) = {
-    value.toLowerCase.matches(".*;.*[(]archis.*")
+    def isPlainArchis = {
+      node.text.toLowerCase.matches(".*[(].*archis.*")
+    }
+
+    def splitPlainNrs = {
+      val Array(nrs, trailer) = node.text.split(" *[(]", 2)
+      val strings = nrs.split("[,;] *")
+      regexpMap
+        .find { case (regexp, _) =>
+          trailer.toLowerCase().matches(regexp)
+        }
+        .map { case (_, value) => typedIds(strings, typeAttr(value)) }
+        .getOrElse(plainIds(strings, trailer))
+    }
+
+    if (node.label != "identifier") node
+    else if (isTypedArchis) splitTypedNrs
+         else if (isPlainArchis) splitPlainNrs
+              else node
   }
 }
 
