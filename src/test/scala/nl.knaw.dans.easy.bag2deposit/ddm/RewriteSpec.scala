@@ -65,7 +65,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
                          subjectScheme="Archeologisch Basis Register"
                          schemeURI="http://www.rnaproject.org"
             >Religie - Klooster(complex) (RKLO)</ddm:subject>
-            </ddm:dcmiMetadata>
+        </ddm:dcmiMetadata>
     )
 
     val expectedDDM = ddm(title = "Rapport 123", audience = "D37000", dcmi =
@@ -76,7 +76,6 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
               subjectScheme="ABR Rapporten"
               reportNo="123"
             >Rapport 123</ddm:reportNumber>
-            <dc:title>blabla</dc:title>
             <ddm:reportNumber
               schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
               valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f"
@@ -108,6 +107,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
                          subjectScheme="ABR Complextypen"
                          schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/e9546020-4b28-4819-b0c2-29e7c864c5c0"
             >klooster</ddm:subject>
+            <dc:title>blabla</dc:title>
         </ddm:dcmiMetadata>
     )
 

@@ -48,13 +48,22 @@ class DdmTransformer(cfgDir: File, collectionsMap: => Map[String, Elem] = Map.em
     languageRewriteRule,
   )
 
-  private case class ArchaeologyRewriteRule(additionalElements: NodeSeq) extends RewriteRule {
-    override def transform(n: Node): Seq[Node] = {
-      if (n.label != "dcmiMetadata") n
+  private def uniqueTitles(profileTitle: String, dcmiChildren: Seq[Node]) = {
+    // TODO apply to standardRuleTransformer
+    val (titles, others) = dcmiChildren.partition(_.label == "title")
+    others ++ titles
+      .sortBy(_.text).distinct
+      .filter(n => !profileTitle.contains(n.text))
+    // TODO drop if part of but not euqal to other title
+  }
+
+  private case class ArchaeologyRewriteRule(profileTitle: String, additionalElements: NodeSeq) extends RewriteRule {
+    override def transform(node: Node): Seq[Node] = {
+      if (node.label != "dcmiMetadata") node
       else <dcmiMetadata>
              { additionalElements }
-             { archaeologyRuleTransformer(n).nonEmptyChildren }
-           </dcmiMetadata>.copy(prefix = n.prefix, attributes = n.attributes, scope = n.scope)
+             { uniqueTitles(profileTitle, archaeologyRuleTransformer(node).nonEmptyChildren) }
+           </dcmiMetadata>.copy(prefix = node.prefix, attributes = node.attributes, scope = node.scope)
     }
   }
 
@@ -75,7 +84,10 @@ class DdmTransformer(cfgDir: File, collectionsMap: => Map[String, Elem] = Map.em
       val notConvertedFirstTitle = transformedProfile \ "title"
 
       // the transformation
-      val ddmRuleTransformer = new RuleTransformer(ArchaeologyRewriteRule(fromFirstTitle ++ inCollection))
+      val ddmRuleTransformer = new RuleTransformer(ArchaeologyRewriteRule(
+        (ddmIn \ "profile" \ "title").text,
+        fromFirstTitle ++ inCollection),
+      )
       val ddmOut = ddmRuleTransformer(ddmIn)
 
       // logging
