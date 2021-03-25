@@ -26,6 +26,7 @@ import org.scalatest.matchers.should.Matchers
 import java.net.URI
 import java.util.UUID
 import scala.util.{ Failure, Success, Try }
+import scala.xml.Text
 
 class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmSupport {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
@@ -54,8 +55,8 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
   "ABR rules" should "convert" in {
     val ddmIn = ddm(title = "Rapport 123", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
-            <dc:title>blabla</dc:title>
-            <dc:title>Rapport 456</dc:title>
+            <dc:alternative>blabla</dc:alternative>
+            <dc:alternative>Rapport 456</dc:alternative>
             <dcterms:temporal xsi:type="abr:ABRperiode">VMEA</dcterms:temporal>
             <dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject>
             <dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
@@ -70,12 +71,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
 
     val expectedDDM = ddm(title = "Rapport 123", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
-            <ddm:reportNumber
-              schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
-              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f"
-              subjectScheme="ABR Rapporten"
-              reportNo="123"
-            >Rapport 123</ddm:reportNumber>
+            <dc:alternative>blabla</dc:alternative>
             <ddm:reportNumber
               schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
               valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f"
@@ -107,7 +103,12 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
                          subjectScheme="ABR Complextypen"
                          schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/e9546020-4b28-4819-b0c2-29e7c864c5c0"
             >klooster</ddm:subject>
-            <dc:title>blabla</dc:title>
+            <ddm:reportNumber
+              schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
+              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f"
+              subjectScheme="ABR Rapporten"
+              reportNo="123"
+            >Rapport 123</ddm:reportNumber>
         </ddm:dcmiMetadata>
     )
 
@@ -213,9 +214,9 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
   it should "match Alkmaar variants" in {
     val ddmIn = ddm(title = "blablabla", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
-            <dc:title>Rapporten over de Alkmaarse Monumenten en Archeologie 18</dc:title>
-            <dc:title> RAMA 13</dc:title>
-            <dc:title>Rapporten over de Alkmaarse Monumentenzorg en Archeologie RAMA 12</dc:title>
+            <dc:alternative>Rapporten over de Alkmaarse Monumenten en Archeologie 18</dc:alternative>
+            <dc:alternative> RAMA 13</dc:alternative>
+            <dc:alternative>Rapporten over de Alkmaarse Monumentenzorg en Archeologie RAMA 12</dc:alternative>
         </ddm:dcmiMetadata>
     )
     val expectedDdm = ddm(title = "blablabla", audience = "D37000", dcmi =
@@ -245,16 +246,11 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
   "acquisitionRewriteRule" should "add acquisition methods of profile to dcmiMetadata" in {
     val ddmIn = ddm(title = "Een Inventariserend Veldonderzoek in de vorm van proefsleuven", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
-          <dc:title>Bureauonderzoek en Inventariserend veldonderzoek (verkennende fase)</dc:title>
+          <dc:alternative>Bureauonderzoek en Inventariserend veldonderzoek (verkennende fase)</dc:alternative>
         </ddm:dcmiMetadata>
     )
     val expectedDdm = ddm(title = "Een Inventariserend Veldonderzoek in de vorm van proefsleuven", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
-              <ddm:acquisitionMethod
-                schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/554ca1ec-3ed8-42d3-ae4b-47bcb848b238"
-                valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/a3354be9-15eb-4066-a4ec-40ed8895cb5a" }
-                subjectScheme="ABR verwervingswijzen"
-              >Een Inventariserend Veldonderzoek in de vorm van proefsleuven</ddm:acquisitionMethod>
               <ddm:acquisitionMethod
                 schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/554ca1ec-3ed8-42d3-ae4b-47bcb848b238"
                 valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/d4ecc89b-d52e-49a1-880a-296db5c2953e" }
@@ -265,6 +261,11 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
                 valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/bd4d913f-1cab-4f08-ab00-77b64a6273e0" }
                 subjectScheme="ABR verwervingswijzen"
               >Bureauonderzoek en Inventariserend veldonderzoek (verkennende fase)</ddm:acquisitionMethod>
+              <ddm:acquisitionMethod
+                schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/554ca1ec-3ed8-42d3-ae4b-47bcb848b238"
+                valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/a3354be9-15eb-4066-a4ec-40ed8895cb5a" }
+                subjectScheme="ABR verwervingswijzen"
+              >Een Inventariserend Veldonderzoek in de vorm van proefsleuven</ddm:acquisitionMethod>
         </ddm:dcmiMetadata>
     )
 
@@ -321,20 +322,28 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
     // content of the <inCollection> element is validated in CollectionsSpec.collectionDatasetIdToInCollection
   }
 
-  it should "add inCollection for other than archaeology" in pendingUntilFixed {
-    val ddmIn = ddm(title = "blabla", audience = "Z99000", dcmi =
+  // TODO try incollection when DDM has no dcmiMetatdata
+  it should "add inCollection for other than archaeology and filter titles" in {
+    val ddmIn = ddm(title = "blabla rabarbera", audience = "Z99000", dcmi =
         <ddm:dcmiMetadata>
+          <dct:alternative>blabla</dct:alternative>
+          <dct:alternative>rabarbera</dct:alternative>
+          <dct:alternative>asterix</dct:alternative>
+          <dct:alternative>asterix</dct:alternative>
+          <dct:alternative>asterix en obelix</dct:alternative>
+          <dct:alternative>blabla rabarbera ratjetoe</dct:alternative>
         </ddm:dcmiMetadata>
-    )
+    ) // TODO what about primary title as part of an alternative title?
     val transformer = new DdmTransformer(
       cfgDir,
       Map("easy-dataset:123" -> <inCollection>mocked</inCollection>)
     )
 
-    transformer.transform(ddmIn, "easy-dataset:456").map(normalized) shouldBe Success(normalized(ddmIn))
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
-      ddm(title = "blabla", audience = "Z99000", dcmi =
+      ddm(title = "blabla rabarbera", audience = "Z99000", dcmi =
         <ddm:dcmiMetadata>
+          <dct:alternative>asterix en obelix</dct:alternative>
+          <dct:alternative>blabla rabarbera ratjetoe</dct:alternative>
           <inCollection>mocked</inCollection>
         </ddm:dcmiMetadata>
       )))
