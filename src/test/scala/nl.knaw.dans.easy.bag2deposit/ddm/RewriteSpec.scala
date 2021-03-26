@@ -302,9 +302,10 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
   }
 
   "ddmTransformer" should "add inCollection for archaeology" in {
-    val ddmIn = ddm(title = "blabla", audience = "D37000", dcmi =
-        <ddm:dcmiMetadata>
-        </ddm:dcmiMetadata>
+    val profile = <dc:title>blabla</dc:title><dct:description/> +: creator +: created +: available  +: archaeology +: openAccess
+    val ddmIn = ddm(
+      <ddm:profile>{ profile }</ddm:profile>
+      <ddm:dcmiMetadata/>
     )
     val transformer = new DdmTransformer(
       cfgDir,
@@ -313,17 +314,18 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
 
     transformer.transform(ddmIn, "easy-dataset:456").map(normalized) shouldBe Success(normalized(ddmIn))
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
-      ddm(title = "blabla", audience = "D37000", dcmi =
-        <ddm:dcmiMetadata>
-          <inCollection>mocked</inCollection>
-        </ddm:dcmiMetadata>
+      ddm(
+        <ddm:profile>{ profile }</ddm:profile>
+        <ddm:dcmiMetadata><inCollection>mocked</inCollection></ddm:dcmiMetadata>
       )))
     // content of the <inCollection> element is validated in CollectionsSpec.collectionDatasetIdToInCollection
   }
 
   it should "add inCollection to an empty dcmiMetadata for other than archaeology" in {
-    val ddmIn = ddm(title = "blabla rabarbera", audience = "Z99000", dcmi =
-        <ddm:dcmiMetadata/>
+    val profile = <dc:title>rabarbera</dc:title><dct:description/> +: creator +: created +: available +: <ddm:audience>Z99000</ddm:audience> +: openAccess
+    val ddmIn = ddm(
+      <ddm:profile>{ profile }</ddm:profile>
+      <ddm:dcmiMetadata/>
     )
     val transformer = new DdmTransformer(
       cfgDir,
@@ -331,15 +333,15 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
     )
 
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
-      ddm(title = "blabla rabarbera", audience = "Z99000", dcmi =
-        <ddm:dcmiMetadata>
-          <inCollection>mocked</inCollection>
-        </ddm:dcmiMetadata>
+      ddm(
+        <ddm:profile>{ profile }</ddm:profile>
+        <ddm:dcmiMetadata><inCollection>mocked</inCollection></ddm:dcmiMetadata>
       )))
-    // content of the <inCollection> element is validated in CollectionsSpec.collectionDatasetIdToInCollection
   }
   it should "add inCollection and filter titles" in {
-    val ddmIn = ddm(title = "blabla rabarbera", audience = "Z99000", dcmi =
+    val profile = <dc:title>blabla rabarbera</dc:title><dct:description/> +: creator +: created +: available +: <ddm:audience>Z99000</ddm:audience> +: openAccess
+    val ddmIn = ddm(
+        <ddm:profile>{ profile }</ddm:profile>
         <ddm:dcmiMetadata>
           <dct:alternative>blabla</dct:alternative>
           <dct:alternative>rabarbera</dct:alternative>
@@ -355,7 +357,8 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
     )
 
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
-      ddm(title = "blabla rabarbera", audience = "Z99000", dcmi =
+      ddm(
+        <ddm:profile>{ profile }</ddm:profile>
         <ddm:dcmiMetadata>
           <dc:title>asterix en obelix</dc:title>
           <dct:alternative>blabla rabarbera ratjetoe</dct:alternative>
