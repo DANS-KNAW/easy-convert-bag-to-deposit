@@ -29,7 +29,7 @@ case class DistinctTitlesRewriteRule(profileTitle: String) extends RewriteRule {
 }
 object DistinctTitlesRewriteRule {
   def distinctTitles(profileTitle: String, dcmiChildren: Seq[Node]): Seq[Node] = {
-    val (titles, others) = dcmiChildren.partition(_.label == "alternative")
+    val (titles, others) = dcmiChildren.partition(node => Seq("title","alternative").contains(node.label))
     val distinctTitles = titles.sortBy(_.text).distinct
     val titleValues = distinctTitles.map(_.text) :+ profileTitle
     distinctTitles
