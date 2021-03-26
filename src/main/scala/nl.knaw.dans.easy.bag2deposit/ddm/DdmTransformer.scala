@@ -46,8 +46,8 @@ class DdmTransformer(cfgDir: File, collectionsMap: => Map[String, Elem] = Map.em
   )
 
   private def standardRuleTransformer(newDcmiNodes: NodeSeq, profileTitle: String) = new RuleTransformer(
-    DistinctTitlesRewriteRule(profileTitle),
     NewDcmiNodesRewriteRule(newDcmiNodes),
+    DistinctTitlesRewriteRule(profileTitle),
     DropEmptyRewriteRule,
     languageRewriteRule,
   )

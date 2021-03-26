@@ -55,8 +55,8 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
   "ABR rules" should "convert" in {
     val ddmIn = ddm(title = "Rapport 123", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
-            <dc:alternative>blabla</dc:alternative>
-            <dc:alternative>Rapport 456</dc:alternative>
+            <dct:alternative>blabla</dct:alternative>
+            <dct:alternative>Rapport 456</dct:alternative>
             <dcterms:temporal xsi:type="abr:ABRperiode">VMEA</dcterms:temporal>
             <dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject>
             <dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
@@ -71,7 +71,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
 
     val expectedDDM = ddm(title = "Rapport 123", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
-            <dc:alternative>blabla</dc:alternative>
+            <dct:alternative>blabla</dct:alternative>
             <ddm:reportNumber
               schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
               valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f"
@@ -214,9 +214,9 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
   it should "match Alkmaar variants" in {
     val ddmIn = ddm(title = "blablabla", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
-            <dc:alternative>Rapporten over de Alkmaarse Monumenten en Archeologie 18</dc:alternative>
-            <dc:alternative> RAMA 13</dc:alternative>
-            <dc:alternative>Rapporten over de Alkmaarse Monumentenzorg en Archeologie RAMA 12</dc:alternative>
+            <dct:alternative>Rapporten over de Alkmaarse Monumenten en Archeologie 18</dct:alternative>
+            <dct:alternative> RAMA 13</dct:alternative>
+            <dct:alternative>Rapporten over de Alkmaarse Monumentenzorg en Archeologie RAMA 12</dct:alternative>
         </ddm:dcmiMetadata>
     )
     val expectedDdm = ddm(title = "blablabla", audience = "D37000", dcmi =
@@ -246,7 +246,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
   "acquisitionRewriteRule" should "add acquisition methods of profile to dcmiMetadata" in {
     val ddmIn = ddm(title = "Een Inventariserend Veldonderzoek in de vorm van proefsleuven", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
-          <dc:alternative>Bureauonderzoek en Inventariserend veldonderzoek (verkennende fase)</dc:alternative>
+          <dct:alternative>Bureauonderzoek en Inventariserend veldonderzoek (verkennende fase)</dct:alternative>
         </ddm:dcmiMetadata>
     )
     val expectedDdm = ddm(title = "Een Inventariserend Veldonderzoek in de vorm van proefsleuven", audience = "D37000", dcmi =
@@ -323,7 +323,24 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
   }
 
   // TODO try incollection when DDM has no dcmiMetatdata
-  it should "add inCollection for other than archaeology and filter titles" in {
+  it should "add inCollection to an empty dcmiMetadata for other than archaeology" in {
+    val ddmIn = ddm(title = "blabla rabarbera", audience = "Z99000", dcmi =
+        <ddm:dcmiMetadata/>
+    )
+    val transformer = new DdmTransformer(
+      cfgDir,
+      Map("easy-dataset:123" -> <inCollection>mocked</inCollection>)
+    )
+
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
+      ddm(title = "blabla rabarbera", audience = "Z99000", dcmi =
+        <ddm:dcmiMetadata>
+          <inCollection>mocked</inCollection>
+        </ddm:dcmiMetadata>
+      )))
+    // content of the <inCollection> element is validated in CollectionsSpec.collectionDatasetIdToInCollection
+  }
+  it should "add inCollection and filter titles" in {
     val ddmIn = ddm(title = "blabla rabarbera", audience = "Z99000", dcmi =
         <ddm:dcmiMetadata>
           <dct:alternative>blabla</dct:alternative>
@@ -333,7 +350,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
           <dct:alternative>asterix en obelix</dct:alternative>
           <dct:alternative>blabla rabarbera ratjetoe</dct:alternative>
         </ddm:dcmiMetadata>
-    ) // TODO what about primary title as part of an alternative title?
+    )
     val transformer = new DdmTransformer(
       cfgDir,
       Map("easy-dataset:123" -> <inCollection>mocked</inCollection>)
