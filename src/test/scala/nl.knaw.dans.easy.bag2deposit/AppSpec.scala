@@ -16,7 +16,6 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
-import nl.knaw.dans.bag.v0.DansV0Bag
 import nl.knaw.dans.bag.v0.DansV0Bag.EASY_USER_ACCOUNT_KEY
 import nl.knaw.dans.easy.bag2deposit.BagSource._
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, FileSystemSupport }
@@ -79,6 +78,13 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     // post condition
     (targetDir / ".." / "deposit.properties").contentAsString should include("dataverse.id-identifier = dans-2xg-umq8")
     // other details verified in other test, note that the DOI has no prefix
+
+    // DDM should have preserved its white space
+    (targetDir / "metadata" / "dataset.xml").contentAsString should include
+    """    <dcterms:description>An example of a dataset.
+      |
+      |    With another paragraph.
+      |    </dcterms:description>""".stripMargin
 
     // TODO (manually) intercept logging: the bag names should reflect the errors
     //  no variation in bag-info.txt not found or a property in that file not found

@@ -44,15 +44,6 @@ package object bag2deposit {
       .tried.unsafeGetOrThrow
   }
 
-  private val nameSpaceRegExp = """ xmlns:[a-z-]+="[^"]*"""" // these attributes have a variable order
-
-  def normalized(elem: Node): String = printer
-    .format(Utility.trim(elem)) // this trim normalizes <a/> and <a></a>
-    .replaceAll(nameSpaceRegExp, "") // the random order would cause differences in actual and expected
-    .replaceAll(" +\n?", " ")
-    .replaceAll("\n +<", "\n<")
-    .trim
-
   implicit class RichNode(val left: Node) extends AnyVal {
 
     def hasType(t: String): Boolean = {
@@ -61,8 +52,6 @@ package object bag2deposit {
         .contains(t)
     }
   }
-
-  val printer = new PrettyPrinter(160, 2)
 
   def loadXml(file: File): Try[Elem] = Try(XML.loadFile(file.toJava))
     .recoverWith {
@@ -74,7 +63,7 @@ package object bag2deposit {
 
     def serialize: String = {
       """<?xml version="1.0" encoding="UTF-8"?>
-        |""".stripMargin + printer.format(elem)
+        |""".stripMargin + Utility.serialize(elem)
     }
   }
 }

@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ DdmSupport, SchemaSupport }
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
-import nl.knaw.dans.easy.bag2deposit.{ BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, normalized, parseCsv }
+import nl.knaw.dans.easy.bag2deposit.{ BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, parseCsv }
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -26,6 +26,7 @@ import org.scalatest.matchers.should.Matchers
 import java.net.URI
 import java.util.UUID
 import scala.util.{ Failure, Success, Try }
+import scala.xml.{ Node, PrettyPrinter, Utility }
 
 class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmSupport {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
@@ -302,7 +303,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
   }
 
   "ddmTransformer" should "add inCollection for archaeology" in {
-    val profile = <dc:title>blabla</dc:title><dct:description/> +: creator +: created +: available  +: archaeology +: openAccess
+    val profile = <dc:title>blabla</dc:title><dct:description/> +: creator +: created +: available +: archaeology +: openAccess
     val ddmIn = ddm(
       <ddm:profile>{ profile }</ddm:profile>
       <ddm:dcmiMetadata/>
@@ -444,4 +445,14 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
                </ddm:dcmiMetadata>,
       )))
   }
+
+  private val nameSpaceRegExp = """ xmlns:[a-z-]+="[^"]*"""" // these attributes have a variable order
+  private val printer = new PrettyPrinter(160, 2) // Utility.serialize would preserve white space, now tests are better readable
+
+  def normalized(elem: Node): String = printer
+    .format(Utility.trim(elem)) // this trim normalizes <a/> and <a></a>
+    .replaceAll(nameSpaceRegExp, "") // the random order would cause differences in actual and expected
+    .replaceAll(" +\n?", " ")
+    .replaceAll("\n +<", "\n<")
+    .trim
 }

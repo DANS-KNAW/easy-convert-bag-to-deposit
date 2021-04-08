@@ -16,7 +16,6 @@
 package nl.knaw.dans.easy.bag2deposit.Fixture
 
 import better.files.StringExtensions
-import nl.knaw.dans.easy.bag2deposit.printer
 import org.scalatest.Assertions.fail
 
 import java.net.UnknownHostException
@@ -25,7 +24,7 @@ import javax.xml.transform.Source
 import javax.xml.transform.stream.StreamSource
 import javax.xml.validation.SchemaFactory
 import scala.util.{ Failure, Try }
-import scala.xml.{ Node, SAXParseException, Utility }
+import scala.xml.{ Node, PrettyPrinter, SAXParseException, Utility }
 
 trait SchemaSupport {
   val schema: String
@@ -50,7 +49,7 @@ trait SchemaSupport {
   }
 
   def validate(xml: Node): Try[Unit] = {
-    val serialized = printer.format(Utility.trim(xml))
+    val serialized = Utility.serialize(xml).toString()
     triedSchema.getOrElse(fail("Please prefix the test with 'assume(schemaIsAvailable)' to ignore a failure due to not reachable schema's"))
     triedSchema.flatMap { schema =>
       val source = new StreamSource(serialized.inputStream)

@@ -16,11 +16,11 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.{ parseCsv, printer }
+import nl.knaw.dans.easy.bag2deposit.parseCsv
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
-import scala.xml.Node
 import scala.xml.transform.RewriteRule
+import scala.xml.{ Node, PrettyPrinter }
 
 case class LanguageRewriteRule(cfgFile: File) extends RewriteRule {
 
@@ -56,6 +56,10 @@ case class LanguageRewriteRule(cfgFile: File) extends RewriteRule {
     <ddm:language encodingScheme='ISO639-2' code={ code.toLowerCase }>{ value.trim }</ddm:language>
 }
 object LanguageRewriteRule extends DebugEnhancedLogging {
+
+  // doesn't preserve white space so don't use for serialization
+  private val printer = new PrettyPrinter(160, 2)
+
   def logNotMappedLanguages(ddm: Node, datasetId: String): Unit = {
     (ddm \\ "language").filter(
       !_.attributes.mkString.contains("encodingScheme")
