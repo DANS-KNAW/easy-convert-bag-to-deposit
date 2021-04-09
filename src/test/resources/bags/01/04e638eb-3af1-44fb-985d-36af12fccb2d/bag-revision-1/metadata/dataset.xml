@@ -15,6 +15,8 @@ xsi:schemaLocation="http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.k
     <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
   </ddm:profile>
   <ddm:dcmiMetadata>
+    <dc:title>Example</dc:title>
+    <dc:title>Another title that is not part of another one</dc:title>
     <dcterms:type xsi:type="dcterms:DCMIType">Text</dcterms:type>
     <dcterms:identifier xsi:type="id-type:DOI">10.5072/dans-2xg-umq8</dcterms:identifier>
     <dcterms:identifier xsi:type="id-type:URN">urn:nbn:nl:ui:13-00-3haq</dcterms:identifier>

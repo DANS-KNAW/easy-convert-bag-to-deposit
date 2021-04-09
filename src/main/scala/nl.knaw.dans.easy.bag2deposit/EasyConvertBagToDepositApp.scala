@@ -25,7 +25,7 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import java.io.{ FileNotFoundException, IOException }
 import scala.collection.mutable.ListBuffer
 import scala.util.{ Failure, Success, Try }
-import scala.xml.NodeSeq
+import scala.xml.{ Elem, NodeSeq }
 
 class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnhancedLogging {
 
@@ -88,7 +88,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       props <- depositPropertiesFactory.create(bagInfo, ddmIn)
       datasetId = props.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
-      _ = provenance.xml(ddmIn, ddmOut).foreach(s => logger.info(s.serialize))
+      _ = provenance.xml(ddmIn, ddmOut).foreach(writeProvenance(bagDir))
       _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
       _ = props.save((bagParentDir / "deposit.properties").toJava)
       _ = ddmFile.writeText(ddmOut.serialize)
@@ -108,6 +108,10 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     case e: Throwable =>
       logger.error(s"${ bagParentDir.name } failed with not expected error: ${ e.getClass.getSimpleName } ${ e.getMessage }")
       Failure(e)
+  }
+
+  private def writeProvenance(bagDir: File)(xml: Elem) = {
+    (bagDir / "metadata" / "provenance.xml").writeText(xml.serialize)
   }
 
   private def move(bagParentDir: File)(outputDir: File) = {
