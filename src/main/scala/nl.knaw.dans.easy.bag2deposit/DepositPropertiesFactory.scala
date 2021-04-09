@@ -32,6 +32,9 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
   def create(bagInfo: BagInfo, ddm: Node): Try[PropertiesConfiguration] = Try {
     val ddmIds: NodeSeq = ddm \ "dcmiMetadata" \ "identifier"
 
+    def formatOfPanId = (ddm \ "dcmiMetadata" \ "isFormatOf")
+      .filter(_.text.toUpperCase.startsWith("PAN-"))
+
     def getIdType(idType: String) = ddmIds
       .find(_.hasType(s"id-type:$idType"))
       .getOrElse(throw InvalidBagException(s"no $idType"))
@@ -80,6 +83,9 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
           addProperty("bag-store.bag-id", bagInfo.uuid)
           addProperty("dataverse.sword-token", bagInfo.versionOf.getOrElse(bagInfo.uuid))
           addProperty("dataverse.nbn", basePids.urn)
+          formatOfPanId.foreach(node =>
+            addProperty("dataverse.other-id", node.text)
+          )
         case FEDORA =>
           addProperty("dataverse.nbn", basePids.urn)
         case _ =>

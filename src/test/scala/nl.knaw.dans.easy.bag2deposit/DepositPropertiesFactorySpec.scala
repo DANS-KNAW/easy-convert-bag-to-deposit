@@ -30,7 +30,7 @@ import scalaj.http.HttpResponse
 import scala.util.Success
 import scala.xml.XML
 
-class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with BagIndexSupport with BagSupport with MockFactory {
+class DepositPropertiesFactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with BagIndexSupport with BagSupport with MockFactory {
 
   "create" should "call the bag-index for the sequence only" in {
     val uuid = "04e638eb-3af1-44fb-985d-36af12fccb2d"
@@ -85,6 +85,8 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
                   <dcterms:identifier xsi:type="id-type:DOI">10.5072/dans-2xg-umq8</dcterms:identifier>
                   <dcterms:identifier xsi:type="id-type:URN">urn:nbn:nl:ui:13-00-3haq</dcterms:identifier>
                   <dcterms:identifier>easy-dataset:162288</dcterms:identifier>
+                  <dcterms:isFormatOf>PAN-00019180</dcterms:isFormatOf>
+                  <dcterms:isFormatOf>pani</dcterms:isFormatOf>
                 </ddm:dcmiMetadata>
               </ddm:DDM>
 
@@ -110,6 +112,7 @@ class FactorySpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |bag-store.bag-id = $bagUUID
          |dataverse.sword-token = $baseUUID
          |dataverse.nbn = urn:nbn:nl:ui:13-z4-f8cm
+         |dataverse.other-id = PAN-00019180
          |dataverse.bag-id = urn:uuid:$bagUUID
          |dataverse.id-protocol = urn
          |dataverse.id-identifier = z4-f8cm
