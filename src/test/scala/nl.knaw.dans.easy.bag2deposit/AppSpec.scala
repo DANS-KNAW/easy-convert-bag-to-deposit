@@ -55,15 +55,6 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
       DepositPropertiesFactory(appConfig, DOI, VAULT)
     ) shouldBe Success("No fatal errors")
 
-    //////// general post conditions
-
-    // DDM should have preserved its white space
-    (targetDir / "metadata" / "dataset.xml").contentAsString should include
-    """    <dcterms:description>An example of a dataset.
-      |
-      |    With another paragraph.
-      |    </dcterms:description>""".stripMargin
-
     // TODO (manually) intercept logging: the bag names should reflect the errors
     //  no variation in bag-info.txt not found or a property in that file not found
 
@@ -85,6 +76,13 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
 
     val validBag = resourceBags / validUUID / "bag-revision-1"
     val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
+
+    // DDM should have preserved its white space
+    (validBag / "metadata" / "dataset.xml").contentAsString should include
+    """    <dcterms:description>An example of a dataset.
+      |
+      |    With another paragraph.
+      |    </dcterms:description>""".stripMargin
 
     // content verified in BagInfoSpec
     validBag / ".." / "deposit.properties" shouldNot exist
