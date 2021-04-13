@@ -28,8 +28,7 @@ import org.apache.commons.csv.CSVFormat.RFC4180
 import org.apache.commons.csv.{ CSVFormat, CSVParser, CSVRecord }
 import resource.managed
 
-import java.nio.charset.Charset.defaultCharset
-import java.nio.charset.StandardCharsets
+import java.nio.charset.{ Charset, StandardCharsets }
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 import scala.util.Try
 import scala.xml.Elem
@@ -42,7 +41,7 @@ object Collections extends DebugEnhancedLogging {
   private def parseCsv(file: File, format: CSVFormat): Try[Iterable[CSVRecord]] = {
     managed(CSVParser.parse(
       file.toJava,
-      defaultCharset(),
+      Charset.forName("UTF-8"),
       format
         .withDelimiter(',')
         .withRecordSeparator('\n')
