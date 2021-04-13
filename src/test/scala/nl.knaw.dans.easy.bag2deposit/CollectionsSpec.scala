@@ -25,6 +25,7 @@ import org.scalatest.matchers.should.Matchers
 import resource.managed
 
 import java.net.UnknownHostException
+import java.nio.charset.Charset
 import scala.util.{ Failure, Success, Try }
 
 class CollectionsSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with Matchers with FileSystemSupport with MockFactory {
@@ -41,7 +42,7 @@ class CollectionsSpec extends AnyFlatSpec with DdmSupport with SchemaSupport wit
       "Verzamelpagina Archeologie not found in collections skos",
     )
     tuples.size shouldBe (cfgDir / "ThemathischeCollecties.csv")
-      .lines.size + 10
+      .lines(Charset.forName("UTF-8")).size + 10
 
     // just sampling some of the resulting tuples:
     tuples("easy-dataset:32660") shouldBe tuples("easy-dataset:33600")

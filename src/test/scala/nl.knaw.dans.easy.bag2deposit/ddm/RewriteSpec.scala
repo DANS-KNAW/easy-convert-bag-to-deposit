@@ -24,6 +24,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.net.URI
+import java.nio.charset.Charset
 import java.util.UUID
 import scala.util.{ Failure, Success, Try }
 import scala.xml.{ Node, PrettyPrinter, Utility }
@@ -412,7 +413,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
   it should "create type-id from archis description" in {
     val transformer = new DdmTransformer(cfgDir, Map.empty)
     val archisIds = File("src/test/resources/possibleArchaeologyIdentifiers.txt")
-      .lines
+      .lines(Charset.forName("UTF-8"))
       .filter(_.toLowerCase.contains("archis"))
       .map(id => <dct:identifier>{id}</dct:identifier>)
     val ddmIn = ddm(title = "blabla", audience = "D37000", dcmi =
