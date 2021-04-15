@@ -19,6 +19,7 @@ import better.files.File
 import cats.instances.list._
 import cats.instances.try_._
 import cats.syntax.traverse._
+import com.yourmediashelf.fedora.client.FedoraClientException
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
 import net.ruippeixotog.scalascraper.dsl.DSL._
@@ -115,12 +116,24 @@ object Collections extends DebugEnhancedLogging {
   }
 
   private def membersOf(datasetId: String, fedoraProvider: FedoraProvider): Try[Seq[String]] = {
+
+    def getMu(jumpoffId: String, streamId: String) = {
+      fedoraProvider
+        .disseminateDatastream(jumpoffId, streamId)
+        .map(browser.parseInputStream(_, StandardCharsets.UTF_8.name())).tried
+    }
+
+    def getMuAsHtmlDoc(jumpoffId: String) = {
+      getMu(jumpoffId, "HTML_MU")
+        .recoverWith { case e: FedoraClientException if e.getStatus == 404 =>
+          getMu(jumpoffId, "TXT_MU")
+        }
+    }
+
     for {
       maybeJumpoffId <- jumpoff(datasetId, fedoraProvider)
       jumpoffId = maybeJumpoffId.getOrElse(throw new Exception(s"no jumpoff for $datasetId"))
-      doc <- fedoraProvider
-        .disseminateDatastream(jumpoffId, "HTML_MU")
-        .map(browser.parseInputStream(_, StandardCharsets.UTF_8.name())).tried
+      doc <- getMuAsHtmlDoc(jumpoffId)
       items = doc >> elementList("a")
       hrefs = items
         .withFilter(_.hasAttr("href"))
