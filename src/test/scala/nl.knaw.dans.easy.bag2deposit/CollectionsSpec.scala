@@ -16,14 +16,16 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
+import com.yourmediashelf.fedora.client.FedoraClientException
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ DdmSupport, FileSystemSupport, SchemaSupport }
-import nl.knaw.dans.easy.bag2deposit.collections.{ Collections, FedoraProvider, Resolver }
+import nl.knaw.dans.easy.bag2deposit.collections.{ Collections, FedoraProvider }
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import resource.managed
 
+import java.io.InputStream
 import java.net.UnknownHostException
 import java.nio.charset.Charset
 import scala.util.{ Failure, Success, Try }
@@ -78,7 +80,7 @@ class CollectionsSpec extends AnyFlatSpec with DdmSupport with SchemaSupport wit
   }
 
   it should "return members from html containing <br>" in {
-    val fedoraProvider = expectJumpoff("easy-dataset:mocked2", jumpoffMocks / "for-dataset-64608.html")
+    val fedoraProvider = expectJumpoffTxt("easy-dataset:mocked2", jumpoffMocks / "for-dataset-64608.html")
     val mockedJumpoffMembers = List("easy-dataset:113728", "easy-dataset:113729", "easy-dataset:113730", "easy-dataset:113731", "easy-dataset:113732", "easy-dataset:113733", "easy-dataset:113734", "easy-dataset:113735", "easy-dataset:113736", "easy-dataset:113737", "easy-dataset:113738", "easy-dataset:113749", "easy-dataset:113750", "easy-dataset:113751", "easy-dataset:113752", "easy-dataset:113753", "easy-dataset:113754", "easy-dataset:113755", "easy-dataset:113757", "easy-dataset:113758", "easy-dataset:113759", "easy-dataset:113760", "easy-dataset:113761", "easy-dataset:113762", "easy-dataset:113763", "easy-dataset:113764", "easy-dataset:113765", "easy-dataset:113766", "easy-dataset:113777", "easy-dataset:113778", "easy-dataset:113782", "easy-dataset:113784", "easy-dataset:190096", "easy-dataset:190097", "easy-dataset:190098", "easy-dataset:190099", "easy-dataset:190100", "easy-dataset:190101", "easy-dataset:190102", "easy-dataset:190103", "easy-dataset:190104", "easy-dataset:190105", "easy-dataset:190106", "easy-dataset:190107", "easy-dataset:190108", "easy-dataset:190109", "easy-dataset:190110", "easy-dataset:190111", "easy-dataset:190112", "easy-dataset:190113", "easy-dataset:190114", "easy-dataset:190117", "easy-dataset:190118", "easy-dataset:190119", "easy-dataset:190120", "easy-dataset:190121", "easy-dataset:190122", "easy-dataset:190123", "easy-dataset:190124", "easy-dataset:190126", "easy-dataset:190127", "easy-dataset:190128", "easy-dataset:190129", "easy-dataset:190130", "easy-dataset:190132", "easy-dataset:190133", "easy-dataset:190134", "easy-dataset:190135", "easy-dataset:190136", "easy-dataset:190137", "easy-dataset:190138", "easy-dataset:190139")
 
     // TODO manual check: should log "ERROR not found: https://doi.org/10.17026/dans-xg5-6zwxBLABLABLA"
@@ -121,13 +123,40 @@ class CollectionsSpec extends AnyFlatSpec with DdmSupport with SchemaSupport wit
 
   private def expectJumpoff(datasetId: String, file: File) = {
     val fedoraProvider: FedoraProvider = mock[FedoraProvider]
+
     (fedoraProvider.getSubordinates(
       _: String
     )) expects datasetId returning Success(Seq("dans-jumpoff:mocked", "easy-file:123"))
+
     (fedoraProvider.disseminateDatastream(
       _: String,
       _: String,
     )) expects("dans-jumpoff:mocked", "HTML_MU") returning managed(file.newFileInputStream) once()
+
+    fedoraProvider
+  }
+
+  private def expectJumpoffTxt(datasetId: String, file: File) = {
+    val fedoraProvider: FedoraProvider = mock[FedoraProvider]
+
+    val mockedInputStream = mock[InputStream]
+    (mockedInputStream.read(_: Array[Byte], _: Int, _: Int)) expects (*,*,*) throwing new FedoraClientException(404,"mocked fedora stream ont found")
+    mockedInputStream.close _ expects ()
+
+    (fedoraProvider.getSubordinates(
+      _: String
+    )) expects datasetId returning Success(Seq("dans-jumpoff:mocked", "easy-file:123"))
+
+    (fedoraProvider.disseminateDatastream(
+      _: String,
+      _: String,
+    )) expects("dans-jumpoff:mocked", "HTML_MU") returning managed(mockedInputStream) once()
+
+    (fedoraProvider.disseminateDatastream(
+      _: String,
+      _: String,
+    )) expects("dans-jumpoff:mocked", "TXT_MU") returning managed(file.newFileInputStream) once()
+
     fedoraProvider
   }
 }

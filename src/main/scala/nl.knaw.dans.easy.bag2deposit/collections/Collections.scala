@@ -31,7 +31,7 @@ import resource.managed
 
 import java.nio.charset.{ Charset, StandardCharsets }
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
-import scala.util.Try
+import scala.util.{ Failure, Try }
 import scala.xml.Elem
 
 object Collections extends DebugEnhancedLogging {
@@ -94,6 +94,8 @@ object Collections extends DebugEnhancedLogging {
       )
     }
 
+    logger.info(s"building collections from $cfgDir")
+
     parseCsv(cfgDir / "ThemathischeCollecties.csv", collectionCsvFormat)
       .unsafeGetOrThrow
       .map(parseCollectionRecord)
@@ -106,7 +108,6 @@ object Collections extends DebugEnhancedLogging {
   }
 
   def memberDatasetIdToInCollection(collectionDatasetIdToInCollection: Seq[(String, Elem)], fedoraProvider: FedoraProvider): Map[String, Elem] = {
-
     collectionDatasetIdToInCollection
       .flatMap { case (datasetId, inCollection) =>
         membersOf(datasetId, fedoraProvider)
@@ -116,17 +117,22 @@ object Collections extends DebugEnhancedLogging {
   }
 
   private def membersOf(datasetId: String, fedoraProvider: FedoraProvider): Try[Seq[String]] = {
-
     def getMu(jumpoffId: String, streamId: String) = {
       fedoraProvider
         .disseminateDatastream(jumpoffId, streamId)
-        .map(browser.parseInputStream(_, StandardCharsets.UTF_8.name())).tried
+        .map(browser.parseInputStream(_, StandardCharsets.UTF_8.name()))
+        .tried
     }
 
     def getMuAsHtmlDoc(jumpoffId: String) = {
       getMu(jumpoffId, "HTML_MU")
-        .recoverWith { case e: FedoraClientException if e.getStatus == 404 =>
-          getMu(jumpoffId, "TXT_MU")
+        .recoverWith {
+          case e: FedoraClientException if e.getStatus == 404 =>
+            logger.warn(s"no HTML_MU for $jumpoffId, trying TXT_MU")
+            getMu(jumpoffId, "TXT_MU")
+          case e =>
+            trace(e)
+            Failure(e)
         }
     }
 
