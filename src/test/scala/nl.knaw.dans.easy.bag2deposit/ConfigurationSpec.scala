@@ -35,22 +35,18 @@ class ConfigurationSpec extends AnyFlatSpec with FileSystemSupport with Matchers
     ) shouldBe a[Success[_]]
   }
 
-  it should "fail on the first transformation when fedora is not available" in {
+  it should "no longer fail on the first transformation when fedora is not available" in {
     distDir(fedoraUrl = "https://does.not.exist.dans.knaw.nl")
 
     val transformer = Configuration(home = testDir / "dist").ddmTransformer
     // the lazy constructor argument throws an exception
     // breaking through the Try of the first call that needs it
     // this is not handled within the context of a for comprehension
-    val triedTriedNode = Try(transformer.transform(
+    val triedNode = transformer.transform(
       <ddm><profile><audience>D37000</audience></profile></ddm>,
       "easy-dataset:123",
-    ))
-    triedTriedNode should matchPattern {
-      case Failure(FedoraProviderException(_, e)) if
-      e.getCause.isInstanceOf[UnknownHostException] &&
-        e.getMessage.contains("does.not.exist.dans.knaw.nl") =>
-    }
+    )
+    triedNode shouldBe Success(<ddm><profile><audience>D37000</audience></profile></ddm>)
   }
 
   private def distDir(fedoraUrl: String) = {
