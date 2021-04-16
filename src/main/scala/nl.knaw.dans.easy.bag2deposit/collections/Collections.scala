@@ -16,21 +16,18 @@
 package nl.knaw.dans.easy.bag2deposit.collections
 
 import better.files.File
-import cats.instances.list._
-import cats.instances.try_._
-import cats.syntax.traverse._
 import com.yourmediashelf.fedora.client.FedoraClientException
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
 import net.ruippeixotog.scalascraper.dsl.DSL._
-import nl.knaw.dans.lib.error.TryExtensions
+import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.csv.CSVFormat.RFC4180
 import org.apache.commons.csv.{ CSVFormat, CSVParser, CSVRecord }
 import resource.managed
 
 import java.nio.charset.{ Charset, StandardCharsets }
-import scala.collection.JavaConverters.iterableAsScalaIterableConverter
+import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
 import scala.xml.Elem
 
@@ -107,16 +104,17 @@ object Collections extends DebugEnhancedLogging {
       }
   }
 
-  def memberDatasetIdToInCollection(collectionDatasetIdToInCollection: Seq[(String, Elem)], fedoraProvider: FedoraProvider): Map[String, Elem] = {
+  def memberDatasetIdToInCollection(collectionDatasetIdToInCollection: Seq[(String, Elem)], fedoraProvider: FedoraProvider): Map[String, Elem] = Try {
     collectionDatasetIdToInCollection
       .flatMap { case (datasetId, inCollection) =>
+        logger.info(s"looking for members of $datasetId for ${ inCollection.text }")
         membersOf(datasetId, fedoraProvider)
-          .unsafeGetOrThrow
           .map(_ -> inCollection)
       }.toMap
-  }
+  }.doIfFailure { case e => logger.error(s"could not build collectionMap: $e", e) }
+    .getOrElse(Map.empty)
 
-  private def membersOf(datasetId: String, fedoraProvider: FedoraProvider): Try[Seq[String]] = {
+  private def membersOf(datasetId: String, fedoraProvider: FedoraProvider): Seq[String] = {
     def getMu(jumpoffId: String, streamId: String) = {
       fedoraProvider
         .disseminateDatastream(jumpoffId, streamId)
@@ -136,6 +134,11 @@ object Collections extends DebugEnhancedLogging {
         }
     }
 
+    // (?s) matches multiline values like https://github.com/DANS-KNAW/easy-convert-bag-to-deposit/blob/57e4ab9513d536c16121ad8916058d4102154138/src/test/resources/sample-jumpoff/3931-for-dataset-34359.html#L168-L169
+    // looking for links containing eiter of
+    //   doi.org.*dans
+    //   urn:nbn:nl:ui:13-
+    val regexp = "(?s).*(doi.org.*dans|urn:nbn:nl:ui:13-).*"
     for {
       maybeJumpoffId <- jumpoff(datasetId, fedoraProvider)
       jumpoffId = maybeJumpoffId.getOrElse(throw new Exception(s"no jumpoff for $datasetId"))
@@ -146,14 +149,10 @@ object Collections extends DebugEnhancedLogging {
         .map(_.attr("href"))
         .sortBy(identity)
         .distinct
-      // (?s) matches multiline values like https://github.com/DANS-KNAW/easy-convert-bag-to-deposit/blob/57e4ab9513d536c16121ad8916058d4102154138/src/test/resources/sample-jumpoff/3931-for-dataset-34359.html#L168-L169
-      // looking for links with containing eiter of
-      //   doi.org.*dans
-      //   urn:nbn:nl:ui:13-
-      filtered = hrefs.filter(_.matches("(?s).*(doi.org.*dans|urn:nbn:nl:ui:13-).*"))
-      ids <- filtered.traverse(toDatasetId)
-    } yield ids.filter(_.isDefined).map(_.get)
-  }
+      maybeIds = hrefs.withFilter(_.matches(regexp)).map(toDatasetId)
+    } yield maybeIds.withFilter(_.isDefined).map(_.get)
+  }.doIfFailure { case e => logger.error(s"could not find members of $datasetId: $e", e) }
+    .getOrElse(Seq.empty)
 
   private def jumpoff(datasetId: String, fedoraProvider: FedoraProvider): Try[Option[String]] = {
     for {
@@ -162,11 +161,16 @@ object Collections extends DebugEnhancedLogging {
     } yield jumpofId
   }
 
-  private def toDatasetId(str: String) = {
+  private def toDatasetId(str: String): Option[String] = {
     val trimmed = str
       .replaceAll(".*doi.org/", "")
       .replaceAll(".*identifier=", "")
       .trim
     resolver.getDatasetId(trimmed)
+  }.doIfFailure { case e =>
+    logger.error(s"could not resolve $str: $e", e)
+  }.getOrElse {
+    logger.warn(s"resolver could not find $str")
+    None
   }
 }
