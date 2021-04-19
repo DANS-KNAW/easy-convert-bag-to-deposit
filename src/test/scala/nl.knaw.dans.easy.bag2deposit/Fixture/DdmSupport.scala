@@ -28,6 +28,13 @@ trait DdmSupport {
   val available: Elem =   <ddm:available>2013-04</ddm:available>
   val archaeology: Elem = <ddm:audience>D37000</ddm:audience>
   val openAccess: Elem =  <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
+  val schemaLocations: String =
+    """http://easy.dans.knaw.nl/schemas/md/ddm/ http://easy.dans.knaw.nl/schemas/md/2015/12/ddm.xsd
+      |http://www.den.nl/standaard/166/Archeologisch-Basisregister/ http://easy.dans.knaw.nl/schemas/vocab/2012/10/abr-type.xsd
+      |http://www.w3.org/2001/XMLSchema-instance http://easy.dans.knaw.nl/schemas/md/emd/2013/11/xml.xsd
+      |http://purl.org/dc/terms/ http://easy.dans.knaw.nl/schemas/emd/2013/11/qdc.xsd
+      |http://purl.org/dc/elements/1.1/ http://dublincore.org/schemas/xmls/qdc/dc.xsd
+      |""".stripMargin
 
   def ddm(content: NodeBuffer): Elem =
       <ddm:DDM xmlns:dcx="http://easy.dans.knaw.nl/schemas/dcx/"
@@ -39,13 +46,8 @@ trait DdmSupport {
          xmlns:dcterms="http://purl.org/dc/terms/"
          xmlns:dcx-dai="http://easy.dans.knaw.nl/schemas/dcx/dai/"
          xmlns:dcmitype="http://purl.org/dc/dcmitype/"
-         xsi:schemaLocation="
-         http://easy.dans.knaw.nl/schemas/md/ddm/ http://easy.dans.knaw.nl/schemas/md/2015/12/ddm.xsd
-         http://www.den.nl/standaard/166/Archeologisch-Basisregister/ http://easy.dans.knaw.nl/schemas/vocab/2012/10/abr-type.xsd
-         http://www.w3.org/2001/XMLSchema-instance http://easy.dans.knaw.nl/schemas/md/emd/2013/11/xml.xsd
-         http://purl.org/dc/terms/ http://easy.dans.knaw.nl/schemas/emd/2013/11/qdc.xsd
-         http://purl.org/dc/elements/1.1/ http://dublincore.org/schemas/xmls/qdc/dc.xsd
-      ">{ content }</ddm:DDM>
+         xsi:schemaLocation={ schemaLocations }
+      >{ content }</ddm:DDM>
 
   def ddm(title: String, audience: String, dcmi: Elem): Elem =
       <ddm:DDM xmlns:dcx="http://easy.dans.knaw.nl/schemas/dcx/"
@@ -57,13 +59,8 @@ trait DdmSupport {
          xmlns:dcterms="http://purl.org/dc/terms/"
          xmlns:dcx-dai="http://easy.dans.knaw.nl/schemas/dcx/dai/"
          xmlns:dcmitype="http://purl.org/dc/dcmitype/"
-         xsi:schemaLocation="
-         http://easy.dans.knaw.nl/schemas/md/ddm/ http://easy.dans.knaw.nl/schemas/md/2015/12/ddm.xsd
-         http://www.den.nl/standaard/166/Archeologisch-Basisregister/ http://easy.dans.knaw.nl/schemas/vocab/2012/10/abr-type.xsd
-         http://www.w3.org/2001/XMLSchema-instance http://easy.dans.knaw.nl/schemas/md/emd/2013/11/xml.xsd
-         http://purl.org/dc/terms/ http://easy.dans.knaw.nl/schemas/emd/2013/11/qdc.xsd
-         http://purl.org/dc/elements/1.1/ http://dublincore.org/schemas/xmls/qdc/dc.xsd
-      ">
+         xsi:schemaLocation={ schemaLocations }
+      >
         <ddm:profile>
           <dc:title>{ title }</dc:title><dct:description/>{ creator +: created +: available }
           <ddm:audience>{ audience }</ddm:audience>{ openAccess }

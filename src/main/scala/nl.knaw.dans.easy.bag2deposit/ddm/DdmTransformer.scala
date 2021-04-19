@@ -52,37 +52,46 @@ class DdmTransformer(cfgDir: File, collectionsMap: => Map[String, Elem] = Map.em
     languageRewriteRule,
   )
 
-  private case class ArchaeologyRewriteRule(profileTitle: String, additionalElements: NodeSeq) extends RewriteRule {
+  private case class ArchaeologyRewriteRule(profileTitle: String, additionalDcmiNodes: NodeSeq) extends RewriteRule {
     override def transform(node: Node): Seq[Node] = {
       // TODO apply NewDcmiNodesRewriteRule/DistinctTitlesRewriteRule instead
       if (node.label != "dcmiMetadata") node
       else <dcmiMetadata>
              { distinctTitles(profileTitle, archaeologyRuleTransformer(node).nonEmptyChildren) }
-             { additionalElements }
+             { additionalDcmiNodes }
            </dcmiMetadata>.copy(prefix = node.prefix, attributes = node.attributes, scope = node.scope)
     }
   }
 
+  private def unknownRightsHolder(ddm: Node) = {
+    val inRole = (ddm \\ "role").text.toLowerCase.contains("rightsholder")
+    if (inRole || (ddm \ "dcmiMetadata" \ "rightsHolder").nonEmpty) Seq.empty
+    else <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+      .copy(prefix = ddm.scope.getPrefix("http://purl.org/dc/terms/"))
+  }
+
   def transform(ddmIn: Node, datasetId: String): Try[Node] = {
-    val inCollection = collectionsMap.get(datasetId).toSeq
-    if (!(ddmIn \ "profile" \ "audience").text.contains("D37000")) {
+    val newDcmiNodes = collectionsMap.get(datasetId)
+      .toSeq ++ unknownRightsHolder(ddmIn)
+
+    val profile = ddmIn \ "profile"
+    if (!(profile \ "audience").text.contains("D37000")) {
       // not archaeological
-      val transformer = standardRuleTransformer(inCollection, (ddmIn \ "profile" \ "title").text)
+      val transformer = standardRuleTransformer(newDcmiNodes, (profile \ "title").text)
       Success(transformer(ddmIn))
     }
     else {
       // a title in the profile will not change but may produce something for dcmiMetadata
-      val originalProfile = ddmIn \ "profile"
-      val transformedProfile = originalProfile.flatMap(profileTitleRuleTransformer)
+      val transformedProfile = profile.flatMap(profileTitleRuleTransformer)
       val fromFirstTitle = transformedProfile.flatMap(_.nonEmptyChildren)
-        .diff(originalProfile.flatMap(_.nonEmptyChildren))
+        .diff(profile.flatMap(_.nonEmptyChildren))
       val notConvertedFirstTitle = transformedProfile \ "title"
 
       // the transformation
       val ddmRuleTransformer = new RuleTransformer(ArchaeologyRewriteRule(
-        (ddmIn \ "profile" \ "title").text,
-        fromFirstTitle ++ inCollection),
-      )
+        profileTitle = (profile \ "title").text,
+        additionalDcmiNodes = fromFirstTitle ++ newDcmiNodes
+      ))
       val ddmOut = ddmRuleTransformer(ddmIn)
 
       // logging

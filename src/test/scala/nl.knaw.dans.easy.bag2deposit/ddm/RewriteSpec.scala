@@ -110,6 +110,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
               subjectScheme="ABR Rapporten"
               reportNo="123"
             >Rapport 123</ddm:reportNumber>
+            <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
     )
 
@@ -169,6 +170,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
           <ddm:language encodingScheme="ISO639-2" code="eng">English</ddm:language>
           <ddm:language encodingScheme='ISO639-2' code="ger">German</ddm:language>
           <ddm:language encodingScheme='ISO639-2' code="fre">French</ddm:language>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
     )
     val datasetId = "eas-dataset:123"
@@ -187,8 +189,13 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
         <ddm:dcmiMetadata>
         </ddm:dcmiMetadata>
     )
+    val ddmExpected = ddm(title = "Briefrapport 123", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+        <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+        </ddm:dcmiMetadata>
+    )
 
-    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddmIn))
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddmExpected))
     // TODO manually check logging of briefrapport
   }
 
@@ -205,6 +212,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
             subjectScheme="ABR Rapporten"
             reportNo="123"
           >Rapport 123</ddm:reportNumber>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
     )
 
@@ -237,6 +245,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
                               subjectScheme="ABR Rapporten" reportNo="12">
               Rapporten over de Alkmaarse Monumentenzorg en Archeologie RAMA 12
             </ddm:reportNumber>
+            <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
     )
     // TODO these titles don't show up in target/test/TitlesSpec/matches-per-rce.txt
@@ -267,6 +276,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
                 valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/a3354be9-15eb-4066-a4ec-40ed8895cb5a" }
                 subjectScheme="ABR verwervingswijzen"
               >Een Inventariserend Veldonderzoek in de vorm van proefsleuven</ddm:acquisitionMethod>
+              <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
     )
 
@@ -296,6 +306,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
                 valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/0bd089db-adf3-4246-8828-e64224e2324b" }
                 subjectScheme="ABR verwervingswijzen"
               >Archeologisch bureauonderzoek en gecombineerd verkennend en karterend booronderzoek</ddm:acquisitionMethod>
+              <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
     )
 
@@ -314,11 +325,19 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
       Map("easy-dataset:123" -> <inCollection>mocked</inCollection>)
     )
 
-    transformer.transform(ddmIn, "easy-dataset:456").map(normalized) shouldBe Success(normalized(ddmIn))
+    transformer.transform(ddmIn, "easy-dataset:456").map(normalized) shouldBe Success(normalized(ddm(
+      <ddm:profile>{ profile }</ddm:profile>
+        <ddm:dcmiMetadata>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+        </ddm:dcmiMetadata>
+    )))
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
       ddm(
         <ddm:profile>{ profile }</ddm:profile>
-        <ddm:dcmiMetadata><inCollection>mocked</inCollection></ddm:dcmiMetadata>
+        <ddm:dcmiMetadata>
+          <inCollection>mocked</inCollection>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+        </ddm:dcmiMetadata>
       )))
     // content of the <inCollection> element is validated in CollectionsSpec.collectionDatasetIdToInCollection
   }
@@ -337,7 +356,10 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
       ddm(
         <ddm:profile>{ profile }</ddm:profile>
-        <ddm:dcmiMetadata><inCollection>mocked</inCollection></ddm:dcmiMetadata>
+        <ddm:dcmiMetadata>
+          <inCollection>mocked</inCollection>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+        </ddm:dcmiMetadata>
       )))
   }
   it should "add inCollection and filter titles" in {
@@ -365,8 +387,57 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
           <dc:title>asterix en obelix</dc:title>
           <dct:alternative>blabla rabarbera ratjetoe</dct:alternative>
           <inCollection>mocked</inCollection>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
       )))
+  }
+  it should "add rightsHolder with proper prefix" in {
+    val profile = <dc:title>blabla rabarbera</dc:title><dct:description/> +: creator +: created +: available +: <ddm:audience>Z99000</ddm:audience> +: openAccess
+    // note that ddm in other tests have both dct as dcterms as namespace prefix for the same URI
+    val ddmIn = {
+      <ddm:DDM xmlns:dct="http://purl.org/dc/terms/">
+        <ddm:dcmiMetadata/>
+      </ddm:DDM>
+    }
+    val ddmExpected = {
+      <ddm:DDM xmlns:dct="http://purl.org/dc/terms/">
+        <ddm:dcmiMetadata>
+          <dct:rightsHolder>Unknown</dct:rightsHolder>
+        </ddm:dcmiMetadata>
+      </ddm:DDM>
+    }
+    val transformer = new DdmTransformer(cfgDir, Map.empty)
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+      Success(normalized(ddmExpected))
+  }
+  it should "recognize rightsHolder" in {
+    val profile = <dc:title>blabla rabarbera</dc:title><dct:description/> +: creator +: created +: available +: <ddm:audience>Z99000</ddm:audience> +: openAccess
+    val ddmIn = ddm(
+        <ddm:profile>{ profile }</ddm:profile>
+        <ddm:dcmiMetadata>
+          <dct:rightsHolder>Some Body</dct:rightsHolder>
+        </ddm:dcmiMetadata>
+    )
+    val transformer = new DdmTransformer(cfgDir, Map.empty)
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+      Success(normalized(ddmIn))
+  }
+  it should "recognize rightsHolder in a role" in {
+    val profile = <dc:title>blabla rabarbera</dc:title><dct:description/> +: creator +: created +: available +: <ddm:audience>Z99000</ddm:audience> +: openAccess
+    val ddmIn = ddm(
+        <ddm:profile>{ profile }</ddm:profile>
+        <ddm:dcmiMetadata>
+          <dcx-dai:contributorDetails>
+            <dcx-dai:organization>
+              <dcx-dai:name>DANS</dcx-dai:name>
+              <dcx-dai:role>RightsHolder</dcx-dai:role>
+            </dcx-dai:organization>
+          </dcx-dai:contributorDetails>
+        </ddm:dcmiMetadata>
+    )
+    val transformer = new DdmTransformer(cfgDir, Map.empty)
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+      Success(normalized(ddmIn))
   }
   it should "split archis nrs" in {
     val ddmIn = ddm(title = "blabla", audience = "D37000", dcmi =
@@ -407,6 +478,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
           <dct:identifier xsi:type="id-type:ARCHIS-MONUMENT">1617</dct:identifier>
           <dct:identifier xsi:type="id-type:ARCHIS-ONDERZOEK">443456</dct:identifier>
           <dct:identifier xsi:type="id-type:ARCHIS-ONDERZOEK">789</dct:identifier>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
       )))
   }
@@ -443,6 +515,7 @@ class RewriteSpec extends AnyFlatSpec with SchemaSupport with Matchers with DdmS
         audience = "D37000",
         dcmi = <ddm:dcmiMetadata>
                  <ddm:isRequiredBy href="http://does.not.exist.dans.knaw.nl">http://does.not.exist.dans.knaw.nl</ddm:isRequiredBy>
+                 <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
                </ddm:dcmiMetadata>,
       )))
   }
