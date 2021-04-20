@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.bag2deposit.collections
 
 import com.yourmediashelf.fedora.client.request.RiSearch
 import com.yourmediashelf.fedora.client.{ FedoraClient, FedoraCredentials }
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.apache.commons.io.IOUtils
 import resource.{ ManagedResource, managed }
@@ -25,7 +26,7 @@ import java.io.InputStream
 import java.net.URL
 import scala.util.{ Failure, Try }
 
-class FedoraProvider(fedoraClient: FedoraClient) {
+class FedoraProvider(fedoraClient: FedoraClient) extends DebugEnhancedLogging {
   // dressed down copy of https://github.com/DANS-KNAW/easy-fedora-tobag
 
   // which is a copy of https://github.com/DANS-KNAW/easy-export-dataset/blob/6e656c6e6dad19bdea70694d63ce929ab7b0ad2b/src/main/scala/nl.knaw.dans.easy.export/FedoraProvider.scala
@@ -40,6 +41,7 @@ class FedoraProvider(fedoraClient: FedoraClient) {
   }
 
   private def search(query: String): Try[Seq[String]] = {
+    trace(query)
     val riSearch = new RiSearch(query).lang("sparql").format("csv")
     managed(riSearch.execute(fedoraClient))
       .flatMap(response => managed(response.getEntityInputStream))
@@ -52,14 +54,16 @@ class FedoraProvider(fedoraClient: FedoraClient) {
   }
 
   def disseminateDatastream(objectId: String, streamId: String): ManagedResource[InputStream] = {
+    trace(objectId, streamId)
     managed(FedoraClient.getDatastreamDissemination(objectId, streamId).execute(fedoraClient))
       .flatMap(response => managed(response.getEntityInputStream))
   }
 }
 case class FedoraProviderException(query: String, cause: Throwable) extends Exception(s"query '$query' failed, cause: ${ cause.getMessage }", cause)
 
-object FedoraProvider {
+object FedoraProvider extends DebugEnhancedLogging {
   def apply(properties: PropertiesConfiguration): Option[FedoraProvider] = {
+    trace()
     Option(properties.getString("fcrepo.url"))
       .toSeq.filter(_.trim.nonEmpty)
       .map(url =>
