@@ -23,6 +23,7 @@ import org.joda.time.{ DateTime, DateTimeZone }
 import resource.managed
 
 import java.io.FileNotFoundException
+import java.nio.charset.Charset
 import java.nio.charset.Charset.defaultCharset
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
@@ -39,7 +40,7 @@ package object bag2deposit {
   private val xsiURI = "http://www.w3.org/2001/XMLSchema-instance"
 
   def parseCsv(file: File, nrOfHeaderLines: Int, format: CSVFormat = CSVFormat.RFC4180): Iterable[CSVRecord] = {
-    managed(CSVParser.parse(file.toJava, defaultCharset(), format))
+    managed(CSVParser.parse(file.toJava, Charset.forName("UTF-8"), format))
       .map(_.asScala.filter(_.asScala.nonEmpty).drop(nrOfHeaderLines))
       .tried.unsafeGetOrThrow
   }

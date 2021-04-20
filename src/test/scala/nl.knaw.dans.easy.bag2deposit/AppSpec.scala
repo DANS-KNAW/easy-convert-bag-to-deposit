@@ -101,5 +101,8 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     // other content changes are verified in ddm.*Spec
     (validBag / "metadata" / "dataset.xml").contentAsString should include("<dc:title>Example</dc:title>")
     (movedBag / "metadata" / "dataset.xml").contentAsString shouldNot include("<dc:title>Example</dc:title>")
+    (validBag / "metadata" / "depositor-info" / "agreements.xml").contentAsString should include("<depositorId>user001</depositorId>")
+    (movedBag / "metadata" / "depositor-info" / "agreements.xml").contentAsString shouldNot include("<depositorId>user001</depositorId>")
+    (movedBag / "metadata" / "depositor-info" / "agreements.xml").contentAsString should include("<depositorId>USer</depositorId>")
   }
 }

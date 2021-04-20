@@ -23,9 +23,11 @@ import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import java.io.{ FileNotFoundException, IOException }
+import java.nio.charset.Charset
 import scala.collection.mutable.ListBuffer
 import scala.util.{ Failure, Success, Try }
-import scala.xml.{ Elem, NodeSeq }
+import scala.xml.transform.{ RewriteRule, RuleTransformer }
+import scala.xml.{ Elem, Node, NodeSeq }
 
 class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnhancedLogging {
 
@@ -69,6 +71,8 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     app = getClass.getSimpleName,
     version = configuration.version
   )
+  implicit val charset: Charset = Charset.forName("UTF-8")
+
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
@@ -83,15 +87,19 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       mutableBagMetadata = bag.getMetadata
       bagInfo <- BagInfo(bagDir, mutableBagMetadata)
       _ = logger.info(s"$bagInfo")
-      ddmFile = bagDir / "metadata" / "dataset.xml"
-      ddmIn <- loadXml(ddmFile)
-      props <- depositPropertiesFactory.create(bagInfo, ddmIn)
+      metadata = bagDir / "metadata"
+      ddmFile = metadata / "dataset.xml"
+      ddmOld <- loadXml(ddmFile)
+      props <- depositPropertiesFactory.create(bagInfo, ddmOld)
       datasetId = props.getString("identifier.fedora", "")
-      ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
-      _ = provenance.xml(ddmIn, ddmOut).foreach(writeProvenance(bagDir))
-      _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
+      ddmNew <- configuration.ddmTransformer.transform(ddmOld, datasetId)
+      (agreementsOld, agreementsNew) <- configuration.agreementTransformer
+        .transform(metadata / "depositor-info" / "agreements.xml")
+      provFile = metadata / "provenance.xml"
+      _ = provenance.xml(ddmOld, ddmNew).foreach(xml => provFile.writeText(xml.serialize))
+      _ = registerMatchedReports(datasetId, ddmNew \\ "reportNumber")
       _ = props.save((bagParentDir / "deposit.properties").toJava)
-      _ = ddmFile.writeText(ddmOut.serialize)
+      _ = ddmFile.writeText(ddmNew.serialize)
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ <- BagFacade.updateMetadata(bag)
       _ <- BagFacade.updateManifest(bag)
@@ -108,10 +116,6 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     case e: Throwable =>
       logger.error(s"${ bagParentDir.name } failed with not expected error: ${ e.getClass.getSimpleName } ${ e.getMessage }")
       Failure(e)
-  }
-
-  private def writeProvenance(bagDir: File)(xml: Elem) = {
-    (bagDir / "metadata" / "provenance.xml").writeText(xml.serialize)
   }
 
   private def move(bagParentDir: File)(outputDir: File) = {
