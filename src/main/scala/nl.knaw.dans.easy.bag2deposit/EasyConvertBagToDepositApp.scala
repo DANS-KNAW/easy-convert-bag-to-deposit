@@ -93,7 +93,9 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ = props.save((bagParentDir / "deposit.properties").toJava)
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
+      _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
+      _ = trace("updating manifest")
       _ <- BagFacade.updateManifest(bag)
       _ = maybeOutputDir.foreach(move(bagParentDir))
       _ = logger.info(s"OK $datasetId ${ bagParentDir.name }/${ bagDir.name }")
@@ -111,16 +113,19 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
   }
 
   private def writeProvenance(bagDir: File)(xml: Elem) = {
+    trace(bagDir)
     (bagDir / "metadata" / "provenance.xml").writeText(xml.serialize)
   }
 
   private def move(bagParentDir: File)(outputDir: File) = {
+    trace(bagParentDir, outputDir)
     val target = outputDir / bagParentDir.name
     logger.info(s"moving bag-parent from $bagParentDir to $target")
     bagParentDir.moveTo(target)(CopyOptions.atomically)
   }
 
   private def getBagDir(bagParentDir: File): Try[File] = Try {
+    trace(bagParentDir)
     val children = bagParentDir.children.toList
     if (children.size > 1)
       throw InvalidBagException(s"more than just one item in $bagParentDir")

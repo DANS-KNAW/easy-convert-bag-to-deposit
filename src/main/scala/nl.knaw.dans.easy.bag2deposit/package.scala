@@ -17,6 +17,7 @@ package nl.knaw.dans.easy
 
 import better.files.File
 import nl.knaw.dans.lib.error._
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.csv.{ CSVFormat, CSVParser, CSVRecord }
 import org.joda.time.format.{ DateTimeFormatter, ISODateTimeFormat }
 import org.joda.time.{ DateTime, DateTimeZone }
@@ -28,7 +29,7 @@ import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
 import scala.xml._
 
-package object bag2deposit {
+package object bag2deposit extends DebugEnhancedLogging {
 
   val dateTimeFormatter: DateTimeFormatter = ISODateTimeFormat.dateTime()
 
@@ -39,6 +40,7 @@ package object bag2deposit {
   private val xsiURI = "http://www.w3.org/2001/XMLSchema-instance"
 
   def parseCsv(file: File, nrOfHeaderLines: Int, format: CSVFormat = CSVFormat.RFC4180): Iterable[CSVRecord] = {
+    trace(file)
     managed(CSVParser.parse(file.toJava, defaultCharset(), format))
       .map(_.asScala.filter(_.asScala.nonEmpty).drop(nrOfHeaderLines))
       .tried.unsafeGetOrThrow
@@ -53,11 +55,14 @@ package object bag2deposit {
     }
   }
 
-  def loadXml(file: File): Try[Elem] = Try(XML.loadFile(file.toJava))
-    .recoverWith {
-      case t: FileNotFoundException => Failure(InvalidBagException(s"could not find: $file"))
-      case t: SAXParseException => Failure(InvalidBagException(s"could not load: $file - ${ t.getMessage }"))
-    }
+  def loadXml(file: File): Try[Elem] = {
+    trace(file)
+    Try(XML.loadFile(file.toJava))
+      .recoverWith {
+        case t: FileNotFoundException => Failure(InvalidBagException(s"could not find: $file"))
+        case t: SAXParseException => Failure(InvalidBagException(s"could not load: $file - ${ t.getMessage }"))
+      }
+  }
 
   implicit class XmlExtensions(val elem: Node) extends AnyVal {
 
