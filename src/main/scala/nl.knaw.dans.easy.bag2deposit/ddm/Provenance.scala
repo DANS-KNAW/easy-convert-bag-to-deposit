@@ -23,15 +23,9 @@ import scala.xml.{ Elem, Node }
 class Provenance(app: String, version: String) {
   private val dateFormat = now().toString(DateTimeFormat.forPattern("yyyy-MM-dd"))
 
-  def xml(oldDdm: Node, newDdm: Node): Option[Elem] = {
+  def xml(ddmChanges: Seq[Node], agreementChanges: Seq[Node]): Option[Elem] = {
 
-    // children of both profile and dcmiMetadata
-    val oldNodes = oldDdm.flatMap(_.nonEmptyChildren).flatMap(_.nonEmptyChildren)
-    val newNodes = newDdm.flatMap(_.nonEmptyChildren).flatMap(_.nonEmptyChildren)
-    val onlyInOld = oldNodes.diff(newNodes)
-    val onlyInNew = newNodes.diff(oldNodes)
-
-    if (onlyInOld.isEmpty && onlyInNew.isEmpty) None
+    if (ddmChanges.isEmpty && agreementChanges.isEmpty) None
     else Some(
       <prov:provenance xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
         xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/"
@@ -44,14 +38,28 @@ class Provenance(app: String, version: String) {
         http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
         ">
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
-            <prov:old>
-              { onlyInOld }
-            </prov:old>
-            <prov:new>
-            { onlyInNew }
-            </prov:new>
+          { if (ddmChanges.isEmpty) Seq.empty
+            else <prov:ddm>{ ddmChanges }</prov:ddm>
+          }
+          { if (agreementChanges.isEmpty) Seq.empty
+            else <prov:agreement>{ agreementChanges }</prov:agreement>
+          }
         </prov:migration>
       </prov:provenance>
     )
+  }
+}
+object Provenance {
+  def compare(oldXml: Node, newXml: Node): Seq[Node] = {
+
+    // children of both profile and dcmiMetadata
+    val oldNodes = oldXml.flatMap(_.nonEmptyChildren).flatMap(_.nonEmptyChildren)
+    val newNodes = newXml.flatMap(_.nonEmptyChildren).flatMap(_.nonEmptyChildren)
+    val onlyInOld = oldNodes.diff(newNodes)
+    val onlyInNew = newNodes.diff(oldNodes)
+
+    if (onlyInOld.isEmpty && onlyInNew.isEmpty) Seq.empty
+    else <prov:old>{ onlyInOld }</prov:old>
+         <prov:new>{ onlyInNew }</prov:new>
   }
 }

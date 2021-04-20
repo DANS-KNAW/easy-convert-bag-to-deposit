@@ -20,14 +20,14 @@ import better.files.File.CopyOptions
 import nl.knaw.dans.bag.v0.DansV0Bag
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
+import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.compare
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import java.io.{ FileNotFoundException, IOException }
 import java.nio.charset.Charset
 import scala.collection.mutable.ListBuffer
 import scala.util.{ Failure, Success, Try }
-import scala.xml.transform.{ RewriteRule, RuleTransformer }
-import scala.xml.{ Elem, Node, NodeSeq }
+import scala.xml.NodeSeq
 
 class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnhancedLogging {
 
@@ -88,18 +88,17 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       bagInfo <- BagInfo(bagDir, mutableBagMetadata)
       _ = logger.info(s"$bagInfo")
       metadata = bagDir / "metadata"
-      ddmFile = metadata / "dataset.xml"
-      ddmOld <- loadXml(ddmFile)
+      ddmOld <- loadXml(metadata / "dataset.xml")
       props <- depositPropertiesFactory.create(bagInfo, ddmOld)
       datasetId = props.getString("identifier.fedora", "")
       ddmNew <- configuration.ddmTransformer.transform(ddmOld, datasetId)
-      (agreementsOld, agreementsNew) <- configuration.agreementTransformer
+      agreementsChanges <- configuration.agreementTransformer
         .transform(metadata / "depositor-info" / "agreements.xml")
-      provFile = metadata / "provenance.xml"
-      _ = provenance.xml(ddmOld, ddmNew).foreach(xml => provFile.writeText(xml.serialize))
+      _ = provenance.xml(agreementsChanges, compare(ddmOld, ddmNew))
+        .foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
       _ = registerMatchedReports(datasetId, ddmNew \\ "reportNumber")
       _ = props.save((bagParentDir / "deposit.properties").toJava)
-      _ = ddmFile.writeText(ddmNew.serialize)
+      _ = (metadata / "dataset.xml").writeText(ddmNew.serialize)
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ <- BagFacade.updateMetadata(bag)
       _ <- BagFacade.updateManifest(bag)
