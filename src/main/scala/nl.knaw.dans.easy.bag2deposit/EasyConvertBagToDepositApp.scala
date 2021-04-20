@@ -92,9 +92,9 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       props <- depositPropertiesFactory.create(bagInfo, ddmOld)
       datasetId = props.getString("identifier.fedora", "")
       ddmNew <- configuration.ddmTransformer.transform(ddmOld, datasetId)
-      agreementsChanges <- configuration.agreementTransformer
-        .transform(metadata / "depositor-info" / "agreements.xml")
-      _ = provenance.xml(agreementsChanges, compare(ddmOld, ddmNew))
+      amdChanges <- configuration.agreementTransformer
+        .transform(metadata / "amd.xml")
+      _ = provenance.xml(Map("amd" -> amdChanges, "ddm" ->compare(ddmOld, ddmNew)))
         .foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
       _ = registerMatchedReports(datasetId, ddmNew \\ "reportNumber")
       _ = props.save((bagParentDir / "deposit.properties").toJava)

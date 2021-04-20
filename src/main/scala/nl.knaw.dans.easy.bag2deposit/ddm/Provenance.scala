@@ -22,10 +22,14 @@ import scala.xml.{ Elem, Node }
 
 class Provenance(app: String, version: String) {
   private val dateFormat = now().toString(DateTimeFormat.forPattern("yyyy-MM-dd"))
+  private val schemes = Map(
+    "ddm" -> "http://easy.dans.knaw.nl/schemas/md/ddm/",
+    "amd" -> "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/",
+  )
 
-  def xml(ddmChanges: Seq[Node], agreementChanges: Seq[Node]): Option[Elem] = {
-
-    if (ddmChanges.isEmpty && agreementChanges.isEmpty) None
+  def xml(changes: Map[String, Seq[Node]]): Option[Elem] = {
+    val filtered = changes.filter(_._2.nonEmpty)
+    if (changes.isEmpty) None
     else Some(
       <prov:provenance xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
         xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/"
@@ -38,12 +42,10 @@ class Provenance(app: String, version: String) {
         http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
         ">
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
-          { if (ddmChanges.isEmpty) Seq.empty
-            else <prov:ddm>{ ddmChanges }</prov:ddm>
-          }
-          { if (agreementChanges.isEmpty) Seq.empty
-            else <prov:agreement>{ agreementChanges }</prov:agreement>
-          }
+          { filtered.map { case (scheme, diff) =>
+            val s = schemes.getOrElse(scheme, null) // null causes omitting the attribute
+            <prov:file scheme={ s }>{ diff }</prov:file>
+          }}
         </prov:migration>
       </prov:provenance>
     )
