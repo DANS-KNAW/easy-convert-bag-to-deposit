@@ -22,10 +22,6 @@ import scala.xml.{ Elem, Node }
 
 class Provenance(app: String, version: String) {
   private val dateFormat = now().toString(DateTimeFormat.forPattern("yyyy-MM-dd"))
-  private val schemes = Map(
-    "ddm" -> "http://easy.dans.knaw.nl/schemas/md/ddm/",
-    "amd" -> "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/",
-  )
 
   def xml(changes: Map[String, Seq[Node]]): Option[Elem] = {
     val filtered = changes.filter(_._2.nonEmpty)
@@ -43,8 +39,7 @@ class Provenance(app: String, version: String) {
         ">
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
           { filtered.map { case (scheme, diff) =>
-            val s = schemes.getOrElse(scheme, null) // null causes omitting the attribute
-            <prov:file scheme={ s }>{ diff }</prov:file>
+            <prov:file scheme={ scheme }>{ diff }</prov:file>
           }}
         </prov:migration>
       </prov:provenance>

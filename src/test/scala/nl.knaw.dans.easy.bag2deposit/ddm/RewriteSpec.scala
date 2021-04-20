@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ DdmSupport, SchemaSupport, XmlSupport }
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
-import nl.knaw.dans.easy.bag2deposit.{ AgreementsTransformer, BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, parseCsv }
+import nl.knaw.dans.easy.bag2deposit.{ AmdTransformer, BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, parseCsv }
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -119,7 +119,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       dataverseIdAuthority = "10.80270",
       bagIndex = BagIndex(new URI("http://localhost:20120/")),
       ddmTransformer = ddmTransformer,
-      agreementTransformer = new AgreementsTransformer(cfgDir)
+      agreementTransformer = new AmdTransformer(cfgDir)
     ))
 
     // a few steps of EasyConvertBagToDepositApp.addPropsToBags

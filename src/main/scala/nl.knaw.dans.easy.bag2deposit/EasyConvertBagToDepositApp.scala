@@ -94,8 +94,10 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       ddmNew <- configuration.ddmTransformer.transform(ddmOld, datasetId)
       amdChanges <- configuration.agreementTransformer
         .transform(metadata / "amd.xml")
-      _ = provenance.xml(Map("amd" -> amdChanges, "ddm" ->compare(ddmOld, ddmNew)))
-        .foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
+      _ = provenance.xml(Map(
+        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> amdChanges,
+        "http://easy.dans.knaw.nl/schemas/md/ddm/" ->compare(ddmOld, ddmNew),
+      )).foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
       _ = registerMatchedReports(datasetId, ddmNew \\ "reportNumber")
       _ = props.save((bagParentDir / "deposit.properties").toJava)
       _ = (metadata / "dataset.xml").writeText(ddmNew.serialize)

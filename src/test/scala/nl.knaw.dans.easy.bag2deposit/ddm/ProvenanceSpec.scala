@@ -16,7 +16,7 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.AgreementsTransformer
+import nl.knaw.dans.easy.bag2deposit.AmdTransformer
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ FileSystemSupport, FixedCurrentDateTimeSupport, XmlSupport }
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -92,7 +92,10 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
    }
 
     new Provenance("EasyConvertBagToDepositApp", "1.0.5")
-      .xml(Map("ddm" -> Provenance.compare(ddmIn, ddmOut), "amd" -> Seq.empty))
+      .xml(Map(
+        "http://easy.dans.knaw.nl/schemas/md/ddm/" -> Provenance.compare(ddmIn, ddmOut),
+        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> Seq.empty,
+      ))
       .map(normalized) shouldBe Some(normalized(
       <prov:provenance xsi:schemaLocation="
         http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
@@ -116,50 +119,47 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     ))
   }
   it should "show agreements diff" in {
-    (testDir / "agreements.xml").writeText(
+    (testDir / "amd.xml").writeText(
       """<?xml version="1.0" encoding="UTF-8"?>""" +
-        Utility.serialize(agreements("user001")).toString()
+        Utility.serialize(
+          <damd:administrative-md xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" version="0.1">
+            <datasetState>PUBLISHED</datasetState>
+            <previousState>DRAFT</previousState>
+            <lastStateChange>2020-02-02T20:02:00.000+01:00</lastStateChange>
+            <depositorId>user001</depositorId>
+            <stateChangeDates>
+                <damd:stateChangeDate>
+                    <fromState>DRAFT</fromState>
+                    <toState>PUBLISHED</toState>
+                    <changeDate>2020-02-02T20:02:00.000+01:00</changeDate>
+                </damd:stateChangeDate>
+            </stateChangeDates>
+          </damd:administrative-md>
+        ).toString()
     )
 
-    val transformer = new AgreementsTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
-    val changes = transformer.transform(testDir / "agreements.xml").getOrElse(fail("could not transform"))
+    val transformer = new AmdTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
+    val changes = transformer.transform(testDir / "amd.xml").getOrElse(fail("could not transform"))
 
-    new Provenance("EasyConvertBagToDepositApp", "1.0.5")
-      .xml(Map("ddm" -> Seq.empty, "agreements" -> changes))
-      .map(normalized) shouldBe Some(normalized(
+    new Provenance("EasyConvertBagToDepositApp", "1.0.5").xml(Map(
+        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> changes,
+      )).map(normalized) shouldBe Some(normalized(
       <prov:provenance xsi:schemaLocation="
         http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
         http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
         http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
         " xmlns:dct="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
-          <prov:file>
+          <prov:file scheme="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
             <prov:old>
               <depositorId>user001</depositorId>
-              <signerId>user001</signerId>
             </prov:old>
             <prov:new>
               <depositorId>USer</depositorId>
-              <signerId>USer</signerId>
             </prov:new>
           </prov:file>
         </prov:migration>
       </prov:provenance>
     ))
   }
-
-  private def agreements(user: String) = {
-      <agreements xsi:schemaLocation="http://easy.dans.knaw.nl/schemas/bag/metadata/agreements/ https://easy.dans.knaw.nl/schemas/bag/metadata/agreements/2019/01/agreements.xsd" xmlns="http://easy.dans.knaw.nl/schemas/bag/metadata/agreements/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-          <depositAgreement>
-              <depositorId>{ user }</depositorId>
-              <dcterms:dateAccepted>2019-05-03T11:54:26.638+02:00</dcterms:dateAccepted>
-              <depositAgreementAccepted>true</depositAgreementAccepted>
-          </depositAgreement>
-          <personalDataStatement>
-              <signerId>{ user }</signerId>
-              <dateSigned>2019-05-03T11:54:26.638+02:00</dateSigned>
-              <containsPrivacySensitiveData>true</containsPrivacySensitiveData>
-          </personalDataStatement>
-      </agreements>
-    }
 }

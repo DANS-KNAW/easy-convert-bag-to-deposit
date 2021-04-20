@@ -24,7 +24,7 @@ import scala.util.Try
 import scala.xml.{ Elem, Node }
 import scala.xml.transform.{ RewriteRule, RuleTransformer }
 
-class AgreementsTransformer(cfgDir: File) {
+class AmdTransformer(cfgDir: File) {
   private val userMap = parseCsv(
     cfgDir / "account-substitutes.csv",
     nrOfHeaderLines = 1,
