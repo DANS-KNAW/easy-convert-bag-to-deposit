@@ -30,7 +30,7 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
   private val resourceBags: File = File("src/test/resources/bags/01")
   private val validUUID = "04e638eb-3af1-44fb-985d-36af12fccb2d"
 
-  "addPropsToBags" should  "move valid exports" in {
+  "addPropsToBags" should "move valid exports" in {
     val delegate = mock[MockBagIndex]
     val noBaseBagUUID = "87151a3a-12ed-426a-94f2-97313c7ae1f2"
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
@@ -68,7 +68,7 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     movedDirs.foreach(dir => dir.isSameContentAs(resourceBags / dir.name) shouldBe false)
 
     // total number of deposits should not change
-    movedDirs.size + leftDirs.size shouldBe  resourceBags.children.toList.size
+    movedDirs.size + leftDirs.size shouldBe resourceBags.children.toList.size
 
     movedDirs.size shouldBe 2 // base-bag-not-found is moved together with the valid bag-revision-1
     // TODO should addPropsToBags check existence of base-bag in case of versioned bags?

@@ -39,8 +39,8 @@ class Provenance(app: String, version: String) {
         ">
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
           { filtered.map { case (scheme, diff) =>
-            <prov:file scheme={ scheme }>{ diff }</prov:file>
-          }}
+          <prov:file scheme={ scheme }>{ diff }</prov:file>
+        }}
         </prov:migration>
       </prov:provenance>
     )

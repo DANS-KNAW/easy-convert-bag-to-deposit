@@ -142,8 +142,8 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     val changes = transformer.transform(testDir / "amd.xml").getOrElse(fail("could not transform"))
 
     new Provenance("EasyConvertBagToDepositApp", "1.0.5").xml(Map(
-        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> changes,
-      )).map(normalized) shouldBe Some(normalized(
+      "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> changes,
+    )).map(normalized) shouldBe Some(normalized(
       <prov:provenance xsi:schemaLocation="
         http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
         http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd

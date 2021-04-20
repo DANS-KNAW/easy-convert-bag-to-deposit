@@ -24,7 +24,6 @@ import resource.managed
 
 import java.io.FileNotFoundException
 import java.nio.charset.Charset
-import java.nio.charset.Charset.defaultCharset
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
 import scala.xml._

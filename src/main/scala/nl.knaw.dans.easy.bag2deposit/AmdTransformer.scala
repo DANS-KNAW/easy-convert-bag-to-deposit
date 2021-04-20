@@ -21,7 +21,7 @@ import org.apache.commons.csv.CSVFormat.RFC4180
 
 import java.nio.charset.Charset
 import scala.util.Try
-import scala.xml.{ Elem, Node }
+import scala.xml.Node
 import scala.xml.transform.{ RewriteRule, RuleTransformer }
 
 class AmdTransformer(cfgDir: File) {
