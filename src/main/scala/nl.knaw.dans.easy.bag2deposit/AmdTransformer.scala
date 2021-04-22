@@ -51,6 +51,8 @@ class AmdTransformer(cfgDir: File) {
       xmlOut = transformer.transform(xmlIn).headOption
         .getOrElse(throw new Exception("programming error: AgreementsTransformer returned multiple roots"))
       _ = file.writeText(xmlOut.serialize)
-    } yield (Provenance.compare(xmlIn, xmlOut))
+      diff = Provenance.compare(xmlIn, xmlOut)
+      _ = trace(diff.map(_.serialize))
+    } yield diff
   }
 }

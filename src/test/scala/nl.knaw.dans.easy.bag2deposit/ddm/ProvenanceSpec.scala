@@ -93,7 +93,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
 
     new Provenance("EasyConvertBagToDepositApp", "1.0.5")
       .xml(Map(
-        "http://easy.dans.knaw.nl/schemas/md/ddm/" -> Provenance.compare(ddmIn, ddmOut),
+        "http://easy.dans.knaw.nl/schemas/md/ddm/" -> Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head),
         "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> Seq.empty,
       ))
       .map(normalized) shouldBe Some(normalized(
