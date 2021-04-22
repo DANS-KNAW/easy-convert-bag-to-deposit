@@ -37,6 +37,7 @@ object Collections extends DebugEnhancedLogging {
   private val resolver: Resolver = Resolver()
 
   private def parseCsv(file: File, format: CSVFormat): Try[Iterable[CSVRecord]] = {
+    trace(file)
     managed(CSVParser.parse(
       file.toJava,
       Charset.forName("UTF-8"),
@@ -63,7 +64,7 @@ object Collections extends DebugEnhancedLogging {
   }
 
   def getCollectionsMap(cfgPath: File, maybeFedoraProvider: Option[FedoraProvider]): Map[String, Elem] = {
-    trace()
+    trace(())
     val result: Map[String, Elem] = maybeFedoraProvider
       .map { provider =>
         memberDatasetIdToInCollection(collectionDatasetIdToInCollection(cfgPath), provider)
@@ -81,6 +82,8 @@ object Collections extends DebugEnhancedLogging {
 
   def collectionDatasetIdToInCollection(cfgDir: File): Seq[(String, Elem)] = {
 
+    logger.info(s"building collections from $cfgDir")
+
     val skosMap = parseCsv(cfgDir / "excel2skos-collecties.csv", skosCsvFormat)
       .unsafeGetOrThrow
       .map(parseSkosRecord).toMap
@@ -91,8 +94,6 @@ object Collections extends DebugEnhancedLogging {
         <notImplemented>{ s"$name not found in collections skos" }</notImplemented>
       )
     }
-
-    logger.info(s"building collections from $cfgDir")
 
     parseCsv(cfgDir / "ThemathischeCollecties.csv", collectionCsvFormat)
       .unsafeGetOrThrow

@@ -63,8 +63,9 @@ case class FedoraProviderException(query: String, cause: Throwable) extends Exce
 
 object FedoraProvider extends DebugEnhancedLogging {
   def apply(properties: PropertiesConfiguration): Option[FedoraProvider] = {
-    trace()
-    Option(properties.getString("fcrepo.url"))
+    val repo = properties.getString("fcrepo.url")
+    trace(this.getClass, repo)
+    Option(repo)
       .toSeq.filter(_.trim.nonEmpty)
       .map(url =>
         new FedoraProvider(new FedoraClient(new FedoraCredentials(

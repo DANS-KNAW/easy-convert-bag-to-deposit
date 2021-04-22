@@ -34,6 +34,7 @@ case class Resolver() extends DebugEnhancedLogging{
   }
 
   private def resolve(url: String) = {
+    trace(url)
     Try(Http(url).asString).flatMap {
       case response if response.code == 404 =>
         logger.error(s"not found: $url")

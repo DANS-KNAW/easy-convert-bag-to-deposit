@@ -41,11 +41,15 @@ object BagFacade {
     case cause: Exception => Failure(InvalidBagException(s"$bagDir, $cause"))
   }
 
-  def updateMetadata(bag: Bag): Try[Unit] = Try {
-    MetadataWriter.writeBagMetadata(bag.getMetadata, bag.getVersion, bag.getRootDir, bag.getFileEncoding)
+  def updateMetadata(bag: Bag): Try[Unit] = {
+    trace(bag.getRootDir)
+    Try {
+      MetadataWriter.writeBagMetadata(bag.getMetadata, bag.getVersion, bag.getRootDir, bag.getFileEncoding)
+    }
   }
 
   def updateManifest(bag: Bag): Try[Unit] = Try {
+    trace(bag.getRootDir)
     def isTagManifest(path: Path): Boolean = {
       bag.getRootDir.relativize(path).getNameCount == 1 && path.getFileName.toString.startsWith("tagmanifest-")
     }

@@ -30,6 +30,7 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
   private val dataverseIdAuthority = configuration.dataverseIdAuthority
 
   def create(bagInfo: BagInfo, ddm: Node): Try[PropertiesConfiguration] = Try {
+    trace(this.getClass)
     val ddmIds: NodeSeq = ddm \ "dcmiMetadata" \ "identifier"
 
     def formatOfPanId = (ddm \ "dcmiMetadata" \ "isFormatOf")

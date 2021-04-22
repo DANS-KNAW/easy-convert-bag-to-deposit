@@ -15,17 +15,19 @@
  */
 package nl.knaw.dans.easy.bag2deposit.ddm
 
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.joda.time.DateTime.now
 import org.joda.time.format.DateTimeFormat
 
 import scala.xml.{ Elem, Node }
 
-class Provenance(app: String, version: String) {
+class Provenance(app: String, version: String) extends DebugEnhancedLogging{
   private val dateFormat = now().toString(DateTimeFormat.forPattern("yyyy-MM-dd"))
 
   def xml(changes: Map[String, Seq[Node]]): Option[Elem] = {
+    trace(this.getClass)
     val filtered = changes.filter(_._2.nonEmpty)
-    if (changes.isEmpty) None
+    if (filtered.isEmpty) None
     else Some(
       <prov:provenance xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
         xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/"

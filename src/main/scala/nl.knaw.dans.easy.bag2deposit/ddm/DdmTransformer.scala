@@ -27,7 +27,7 @@ import scala.xml.transform.{ RewriteRule, RuleTransformer }
 import scala.xml.{ Elem, Node, NodeSeq }
 
 class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty) extends DebugEnhancedLogging {
-  trace()
+  trace(())
   val reportRewriteRule: ReportRewriteRule = ReportRewriteRule(cfgDir)
   private val acquisitionRewriteRule = AcquisitionRewriteRule(cfgDir)
   private val languageRewriteRule = LanguageRewriteRule(cfgDir / "languages.csv")
@@ -71,6 +71,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty
   }
 
   def transform(ddmIn: Node, datasetId: String): Try[Node] = {
+    trace(datasetId)
     val newDcmiNodes = collectionsMap.get(datasetId)
       .toSeq ++ unknownRightsHolder(ddmIn)
 
