@@ -63,6 +63,7 @@ object Collections extends DebugEnhancedLogging {
   }
 
   def getCollectionsMap(cfgPath: File, maybeFedoraProvider: Option[FedoraProvider]): Map[String, Elem] = {
+    trace()
     val result: Map[String, Elem] = maybeFedoraProvider
       .map { provider =>
         memberDatasetIdToInCollection(collectionDatasetIdToInCollection(cfgPath), provider)
