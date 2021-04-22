@@ -16,6 +16,7 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
+import net.ruippeixotog.scalascraper.dsl.DSL.deepFunctorOps
 import nl.knaw.dans.bag.v0.DansV0Bag.EASY_USER_ACCOUNT_KEY
 import nl.knaw.dans.easy.bag2deposit.BagSource._
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, FileSystemSupport }
@@ -101,8 +102,8 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     // other content changes are verified in ddm.*Spec
     (validBag / "metadata" / "dataset.xml").contentAsString should include("<dc:title>Example</dc:title>")
     (movedBag / "metadata" / "dataset.xml").contentAsString shouldNot include("<dc:title>Example</dc:title>")
-    (validBag / "metadata" / "depositor-info" / "agreements.xml").contentAsString should include("<depositorId>user001</depositorId>")
-    (movedBag / "metadata" / "depositor-info" / "agreements.xml").contentAsString shouldNot include("<depositorId>user001</depositorId>")
-    (movedBag / "metadata" / "depositor-info" / "agreements.xml").contentAsString should include("<depositorId>USer</depositorId>")
+    (validBag / "metadata" / "amd.xml").contentAsString should include("<depositorId>user001</depositorId>")
+    (movedBag / "metadata" / "amd.xml").contentAsString should
+      (include("<depositorId>USer</depositorId>") and not include "<depositorId>user001</depositorId>")
   }
 }

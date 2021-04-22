@@ -50,10 +50,9 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging{
 }
 object Provenance {
   def compare(oldXml: Node, newXml: Node): Seq[Node] = {
-
-    // children of both profile and dcmiMetadata
-    val oldNodes = oldXml.flatMap(_.nonEmptyChildren).flatMap(_.nonEmptyChildren)
-    val newNodes = newXml.flatMap(_.nonEmptyChildren).flatMap(_.nonEmptyChildren)
+    // TODO poor mans solution to call with ddm/dcmiMetadata respective root of amd
+    val oldNodes = oldXml.flatMap(_.nonEmptyChildren)
+    val newNodes = newXml.flatMap(_.nonEmptyChildren)
     val onlyInOld = oldNodes.diff(newNodes)
     val onlyInNew = newNodes.diff(oldNodes)
 
