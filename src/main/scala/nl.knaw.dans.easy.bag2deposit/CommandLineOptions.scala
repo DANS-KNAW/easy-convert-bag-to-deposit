@@ -27,7 +27,7 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   editBuilder(_.setHelpWidth(110))
   printedName = "easy-convert-bag-to-deposit"
   version(configuration.version)
-  val description: String = s"""Add deposit.properties to directories(s) with a bag"""
+  val description: String = s"""Add deposit.properties to directorie(s) with a bag"""
   val synopsis: String =
     s"""
        |  $printedName { --dir | --uuid } <directory> -t { URN | DOI } -s { FEDORA | VAULT } [ -o <output-dir> ]

@@ -15,16 +15,15 @@
  */
 package nl.knaw.dans.easy.bag2deposit
 
-import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.{ FileVisitResult, Files, Path }
-
 import better.files.File
-import gov.loc.repository.bagit.creator.CreateTagManifestsVistor
-import gov.loc.repository.bagit.domain.{ Bag, Metadata }
+import gov.loc.repository.bagit.creator.{ CreatePayloadManifestsVistor, CreateTagManifestsVistor }
+import gov.loc.repository.bagit.domain.Bag
 import gov.loc.repository.bagit.hash.Hasher
 import gov.loc.repository.bagit.reader.BagReader
 import gov.loc.repository.bagit.writer.{ ManifestWriter, MetadataWriter }
 
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.{ FileVisitResult, Files, Path }
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
 
@@ -45,7 +44,28 @@ object BagFacade {
     MetadataWriter.writeBagMetadata(bag.getMetadata, bag.getVersion, bag.getRootDir, bag.getFileEncoding)
   }
 
-  def updateManifest(bag: Bag): Try[Unit] = Try {
+  def addPayloadManifestEntries(bag: Bag, entries: Path): Try[Unit] = Try {
+    val manifests = bag.getPayLoadManifests
+    val map = Hasher.createManifestToMessageDigestMap(
+      manifests.asScala.map(_.getAlgorithm).asJava
+    )
+    val bagDir = bag.getRootDir
+    Files.walkFileTree(
+      bagDir.resolve(entries),
+      new CreatePayloadManifestsVistor(map, true),
+    )
+    val newEntries = map.keySet().asScala.map(x =>
+      x.getAlgorithm -> x.getFileToChecksumMap
+    ).toMap
+    manifests.asScala.foreach{ m =>
+      val newMap = newEntries(m.getAlgorithm).asScala
+      val oldMap = m.getFileToChecksumMap.asScala.toMap // we don't want to recalculate these
+      m.setFileToChecksumMap((newMap ++ oldMap).asJava)
+    }
+    ManifestWriter.writePayloadManifests(manifests, bagDir, bagDir, bag.getFileEncoding)
+  }
+
+  def updateTagManifest(bag: Bag): Try[Unit] = Try {
     def isTagManifest(path: Path): Boolean = {
       bag.getRootDir.relativize(path).getNameCount == 1 && path.getFileName.toString.startsWith("tagmanifest-")
     }

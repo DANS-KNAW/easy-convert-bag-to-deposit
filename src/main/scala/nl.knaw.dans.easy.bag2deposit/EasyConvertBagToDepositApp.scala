@@ -23,6 +23,8 @@ import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import java.io.{ FileNotFoundException, IOException }
+import java.nio.charset.Charset
+import java.nio.file.Paths
 import scala.collection.mutable.ListBuffer
 import scala.util.{ Failure, Success, Try }
 import scala.xml.{ Elem, NodeSeq }
@@ -72,6 +74,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
+    val migrationFiles = Seq("provenance.xml", "emd.xml", "dataset.xml", "files.xml")
     val bagInfoKeysToRemove = Seq(
       DansV0Bag.EASY_USER_ACCOUNT_KEY,
       BagInfo.baseUrnKey,
@@ -83,7 +86,8 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       mutableBagMetadata = bag.getMetadata
       bagInfo <- BagInfo(bagDir, mutableBagMetadata)
       _ = logger.info(s"$bagInfo")
-      ddmFile = bagDir / "metadata" / "dataset.xml"
+      metadata = bagDir / "metadata"
+      ddmFile = metadata / "dataset.xml"
       ddmIn <- loadXml(ddmFile)
       props <- depositPropertiesFactory.create(bagInfo, ddmIn)
       datasetId = props.getString("identifier.fedora", "")
@@ -93,10 +97,11 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ = props.save((bagParentDir / "deposit.properties").toJava)
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
-      _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
-      _ = trace("updating manifest")
-      _ <- BagFacade.updateManifest(bag)
+      migrationDir = (bagDir / "data" / "easy-migration").createDirectories()
+      _ = migrationFiles.foreach(name => (metadata / name).copyTo(migrationDir / name))
+      _ <- BagFacade.addPayloadManifestEntries(bag, Paths.get("data/easy-migration"))
+      _ <- BagFacade.updateTagManifest(bag)
       _ = maybeOutputDir.foreach(move(bagParentDir))
       _ = logger.info(s"OK $datasetId ${ bagParentDir.name }/${ bagDir.name }")
     } yield true
