@@ -44,25 +44,24 @@ object BagFacade {
     MetadataWriter.writeBagMetadata(bag.getMetadata, bag.getVersion, bag.getRootDir, bag.getFileEncoding)
   }
 
-  def addPayloadManifestEntries(bag: Bag, entries: Path): Try[Unit] = Try {
-    val manifests = bag.getPayLoadManifests
+  def addPayloadManifestEntries(bag: Bag, payloadEntries: Path): Try[Unit] = Try {
+    val payloadManifests = bag.getPayLoadManifests
     val map = Hasher.createManifestToMessageDigestMap(
-      manifests.asScala.map(_.getAlgorithm).asJava
+      payloadManifests.asScala.map(_.getAlgorithm).asJava
     )
+    val manifestsVisitor = new CreatePayloadManifestsVistor(map, true)
     val bagDir = bag.getRootDir
-    Files.walkFileTree(
-      bagDir.resolve(entries),
-      new CreatePayloadManifestsVistor(map, true),
-    )
-    val newEntries = map.keySet().asScala.map(x =>
-      x.getAlgorithm -> x.getFileToChecksumMap
+    Files.walkFileTree(bagDir.resolve(payloadEntries), manifestsVisitor)
+    val newManifestsEntries = map.keySet().asScala.map(m =>
+      m.getAlgorithm -> m.getFileToChecksumMap
     ).toMap
-    manifests.asScala.foreach{ m =>
-      val newMap = newEntries(m.getAlgorithm).asScala
-      val oldMap = m.getFileToChecksumMap.asScala.toMap // we don't want to recalculate these
-      m.setFileToChecksumMap((newMap ++ oldMap).asJava)
+    for {
+      m <- payloadManifests.asScala
+      (path,hash) <- newManifestsEntries(m.getAlgorithm).asScala
+    } {
+      m.getFileToChecksumMap.put(path,hash)
     }
-    ManifestWriter.writePayloadManifests(manifests, bagDir, bagDir, bag.getFileEncoding)
+    ManifestWriter.writePayloadManifests(payloadManifests, bagDir, bagDir, bag.getFileEncoding)
   }
 
   def updateTagManifest(bag: Bag): Try[Unit] = Try {
