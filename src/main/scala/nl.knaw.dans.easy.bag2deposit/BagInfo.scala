@@ -19,7 +19,6 @@ import java.util.UUID
 
 import better.files.File
 import gov.loc.repository.bagit.domain.Metadata
-import nl.knaw.dans.bag.v0.DansV0Bag
 import nl.knaw.dans.lib.error._
 import org.apache.commons.configuration.ConfigurationException
 
@@ -41,7 +40,7 @@ object BagInfo {
 
     def getMandatory(key: String) = getMaybe(key).getOrElse(throw notFound(key))
 
-    val maybeVersionOf = getMaybe(DansV0Bag.IS_VERSION_OF_KEY).map(uuidFromVersionOf)
+    val maybeVersionOf = getMaybe(BagFacade.IS_VERSION_OF_KEY).map(uuidFromVersionOf)
     val basePids = (getMaybe(baseUrnKey), getMaybe(baseDoiKey)) match {
       case (None, None) => None
       case (Some(urn), Some(doi)) => Some(BasePids(urn, doi))
@@ -49,7 +48,7 @@ object BagInfo {
     }
 
     new BagInfo(
-      userId = getMandatory(DansV0Bag.EASY_USER_ACCOUNT_KEY),
+      userId = getMandatory(BagFacade.EASY_USER_ACCOUNT_KEY),
       created = getMandatory("Bagging-Date"),
       uuid = uuidFromFile(bagDir.parent),
       bagName = bagDir.name,

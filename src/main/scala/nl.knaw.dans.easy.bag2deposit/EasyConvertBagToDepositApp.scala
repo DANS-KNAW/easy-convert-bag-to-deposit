@@ -17,7 +17,6 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import better.files.File.CopyOptions
-import nl.knaw.dans.bag.v0.DansV0Bag
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
@@ -76,7 +75,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     logger.debug(s"creating application.properties for $bagParentDir")
     val migrationFiles = Seq("provenance.xml", "emd.xml", "dataset.xml", "files.xml")
     val bagInfoKeysToRemove = Seq(
-      DansV0Bag.EASY_USER_ACCOUNT_KEY,
+      BagFacade.EASY_USER_ACCOUNT_KEY,
       BagInfo.baseUrnKey,
       BagInfo.baseDoiKey,
     )
@@ -97,11 +96,12 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ = props.save((bagParentDir / "deposit.properties").toJava)
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
-      _ <- BagFacade.updateMetadata(bag)
       migrationDir = (bagDir / "data" / "easy-migration").createDirectories()
       _ = migrationFiles.foreach(name => (metadata / name).copyTo(migrationDir / name))
-      _ <- BagFacade.addPayloadManifestEntries(bag, Paths.get("data/easy-migration"))
-      _ <- BagFacade.updateTagManifest(bag)
+      _ <- BagFacade.updateMetadata(bag)
+      _ <- BagFacade.putPayloadManifests(bag, Paths.get("data/easy-migration"))
+      _ <- BagFacade.updateTagManifests(bag) // TODO recalculate only "bag-info.txt", ddmFile, amdFile(pr#39), "manifest-*.txt"
+      _ <- BagFacade.writeManifests(bag)
       _ = maybeOutputDir.foreach(move(bagParentDir))
       _ = logger.info(s"OK $datasetId ${ bagParentDir.name }/${ bagDir.name }")
     } yield true

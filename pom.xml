@@ -45,8 +45,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>nl.knaw.dans.lib</groupId>
-            <artifactId>dans-bag-lib_2.12</artifactId>
+            <groupId>nl.knaw.dans</groupId>
+            <artifactId>bagit</artifactId>
         </dependency>
         <dependency>
             <groupId>com.yourmediashelf.fedora.client</groupId>
