@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import gov.loc.repository.bagit.creator.{ CreatePayloadManifestsVistor, CreateTagManifestsVistor }
+import gov.loc.repository.bagit.domain
 import gov.loc.repository.bagit.domain.Bag
 import gov.loc.repository.bagit.hash.Hasher
 import gov.loc.repository.bagit.reader.BagReader
@@ -24,6 +25,8 @@ import gov.loc.repository.bagit.writer.{ ManifestWriter, MetadataWriter }
 
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{ FileVisitResult, Files, Path }
+import java.security.MessageDigest
+import java.util
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
 
@@ -57,7 +60,7 @@ object BagFacade {
    * @param payloadEntries directory or file relatieve to the root of the bag
    * @return
    */
-  def putPayloadManifests(bag: Bag, payloadEntries: Path): Try[Unit] = Try {
+  def updatePayloadManifests(bag: Bag, payloadEntries: Path): Try[Unit] = Try {
     if (!payloadEntries.toString.startsWith("data/")) {
       throw new IllegalArgumentException(s"path must start with data, found $payloadEntries")
     }
@@ -65,42 +68,42 @@ object BagFacade {
       throw new IllegalArgumentException(s"No payload manifests found (as DansV0Bag would have created) ${bag.getRootDir}")
     }
     val payloadManifests = bag.getPayLoadManifests
-    val map = Hasher.createManifestToMessageDigestMap(
-      payloadManifests.asScala.map(_.getAlgorithm).asJava
-    )
-    val manifestsVisitor = new CreatePayloadManifestsVistor(map, includeHiddenFiles)
-    Files.walkFileTree(bag.getRootDir.resolve(payloadEntries), manifestsVisitor)
-    val newMap = map.keySet().asScala.map(m =>
+    val algorithms = payloadManifests.asScala.map(_.getAlgorithm).asJava
+    val map = Hasher.createManifestToMessageDigestMap(algorithms)
+    val visitor = new CreatePayloadManifestsVistor(map, includeHiddenFiles)
+    Files.walkFileTree(bag.getRootDir.resolve(payloadEntries), visitor)
+    mergeManifests(payloadManifests, map)
+  }
+
+  /** Recalculates the SHAs for changed metadata files (and payload manifests) for all present algorithms */
+  def updateTagManifests(bag: Bag, changed: Seq[Path]): Try[Unit] = Try {
+    val bagRoot = bag.getRootDir
+    val tagManifests = bag.getTagManifests
+    val algorithms = tagManifests.asScala.map(_.getAlgorithm).asJava
+    val map = Hasher.createManifestToMessageDigestMap(algorithms)
+    val visitor = new CreateTagManifestsVistor(map, includeHiddenFiles) {
+      override def visitFile(path: Path, attrs: BasicFileAttributes): FileVisitResult = {
+        val relativePath = bagRoot.relativize(path)
+        if (relativePath.toString.startsWith("manifest-") ||
+          changed.contains(relativePath)
+        ) super.visitFile(path, attrs)
+        else FileVisitResult.CONTINUE
+      }
+    }
+    Files.walkFileTree(bagRoot, visitor)
+    mergeManifests(tagManifests, map)
+  }
+
+  private def mergeManifests(manifests: util.Set[domain.Manifest], manifetsToDigest: util.Map[domain.Manifest, MessageDigest]): Unit = {
+    val newMap = manifetsToDigest.keySet().asScala.map(m =>
       m.getAlgorithm -> m.getFileToChecksumMap
     ).toMap
     for {
-      m <- payloadManifests.asScala
+      m <- manifests.asScala
       (path, hash) <- newMap(m.getAlgorithm).asScala
     } {
       m.getFileToChecksumMap.put(path, hash)
     }
-  }
-
-  /** Recalculates the SHAs for all metadata files for all present algorithms */
-  def updateTagManifests(bag: Bag): Try[Unit] = Try {
-    val bagRoot = bag.getRootDir
-
-    def isTagManifest(path: Path): Boolean = {
-      bagRoot.relativize(path).getNameCount == 1 && path.getFileName.toString.startsWith("tagmanifest-")
-    }
-
-    val algorithms = bag.getTagManifests.asScala.map(_.getAlgorithm).asJava
-    val tagFilesMap = Hasher.createManifestToMessageDigestMap(algorithms)
-    val tagVisitor = new CreateTagManifestsVistor(tagFilesMap, includeHiddenFiles) {
-      override def visitFile(path: Path, attrs: BasicFileAttributes): FileVisitResult = {
-        // bagit doesn't skip it as during bag creation it is not there
-        if (isTagManifest(path)) FileVisitResult.CONTINUE
-        else super.visitFile(path, attrs)
-      }
-    }
-    Files.walkFileTree(bagRoot, tagVisitor)
-    bag.getTagManifests.clear()
-    bag.getTagManifests.addAll(tagFilesMap.keySet())
   }
 
   /** (re)writes payload and tagmanifest files for all present algorithms */
