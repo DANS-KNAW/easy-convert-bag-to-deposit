@@ -15,12 +15,12 @@
  */
 package nl.knaw.dans.easy.bag2deposit
 
-import java.nio.file.Path
-
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.BagSource.BagSource
 import nl.knaw.dans.easy.bag2deposit.IdType.IdType
 import org.rogach.scallop.{ ScallopConf, ScallopOption, ValueConverter, singleArgConverter }
+
+import java.nio.file.Path
 
 class CommandLineOptions(args: Array[String], configuration: Configuration) extends ScallopConf(args) {
   appendDefaultToDescription = true

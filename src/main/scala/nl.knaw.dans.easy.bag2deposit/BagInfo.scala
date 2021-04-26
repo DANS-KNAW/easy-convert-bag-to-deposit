@@ -15,13 +15,12 @@
  */
 package nl.knaw.dans.easy.bag2deposit
 
-import java.util.UUID
-
 import better.files.File
 import gov.loc.repository.bagit.domain.Metadata
 import nl.knaw.dans.lib.error._
 import org.apache.commons.configuration.ConfigurationException
 
+import java.util.UUID
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
 

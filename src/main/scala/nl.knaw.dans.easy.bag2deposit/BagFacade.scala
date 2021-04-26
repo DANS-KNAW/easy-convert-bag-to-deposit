@@ -36,8 +36,7 @@ object BagFacade {
   val IS_VERSION_OF_KEY = "Is-Version-Of"
   val EASY_USER_ACCOUNT_KEY = "EASY-User-Account"
 
-  // TODO add to dans-bag lib
-  //  variant of https://github.com/DANS-KNAW/easy-ingest-flow/blob/78ea3bec23923adf10c1c0650b019ea51c251ce6/src/main/scala/nl.knaw.dans.easy.ingestflow/BagitFacadeComponent.scala#L133
+  // TODO variant of https://github.com/DANS-KNAW/easy-ingest-flow/blob/78ea3bec23923adf10c1c0650b019ea51c251ce6/src/main/scala/nl.knaw.dans.easy.ingestflow/BagitFacadeComponent.scala#L133
 
   private val bagReader = new BagReader()
 
@@ -65,7 +64,7 @@ object BagFacade {
       throw new IllegalArgumentException(s"path must start with data, found $payloadEntries")
     }
     if (bag.getPayLoadManifests.isEmpty) {
-      throw new IllegalArgumentException(s"No payload manifests found (as DansV0Bag would have created) ${bag.getRootDir}")
+      throw new IllegalArgumentException(s"No payload manifests found (as DansV0Bag would have created) ${ bag.getRootDir }")
     }
     val payloadManifests = bag.getPayLoadManifests
     val algorithms = payloadManifests.asScala.map(_.getAlgorithm).asJava
@@ -75,7 +74,7 @@ object BagFacade {
     mergeManifests(payloadManifests, map)
   }
 
-  /** Recalculates the SHAs for changed metadata files (and payload manifests) for all present algorithms */
+  /** Recalculates the checksums for changed metadata files (and payload manifests) for all present algorithms */
   def updateTagManifests(bag: Bag, changed: Seq[Path]): Try[Unit] = Try {
     val bagRoot = bag.getRootDir
     val tagManifests = bag.getTagManifests
