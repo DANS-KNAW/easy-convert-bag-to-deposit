@@ -82,8 +82,6 @@ object Collections extends DebugEnhancedLogging {
 
   def collectionDatasetIdToInCollection(cfgDir: File): Seq[(String, Elem)] = {
 
-    logger.info(s"building collections from $cfgDir")
-
     val skosMap = parseCsv(cfgDir / "excel2skos-collecties.csv", skosCsvFormat)
       .unsafeGetOrThrow
       .map(parseSkosRecord).toMap
