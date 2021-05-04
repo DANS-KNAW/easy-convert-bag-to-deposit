@@ -92,7 +92,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
    }
 
     new Provenance("EasyConvertBagToDepositApp", "1.0.5")
-      .xml(Map(
+      .collectChangesInXmls(Map(
         "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" ->
           Seq.empty,
         "http://easy.dans.knaw.nl/schemas/md/ddm/" ->
@@ -141,7 +141,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     )
 
     val transformer = new AmdTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
-    new Provenance("EasyConvertBagToDepositApp", "1.0.5").xml(Map(
+    new Provenance("EasyConvertBagToDepositApp", "1.0.5").collectChangesInXmls(Map(
       "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" ->
         transformer.transform(testDir / "amd.xml").getOrElse(fail("could not transform")),
     )).map(normalized) shouldBe Some(normalized(

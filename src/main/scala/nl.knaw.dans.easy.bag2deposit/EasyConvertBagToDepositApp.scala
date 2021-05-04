@@ -97,16 +97,16 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       props <- depositPropertiesFactory.create(bagInfo, ddmIn)
       datasetId = props.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
-      amdChanges <- configuration.amdTransformer.transform(metadata / "amd.xml")
-      oldDcmi = (ddmIn \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
-      newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
-      _ = provenance.xml(Map(
-        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> amdChanges,
-        "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
-      )).foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
       _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
       _ = props.save((bagParentDir / "deposit.properties").toJava)
       _ = ddmFile.writeText(ddmOut.serialize)
+      oldDcmi = (ddmIn \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
+      newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
+      amdChanges <- configuration.amdTransformer.transform(metadata / "amd.xml")
+      _ = provenance.collectChangesInXmls(Map(
+        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> amdChanges,
+        "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
+      )).foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
       migrationDir = (bagDir / "data" / "easy-migration").createDirectories()
       _ = migrationFiles.foreach(name => (metadata / name).copyTo(migrationDir / name))
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)

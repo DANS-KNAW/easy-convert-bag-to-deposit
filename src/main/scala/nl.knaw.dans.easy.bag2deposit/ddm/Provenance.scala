@@ -31,7 +31,7 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging {
    *                the values are an empty list or the content for <prov:migration>
    * @return
    */
-  def xml(changes: Map[String, Seq[Node]]): Option[Elem] = {
+  def collectChangesInXmls(changes: Map[String, Seq[Node]]): Option[Elem] = {
     trace(this.getClass)
     val filtered = changes.filter(_._2.nonEmpty)
     if (filtered.isEmpty) None
