@@ -49,7 +49,7 @@ class AmdTransformer(cfgDir: File) {
     for {
       xmlIn <- loadXml(file)
       xmlOut = transformer.transform(xmlIn).headOption
-        .getOrElse(throw new Exception("programming error: AgreementsTransformer returned multiple roots"))
+        .getOrElse(throw new Exception("programming error: AmdTransformer returned multiple roots"))
       _ = file.writeText(xmlOut.serialize)
       diff = Provenance.compare(xmlIn, xmlOut)
       _ = trace(diff.map(_.serialize))

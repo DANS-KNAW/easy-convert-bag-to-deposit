@@ -118,7 +118,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       </prov:provenance>
     ))
   }
-  it should "show agreements diff" in {
+  it should "show amd diff" in {
     (testDir / "amd.xml").writeText(
       """<?xml version="1.0" encoding="UTF-8"?>""" +
         Utility.serialize(

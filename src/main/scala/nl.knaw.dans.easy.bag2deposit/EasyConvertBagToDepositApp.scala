@@ -93,7 +93,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       props <- depositPropertiesFactory.create(bagInfo, ddmOld)
       datasetId = props.getString("identifier.fedora", "")
       ddmNew <- configuration.ddmTransformer.transform(ddmOld, datasetId)
-      amdChanges <- configuration.agreementTransformer.transform(metadata / "amd.xml")
+      amdChanges <- configuration.amdTransformer.transform(metadata / "amd.xml")
       oldDcmi = (ddmOld \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       newDcmi = (ddmNew \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       _ = provenance.xml(Map(

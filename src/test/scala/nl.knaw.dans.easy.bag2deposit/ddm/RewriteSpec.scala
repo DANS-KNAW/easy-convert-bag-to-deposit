@@ -119,7 +119,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       dataverseIdAuthority = "10.80270",
       bagIndex = BagIndex(new URI("http://localhost:20120/")),
       ddmTransformer = ddmTransformer,
-      agreementTransformer = new AmdTransformer(cfgDir)
+      amdTransformer = new AmdTransformer(cfgDir)
     ))
 
     // a few steps of EasyConvertBagToDepositApp.addPropsToBags

@@ -28,7 +28,7 @@ trait AppConfigSupport extends BagIndexSupport {
       dataverseIdAuthority = "10.80270",
       bagIndex = bagIndex,
       ddmTransformer = new DdmTransformer(cfgFile),
-      agreementTransformer = new AmdTransformer(cfgFile)
+      amdTransformer = new AmdTransformer(cfgFile)
     )
   }
 }

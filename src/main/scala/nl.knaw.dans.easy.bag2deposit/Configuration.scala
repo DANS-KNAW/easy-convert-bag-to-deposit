@@ -30,7 +30,7 @@ case class Configuration(version: String,
                          dataverseIdAuthority: String,
                          bagIndex: BagIndex,
                          ddmTransformer: DdmTransformer,
-                         agreementTransformer: AmdTransformer,
+                         amdTransformer: AmdTransformer,
                         )
 
 object Configuration extends DebugEnhancedLogging {
@@ -56,7 +56,7 @@ object Configuration extends DebugEnhancedLogging {
       dataverseIdAuthority = properties.getString("dataverse.id-authority"),
       bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
       ddmTransformer = new DdmTransformer(cfgPath, getCollectionsMap(cfgPath, FedoraProvider(properties))),
-      agreementTransformer = new AmdTransformer(cfgPath)
+      amdTransformer = new AmdTransformer(cfgPath)
     )
   }
 }
