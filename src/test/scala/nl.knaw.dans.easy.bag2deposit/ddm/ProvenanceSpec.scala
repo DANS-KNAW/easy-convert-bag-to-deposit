@@ -16,7 +16,7 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.AmdTransformer
+import nl.knaw.dans.easy.bag2deposit.UserTransformer
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ FileSystemSupport, FixedCurrentDateTimeSupport, XmlSupport }
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -140,7 +140,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
         ).toString()
     )
 
-    val transformer = new AmdTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
+    val transformer = new UserTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
     new Provenance("EasyConvertBagToDepositApp", "1.0.5").collectChangesInXmls(Map(
       "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" ->
         transformer.transform(testDir / "amd.xml").getOrElse(fail("could not transform")),

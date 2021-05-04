@@ -30,5 +30,5 @@ case class Configuration(version: String,
                          dataverseIdAuthority: String,
                          bagIndex: BagIndex,
                          ddmTransformer: DdmTransformer,
-                         amdTransformer: AmdTransformer,
+                         userTransformer: UserTransformer,
                         )

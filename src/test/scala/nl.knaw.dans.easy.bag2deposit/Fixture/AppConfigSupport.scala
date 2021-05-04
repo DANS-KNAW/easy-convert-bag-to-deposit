@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.bag2deposit.Fixture
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer
-import nl.knaw.dans.easy.bag2deposit.{ AmdTransformer, BagIndex, Configuration }
+import nl.knaw.dans.easy.bag2deposit.{ UserTransformer, BagIndex, Configuration }
 
 trait AppConfigSupport extends BagIndexSupport {
   def testConfig(bagIndex: BagIndex): Configuration = {
@@ -28,7 +28,7 @@ trait AppConfigSupport extends BagIndexSupport {
       dataverseIdAuthority = "10.80270",
       bagIndex = bagIndex,
       ddmTransformer = new DdmTransformer(cfgFile),
-      amdTransformer = new AmdTransformer(cfgFile)
+      userTransformer = new UserTransformer(cfgFile)
     )
   }
 }

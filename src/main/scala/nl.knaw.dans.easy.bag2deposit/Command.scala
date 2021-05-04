@@ -59,7 +59,7 @@ object Command extends App with DebugEnhancedLogging {
     dataverseIdAuthority = properties.getString("dataverse.id-authority"),
     bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
     ddmTransformer = new DdmTransformer(cfgPath, getCollectionsMap(cfgPath, FedoraProvider(properties))),
-    amdTransformer = new AmdTransformer(cfgPath)
+    userTransformer = new UserTransformer(cfgPath)
   )
   private val propertiesFactory = DepositPropertiesFactory(
     configuration,

@@ -24,7 +24,7 @@ import scala.util.Try
 import scala.xml.Node
 import scala.xml.transform.{ RewriteRule, RuleTransformer }
 
-class AmdTransformer(cfgDir: File) {
+class UserTransformer(cfgDir: File) {
   private val csvFile: File = cfgDir / "account-substitutes.csv"
   private val userMap = if (!csvFile.exists || csvFile.isEmpty)
                           Map[String,String]()

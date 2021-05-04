@@ -102,7 +102,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ = ddmFile.writeText(ddmOut.serialize)
       oldDcmi = (ddmIn \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
-      amdChanges <- configuration.amdTransformer.transform(metadata / "amd.xml")
+      amdChanges <- configuration.userTransformer.transform(metadata / "amd.xml")
       _ = provenance.collectChangesInXmls(Map(
         "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> amdChanges,
         "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
