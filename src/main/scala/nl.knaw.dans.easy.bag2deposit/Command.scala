@@ -16,21 +16,51 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
+import better.files.File.root
+import nl.knaw.dans.easy.bag2deposit.collections.Collections.getCollectionsMap
+import nl.knaw.dans.easy.bag2deposit.collections.FedoraProvider
+import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import org.apache.commons.configuration.PropertiesConfiguration
 
+import java.net.URI
 import scala.language.reflectiveCalls
 
 object Command extends App with DebugEnhancedLogging {
   type FeedBackMessage = String
+  private val home = File(System.getProperty("app.home"))
+  val cfgPath = Seq(
+    root / "etc" / "opt" / "dans.knaw.nl" / "easy-convert-bag-to-deposit",
+    home / "cfg")
+    .find(_.exists)
+    .getOrElse { throw new IllegalStateException("No configuration directory found") }
+  val properties = {
+    new PropertiesConfiguration() {
+      setDelimiterParsingDisabled(true)
+      load((cfgPath / "application.properties").toJava)
+    }
+  }
+  val version = (home / "bin" / "version").contentAsString.stripLineEnd
+  val agent = properties.getString("http.agent", s"easy-convert-bag-to-deposit/$version")
+  logger.info(s"setting http.agent to $agent")
+  System.setProperty("http.agent", agent)
 
-  val configuration = Configuration(File(System.getProperty("app.home")))
-  val commandLine: CommandLineOptions = new CommandLineOptions(args, configuration) {
+  val commandLine: CommandLineOptions = new CommandLineOptions(args, version) {
     verify()
   }
   private val bagParentDirs = commandLine.bagParentDir.map(Iterator(_))
     .getOrElse(commandLine.bagGrandParentDir.map(_.children)
       .getOrElse(Iterator.empty))
 
+
+  val configuration = Configuration(
+    version,
+    dansDoiPrefixes = properties.getStringArray("dans-doi.prefixes"),
+    dataverseIdAuthority = properties.getString("dataverse.id-authority"),
+    bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
+    ddmTransformer = new DdmTransformer(cfgPath, getCollectionsMap(cfgPath, FedoraProvider(properties))),
+    amdTransformer = new AmdTransformer(cfgPath)
+  )
   private val propertiesFactory = DepositPropertiesFactory(
     configuration,
     commandLine.idType(),

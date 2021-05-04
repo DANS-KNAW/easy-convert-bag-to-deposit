@@ -17,18 +17,28 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.FileSystemSupport
-import nl.knaw.dans.easy.bag2deposit.collections.FedoraProviderException
+import nl.knaw.dans.easy.bag2deposit.collections.Collections.getCollectionsMap
+import nl.knaw.dans.easy.bag2deposit.collections.FedoraProvider
+import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer
+import org.apache.commons.configuration.PropertiesConfiguration
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.net.UnknownHostException
-import scala.util.{ Failure, Success, Try }
+import scala.util.Success
 
 class ConfigurationSpec extends AnyFlatSpec with FileSystemSupport with Matchers {
+
+  private val transformer = {
+    val cfgPath = testDir / "dist" / "cfg"
+    val properties = new PropertiesConfiguration() {
+      setDelimiterParsingDisabled(true)
+      load((cfgPath / "application.properties").toJava)
+    }
+    new DdmTransformer(cfgPath, getCollectionsMap(cfgPath, FedoraProvider(properties)))
+  }
+
   "constructor" should "get past the first transformation when fedora is not configured" in {
     distDir(fedoraUrl = "")
-    val transformer = Configuration(home = testDir / "dist").ddmTransformer
-
     transformer.transform(
       <ddm><profile><audience>D37000</audience></profile></ddm>,
       "easy-dataset:123",
@@ -37,8 +47,6 @@ class ConfigurationSpec extends AnyFlatSpec with FileSystemSupport with Matchers
 
   it should "no longer fail on the first transformation when fedora is not available" in {
     distDir(fedoraUrl = "https://does.not.exist.dans.knaw.nl")
-
-    val transformer = Configuration(home = testDir / "dist").ddmTransformer
     // the lazy constructor argument throws an exception
     // breaking through the Try of the first call that needs it
     // this is not handled within the context of a for comprehension

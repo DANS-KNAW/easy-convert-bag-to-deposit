@@ -24,8 +24,7 @@ import java.io.ByteArrayOutputStream
 
 class ReadmeSpec extends AnyFlatSpec with Matchers with CustomMatchers with FixedCurrentDateTimeSupport {
 
-  private val configuration = Configuration(version = "my-version", Seq.empty, null, null, null, null)
-  private val clo = new CommandLineOptions(Array[String](), configuration) {
+  private val clo = new CommandLineOptions(Array[String](), "my-version") {
     // avoids System.exit() in case of invalid arguments or "--help"
     override def verify(): Unit = {}
   }

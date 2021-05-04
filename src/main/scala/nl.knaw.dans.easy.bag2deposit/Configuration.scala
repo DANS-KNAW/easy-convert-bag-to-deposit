@@ -32,31 +32,3 @@ case class Configuration(version: String,
                          ddmTransformer: DdmTransformer,
                          amdTransformer: AmdTransformer,
                         )
-
-object Configuration extends DebugEnhancedLogging {
-
-  def apply(home: File): Configuration = {
-    val cfgPath = Seq(
-      root / "etc" / "opt" / "dans.knaw.nl" / "easy-convert-bag-to-deposit",
-      home / "cfg")
-      .find(_.exists)
-      .getOrElse { throw new IllegalStateException("No configuration directory found") }
-    val properties = new PropertiesConfiguration() {
-      setDelimiterParsingDisabled(true)
-      load((cfgPath / "application.properties").toJava)
-    }
-    val version = (home / "bin" / "version").contentAsString.stripLineEnd
-    val agent = properties.getString("http.agent", s"easy-convert-bag-to-deposit/$version")
-    logger.info(s"setting http.agent to $agent")
-    System.setProperty("http.agent", agent)
-
-    new Configuration(
-      version,
-      dansDoiPrefixes = properties.getStringArray("dans-doi.prefixes"),
-      dataverseIdAuthority = properties.getString("dataverse.id-authority"),
-      bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
-      ddmTransformer = new DdmTransformer(cfgPath, getCollectionsMap(cfgPath, FedoraProvider(properties))),
-      amdTransformer = new AmdTransformer(cfgPath)
-    )
-  }
-}

@@ -22,18 +22,18 @@ import org.rogach.scallop.{ ScallopConf, ScallopOption, ValueConverter, singleAr
 
 import java.nio.file.Path
 
-class CommandLineOptions(args: Array[String], configuration: Configuration) extends ScallopConf(args) {
+class CommandLineOptions(args: Array[String], version: String) extends ScallopConf(args) {
   appendDefaultToDescription = true
   editBuilder(_.setHelpWidth(110))
   printedName = "easy-convert-bag-to-deposit"
-  version(configuration.version)
+  version(version)
   val description: String = s"""Add deposit.properties to directorie(s) with a bag"""
   val synopsis: String =
     s"""
        |  $printedName { --dir | --uuid } <directory> -t { URN | DOI } -s { FEDORA | VAULT } [ -o <output-dir> ]
        |""".stripMargin
 
-  version(s"$printedName v${ configuration.version }")
+  version(s"$printedName v$version")
   banner(
     s"""
        |  $description
