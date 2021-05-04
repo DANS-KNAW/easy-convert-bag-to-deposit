@@ -25,11 +25,14 @@ import scala.xml.Node
 import scala.xml.transform.{ RewriteRule, RuleTransformer }
 
 class AmdTransformer(cfgDir: File) {
-  private val userMap = parseCsv(
-    cfgDir / "account-substitutes.csv",
-    nrOfHeaderLines = 1,
-    format = RFC4180.withHeader("old", "new"),
-  ).map(r => r.get("old") -> r.get("new")).toMap
+  private val csvFile: File = cfgDir / "account-substitutes.csv"
+  private val userMap = if (!csvFile.exists || csvFile.isEmpty)
+                          Map[String,String]()
+                        else parseCsv(
+                          csvFile,
+                          nrOfHeaderLines = 1,
+                          format = RFC4180.withHeader("old", "new"),
+                        ).map(r => r.get("old") -> r.get("new")).toMap
 
   private val userRewriteRule: RewriteRule = new RewriteRule {
     override def transform(node: Node): Seq[Node] = {
