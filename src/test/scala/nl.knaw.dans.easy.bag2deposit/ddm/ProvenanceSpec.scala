@@ -93,8 +93,10 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
 
     new Provenance("EasyConvertBagToDepositApp", "1.0.5")
       .xml(Map(
-        "http://easy.dans.knaw.nl/schemas/md/ddm/" -> Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head),
-        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> Seq.empty,
+        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" ->
+          Seq.empty,
+        "http://easy.dans.knaw.nl/schemas/md/ddm/" ->
+          Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head),
       ))
       .map(normalized) shouldBe Some(normalized(
       <prov:provenance xsi:schemaLocation="
@@ -139,16 +141,15 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     )
 
     val transformer = new AmdTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
-    val changes = transformer.transform(testDir / "amd.xml").getOrElse(fail("could not transform"))
-
     new Provenance("EasyConvertBagToDepositApp", "1.0.5").xml(Map(
-      "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> changes,
+      "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" ->
+        transformer.transform(testDir / "amd.xml").getOrElse(fail("could not transform")),
     )).map(normalized) shouldBe Some(normalized(
       <prov:provenance xsi:schemaLocation="
         http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
         http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
         http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
-        " xmlns:dct="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
+        ">
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
           <prov:file scheme="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
             <prov:old>

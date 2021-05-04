@@ -21,9 +21,16 @@ import org.joda.time.format.DateTimeFormat
 
 import scala.xml.{ Elem, Node }
 
-class Provenance(app: String, version: String) extends DebugEnhancedLogging{
+class Provenance(app: String, version: String) extends DebugEnhancedLogging {
   private val dateFormat = now().toString(DateTimeFormat.forPattern("yyyy-MM-dd"))
 
+  /**
+   * collects differences between old and new versions of XMLs as far as they we
+   *
+   * @param changes the key of the map is the schema of the compared XMLs
+   *                the values are an empty list or the content for <prov:migration>
+   * @return
+   */
   def xml(changes: Map[String, Seq[Node]]): Option[Elem] = {
     trace(this.getClass)
     val filtered = changes.filter(_._2.nonEmpty)
@@ -40,7 +47,7 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging{
         http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
         ">
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
-          { filtered.map { case (scheme, diff) =>
+        { filtered.map { case (scheme, diff) =>
           <prov:file scheme={ scheme }>{ diff }</prov:file>
         }}
         </prov:migration>
@@ -49,6 +56,14 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging{
   }
 }
 object Provenance {
+  /**
+   * Creates the content for a <prov:migration> by comparing the direct child elements of each XML.
+   * @param oldXml the original instance
+   * @param newXml the modified instance
+   * @return and empty list if both versions have the same children
+   *         when large/complex elements (like for example authors or polygons) have minor changes
+   *         both versions of the complete element is returned
+   */
   def compare(oldXml: Node, newXml: Node): Seq[Node] = {
     // TODO poor mans solution to call with ddm/dcmiMetadata respective root of amd
     val oldNodes = oldXml.flatMap(_.nonEmptyChildren)
