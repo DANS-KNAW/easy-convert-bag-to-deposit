@@ -29,7 +29,7 @@ import scala.util.Success
 class ConfigurationSpec extends AnyFlatSpec with FileSystemSupport with Matchers {
 
   private val transformer = {
-    val cfgPath = testDir / "dist" / "cfg"
+    val cfgPath = File("src/main/assembly/dist/cfg")
     val properties = new PropertiesConfiguration() {
       setDelimiterParsingDisabled(true)
       load((cfgPath / "application.properties").toJava)
