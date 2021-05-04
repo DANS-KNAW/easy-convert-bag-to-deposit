@@ -15,23 +15,28 @@
  */
 package nl.knaw.dans.easy.bag2deposit
 
-import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.{ FileVisitResult, Files, Path }
-
 import better.files.File
-import gov.loc.repository.bagit.creator.CreateTagManifestsVistor
-import gov.loc.repository.bagit.domain.{ Bag, Metadata }
+import gov.loc.repository.bagit.creator.{ CreatePayloadManifestsVistor, CreateTagManifestsVistor }
+import gov.loc.repository.bagit.domain
+import gov.loc.repository.bagit.domain.Bag
 import gov.loc.repository.bagit.hash.Hasher
 import gov.loc.repository.bagit.reader.BagReader
 import gov.loc.repository.bagit.writer.{ ManifestWriter, MetadataWriter }
 
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.{ FileVisitResult, Files, Path }
+import java.security.MessageDigest
+import java.util
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
 
 object BagFacade {
 
-  // TODO add to dans-bag lib
-  //  variant of https://github.com/DANS-KNAW/easy-ingest-flow/blob/78ea3bec23923adf10c1c0650b019ea51c251ce6/src/main/scala/nl.knaw.dans.easy.ingestflow/BagitFacadeComponent.scala#L133
+  // these constants duplicate nl.knaw.dans.bag.v0.DansV0Bag
+  val IS_VERSION_OF_KEY = "Is-Version-Of"
+  val EASY_USER_ACCOUNT_KEY = "EASY-User-Account"
+
+  // TODO variant of https://github.com/DANS-KNAW/easy-ingest-flow/blob/78ea3bec23923adf10c1c0650b019ea51c251ce6/src/main/scala/nl.knaw.dans.easy.ingestflow/BagitFacadeComponent.scala#L133
 
   private val bagReader = new BagReader()
 
@@ -48,24 +53,67 @@ object BagFacade {
     }
   }
 
-  def updateManifest(bag: Bag): Try[Unit] = Try {
-    trace(bag.getRootDir)
-    def isTagManifest(path: Path): Boolean = {
-      bag.getRootDir.relativize(path).getNameCount == 1 && path.getFileName.toString.startsWith("tagmanifest-")
-    }
+  private val includeHiddenFiles = true
 
-    val algorithms = bag.getTagManifests.asScala.map(_.getAlgorithm).asJava
-    val tagFilesMap = Hasher.createManifestToMessageDigestMap(algorithms)
-    val tagVisitor = new CreateTagManifestsVistor(tagFilesMap, true) {
+  /**
+   * (re)calculate values for all algorithms of new/changed payload files
+   *
+   * @param bag            changed bag
+   * @param payloadEntries directory or file relatieve to the root of the bag
+   * @return
+   */
+  def updatePayloadManifests(bag: Bag, payloadEntries: Path): Try[Unit] = Try {
+    trace(bag.getRootDir)
+    if (!payloadEntries.toString.startsWith("data/")) {
+      throw new IllegalArgumentException(s"path must start with data, found $payloadEntries")
+    }
+    if (bag.getPayLoadManifests.isEmpty) {
+      throw new IllegalArgumentException(s"No payload manifests found (as DansV0Bag would have created) ${ bag.getRootDir }")
+    }
+    val payloadManifests = bag.getPayLoadManifests
+    val algorithms = payloadManifests.asScala.map(_.getAlgorithm).asJava
+    val map = Hasher.createManifestToMessageDigestMap(algorithms)
+    val visitor = new CreatePayloadManifestsVistor(map, includeHiddenFiles)
+    Files.walkFileTree(bag.getRootDir.resolve(payloadEntries), visitor)
+    mergeManifests(payloadManifests, map)
+  }
+
+  /** Recalculates the checksums for changed metadata files (and payload manifests) for all present algorithms */
+  def updateTagManifests(bag: Bag, changed: Seq[Path]): Try[Unit] = Try {
+    val bagRoot = bag.getRootDir
+    val tagManifests = bag.getTagManifests
+    val algorithms = tagManifests.asScala.map(_.getAlgorithm).asJava
+    val map = Hasher.createManifestToMessageDigestMap(algorithms)
+    val visitor = new CreateTagManifestsVistor(map, includeHiddenFiles) {
       override def visitFile(path: Path, attrs: BasicFileAttributes): FileVisitResult = {
-        if (isTagManifest(path)) FileVisitResult.CONTINUE
-        else super.visitFile(path, attrs)
+        val relativePath = bagRoot.relativize(path)
+        if (relativePath.toString.startsWith("manifest-") ||
+          changed.contains(relativePath)
+        ) super.visitFile(path, attrs)
+        else FileVisitResult.CONTINUE
       }
     }
-    val bagPath = bag.getRootDir
-    Files.walkFileTree(bagPath, tagVisitor)
-    bag.getTagManifests.clear()
-    bag.getTagManifests.addAll(tagFilesMap.keySet())
-    ManifestWriter.writeTagManifests(bag.getTagManifests, bagPath, bagPath, bag.getFileEncoding)
+    Files.walkFileTree(bagRoot, visitor)
+    mergeManifests(tagManifests, map)
+  }
+
+  private def mergeManifests(manifests: util.Set[domain.Manifest], manifetsToDigest: util.Map[domain.Manifest, MessageDigest]): Unit = {
+    val newMap = manifetsToDigest.keySet().asScala.map(m =>
+      m.getAlgorithm -> m.getFileToChecksumMap
+    ).toMap
+    for {
+      m <- manifests.asScala
+      (path, hash) <- newMap(m.getAlgorithm).asScala
+    } {
+      m.getFileToChecksumMap.put(path, hash)
+    }
+  }
+
+  /** (re)writes payload and tagmanifest files for all present algorithms */
+  def writeManifests(bag: Bag): Try[Unit] = Try {
+    val bagRoot = bag.getRootDir
+    val encoding = bag.getFileEncoding
+    ManifestWriter.writePayloadManifests(bag.getPayLoadManifests, bagRoot, bagRoot, encoding)
+    ManifestWriter.writeTagManifests(bag.getTagManifests, bagRoot, bagRoot, encoding)
   }
 }

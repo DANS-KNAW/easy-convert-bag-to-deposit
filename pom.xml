@@ -31,7 +31,7 @@
 
     <name>EASY Vault convert bag to deposit</name>
     <url>https://github.com/DANS-KNAW/easy-convert-bag-to-deposit</url>
-    <description>Add deposit.properties to directories(s) with a bag</description>
+    <description>Add deposit.properties to directorie(s) with a bag</description>
     <inceptionYear>2020</inceptionYear>
 
     <properties>
@@ -45,8 +45,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>nl.knaw.dans.lib</groupId>
-            <artifactId>dans-bag-lib_2.12</artifactId>
+            <groupId>nl.knaw.dans</groupId>
+            <artifactId>bagit</artifactId>
         </dependency>
         <dependency>
             <groupId>com.yourmediashelf.fedora.client</groupId>

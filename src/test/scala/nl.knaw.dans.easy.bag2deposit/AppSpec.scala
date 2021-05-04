@@ -16,8 +16,6 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
-import net.ruippeixotog.scalascraper.dsl.DSL.deepFunctorOps
-import nl.knaw.dans.bag.v0.DansV0Bag.EASY_USER_ACCOUNT_KEY
 import nl.knaw.dans.easy.bag2deposit.BagSource._
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, FileSystemSupport }
 import nl.knaw.dans.easy.bag2deposit.IdType._
@@ -92,8 +90,8 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     movedBag / ".." / "deposit.properties" should exist
 
     // other content changes verified in DepositPropertiesFactorySpec
-    (validBag / "bag-info.txt").contentAsString should include(EASY_USER_ACCOUNT_KEY)
-    (movedBag / "bag-info.txt").contentAsString shouldNot include(EASY_USER_ACCOUNT_KEY)
+    (validBag / "bag-info.txt").contentAsString should include(BagFacade.EASY_USER_ACCOUNT_KEY)
+    (movedBag / "bag-info.txt").contentAsString shouldNot include(BagFacade.EASY_USER_ACCOUNT_KEY)
 
     // content of provenance verified in ddm.ProvenanceSpec
     (validBag / "tagmanifest-sha1.txt").contentAsString shouldNot include("metadata/provenance.xml")

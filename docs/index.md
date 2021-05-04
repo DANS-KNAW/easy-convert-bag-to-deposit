@@ -11,10 +11,11 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Add deposit.properties to directories(s) with a bag.
+Add deposit.properties to directorie(s) with a bag.
 These [properties](depositproperties.md) are used in the processing of the deposit.
 The bag in each directory should be a bag created with the `get` 
-subcommand of [easy-bag-store](https://dans-knaw.github.io/easy-bag-store/).
+subcommand of [easy-bag-store](https://dans-knaw.github.io/easy-bag-store/)
+or created with [easy-fedora-to-bag](https://dans-knaw.github.io/easy-fedora-to-bag/)
 
 The state of a bag is undefined when it has a `deposit.properties` but is not moved to `<output-dir>`:
 the `metadata.xml`, `bag-info.txt` and manifests may or may not have been changed. 

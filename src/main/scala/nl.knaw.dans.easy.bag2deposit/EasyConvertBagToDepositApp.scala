@@ -17,13 +17,13 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import better.files.File.CopyOptions
-import nl.knaw.dans.bag.v0.DansV0Bag
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.compare
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import java.io.{ FileNotFoundException, IOException }
+import java.nio.file.Paths
 import java.nio.charset.Charset
 import scala.collection.mutable.ListBuffer
 import scala.util.{ Failure, Success, Try }
@@ -77,8 +77,10 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
+    val migrationFiles = Seq("provenance.xml", "emd.xml", "dataset.xml", "files.xml")
+    val changedMetadata = Seq("bag-info.xml", "metadata/amd.xml", "metadata/dataset.xml", "metadata/provenance.xml").map(Paths.get(_))
     val bagInfoKeysToRemove = Seq(
-      DansV0Bag.EASY_USER_ACCOUNT_KEY,
+      BagFacade.EASY_USER_ACCOUNT_KEY,
       BagInfo.baseUrnKey,
       BagInfo.baseDoiKey,
     )
@@ -87,25 +89,35 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       bag <- BagFacade.getBag(bagDir)
       mutableBagMetadata = bag.getMetadata
       bagInfo <- BagInfo(bagDir, mutableBagMetadata)
+      _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = logger.info(s"$bagInfo")
       metadata = bagDir / "metadata"
-      ddmOld <- loadXml(metadata / "dataset.xml")
-      props <- depositPropertiesFactory.create(bagInfo, ddmOld)
+      ddmFile = metadata / "dataset.xml"
+      ddmIn <- loadXml(ddmFile)
+      props <- depositPropertiesFactory.create(bagInfo, ddmIn)
       datasetId = props.getString("identifier.fedora", "")
-      ddmNew <- configuration.ddmTransformer.transform(ddmOld, datasetId)
+      ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
       amdChanges <- configuration.amdTransformer.transform(metadata / "amd.xml")
-      oldDcmi = (ddmOld \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
-      newDcmi = (ddmNew \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
+      oldDcmi = (ddmIn \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
+      newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       _ = provenance.xml(Map(
         "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> amdChanges,
         "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
       )).foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
-      _ = registerMatchedReports(datasetId, ddmNew \\ "reportNumber")
+      _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
       _ = props.save((bagParentDir / "deposit.properties").toJava)
-      _ = (metadata / "dataset.xml").writeText(ddmNew.serialize)
+      _ = ddmFile.writeText(ddmOut.serialize)
+      migrationDir = (bagDir / "data" / "easy-migration").createDirectories()
+      _ = migrationFiles.foreach(name => (metadata / name).copyTo(migrationDir / name))
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
+      _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
-      _ <- BagFacade.updateManifest(bag)
+      _ = trace("updating payload manifest")
+      _ <- BagFacade.updatePayloadManifests(bag, Paths.get("data/easy-migration"))
+      _ = trace("updating tag manifest")
+      _ <- BagFacade.updateTagManifests(bag, changedMetadata)
+      _ = trace("writing manifests")
+      _ <- BagFacade.writeManifests(bag)
       _ = maybeOutputDir.foreach(move(bagParentDir))
       _ = logger.info(s"OK $datasetId ${ bagParentDir.name }/${ bagDir.name }")
     } yield true
