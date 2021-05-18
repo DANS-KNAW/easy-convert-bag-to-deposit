@@ -67,7 +67,7 @@ object AbrRewriteRule {
   private def temporalMap(cfgDir: File): Map[String, Elem] = {
     parseCsv(cfgDir / "ABR-period.csv", nrOfHeaderLines, csvFormat)
       .map(record => record.get("old") ->
-        <ddm:temporal xml:lang="nl"
+        <ddm:temporal xml:lang="nld"
            valueURI={ valueUri(record.get("uuid")) }
            subjectScheme={ "ABR Periodes" }
            schemeURI={ "https://data.cultureelerfgoed.nl/term/id/abr/9b688754-1315-484b-9c89-8817e87c1e84" }
@@ -78,7 +78,7 @@ object AbrRewriteRule {
   private def subjectMap(cfgDir: File): Map[String, Elem] = {
     parseCsv(cfgDir / "ABR-complex.csv", nrOfHeaderLines, csvFormat)
       .map(record => record.get("old") ->
-        <ddm:subject xml:lang="nl"
+        <ddm:subject xml:lang="nld"
           valueURI={ valueUri(record.get("uuid")) }
           subjectScheme={ "ABR Complextypen" }
           schemeURI={ "https://data.cultureelerfgoed.nl/term/id/abr/e9546020-4b28-4819-b0c2-29e7c864c5c0" }

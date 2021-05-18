@@ -78,27 +78,27 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
               subjectScheme="ABR Rapporten"
               reportNo="456"
             >Rapport 456</ddm:reportNumber>
-            <ddm:temporal xml:lang="nl"
+            <ddm:temporal xml:lang="nld"
                           valueURI="https://data.cultureelerfgoed.nl/term/id/abr/330e7fe0-a1f7-43de-b448-d477898f6648"
                           subjectScheme="ABR Periodes"
                           schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/9b688754-1315-484b-9c89-8817e87c1e84"
             >Vroege Middeleeuwen A</ddm:temporal>
-            <ddm:subject xml:lang="nl"
+            <ddm:subject xml:lang="nld"
                          valueURI="https://data.cultureelerfgoed.nl/term/id/abr/6ae3ab19-49ca-44a7-8b65-3a3395014bb9"
                          subjectScheme="ABR Complextypen"
                          schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/e9546020-4b28-4819-b0c2-29e7c864c5c0"
             >veenwinning (inclusief zouthoudend veen t.b.v. zoutproductie)</ddm:subject>
-            <ddm:subject xml:lang="nl"
+            <ddm:subject xml:lang="nld"
                          valueURI="https://data.cultureelerfgoed.nl/term/id/abr/f182d72c-2d22-47ae-b799-26dea01e770c"
                          subjectScheme="ABR Complextypen"
                          schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/e9546020-4b28-4819-b0c2-29e7c864c5c0"
             >akker / tuin</ddm:subject>
-            <ddm:subject xml:lang="nl"
+            <ddm:subject xml:lang="nld"
                          valueURI="https://data.cultureelerfgoed.nl/term/id/abr/5fbda024-be3e-47ac-a6c8-1c58d2cf5ccc"
                          subjectScheme="ABR Complextypen"
                          schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/e9546020-4b28-4819-b0c2-29e7c864c5c0"
             >complextype niet te bepalen</ddm:subject>
-            <ddm:subject xml:lang="nl"
+            <ddm:subject xml:lang="nld"
                          valueURI="https://data.cultureelerfgoed.nl/term/id/abr/28e58033-875e-4f90-baa2-7b1c1c147574"
                          subjectScheme="ABR Complextypen"
                          schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/e9546020-4b28-4819-b0c2-29e7c864c5c0"
