@@ -18,7 +18,8 @@ subcommand of [easy-bag-store](https://dans-knaw.github.io/easy-bag-store/)
 or created with [easy-fedora-to-bag](https://dans-knaw.github.io/easy-fedora-to-bag/)
 
 The state of a bag is undefined when it has a `deposit.properties` but is not moved to `<output-dir>`:
-the `metadata.xml`, `bag-info.txt` and manifests may or may not have been changed. 
+each one of `bag-info.txt`, `metadata.xml`, `amd.xml`, `data/easy-migration/*`, `metadata/provenance.xml`
+and manifests may or may not have been changed or created. 
 
 ARGUMENTS
 ---------
@@ -31,7 +32,7 @@ ARGUMENTS
          -o, --output-dir  <arg>                  Optional. Directory that will receive completed deposits with
                                                   atomic moves.
          -s, --source  <arg>                      The source of the bags
-         -u, --uuid  <arg>                        directory with a bag. This directory each MUST be a uuid.
+         -u, --uuid  <arg>                        directory with a bag. This directory MUST be a uuid.
          -h, --help                               Show help message
          -v, --version                            Show version of this program
     ---

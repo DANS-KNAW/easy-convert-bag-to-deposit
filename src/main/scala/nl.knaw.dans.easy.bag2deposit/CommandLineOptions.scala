@@ -52,7 +52,7 @@ class CommandLineOptions(args: Array[String], version: String) extends ScallopCo
   val bagGrandParentDir: ScallopOption[File] = opt[Path]("dir", short = 'd',
     descr = "directory with the deposits. These deposit-dirs each MUST have the uuid of the bag as directory name, and have one bag-dir each").map(File(_))
   val bagParentDir: ScallopOption[File] = opt[Path]("uuid", short = 'u',
-    descr = "directory with a bag. This directory each MUST be a uuid.").map(File(_))
+    descr = "directory with a bag. This directory MUST be a uuid.").map(File(_))
   val idType: ScallopOption[IdType] = opt[IdType]("dataverse-identifier-type", short = 't', required = true,
     descr = "the field to be used as Dataverse identifier, either doi or urn:nbn")
   val bagSource: ScallopOption[BagSource] = opt[BagSource]("source", short = 's', required = true,
