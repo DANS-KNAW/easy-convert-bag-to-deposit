@@ -31,6 +31,8 @@ import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
 import scala.xml.Elem
 
+case class Collection (name: String, ids: Seq[String], collectionType: String, members: Seq[String])
+
 object Collections extends DebugEnhancedLogging {
 
   private val browser = JsoupBrowser()
@@ -50,9 +52,19 @@ object Collections extends DebugEnhancedLogging {
   }
 
   private val skosCsvFormat = RFC4180.withHeader("URI", "prefLabel", "definition", "broader", "notation")
-  private val collectionCsvFormat = RFC4180.withHeader("name", "ids", "type", "comment")
+  private val collectionCsvFormat = RFC4180.withHeader("name", "ids", "type", "comment", "members")
 
-  private def parseCollectionRecord(r: CSVRecord) = r.get("name").trim -> r.get("ids")
+  private def parseCollectionRecord(r: CSVRecord) = Try {
+    val strings = Try(r.get("members"))
+      .map(_.split(", *"))
+      .getOrElse(Array[String]())
+    Collection(
+      r.get("name"),
+      r.get("ids").split(", *").filter(_.startsWith("easy-dataset:")),
+      Try(r.get("type")).getOrElse(""),
+      strings, // compiler error when inlined
+    )
+  }.getOrElse(throw new IllegalArgumentException(s"invalid line $r"))
 
   private def parseSkosRecord(r: CSVRecord) = {
     r.get("definition") ->
@@ -97,11 +109,8 @@ object Collections extends DebugEnhancedLogging {
       .unsafeGetOrThrow
       .map(parseCollectionRecord)
       .toList
-      .filter(_._2.startsWith("easy-dataset:"))
-      .flatMap { case (name, datasetIds) =>
-        datasetIds.split(",").toSeq
-          .map(_ -> inCollectionElem(name))
-      }
+      .filter(_.ids.nonEmpty)
+      .flatMap(c => c.ids.map(_ -> inCollectionElem(c.name)))
   }
 
   def memberDatasetIdToInCollection(collectionDatasetIdToInCollection: Seq[(String, Elem)], fedoraProvider: FedoraProvider): Map[String, Elem] = Try {
