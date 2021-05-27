@@ -28,36 +28,35 @@ import scala.util.Success
 
 class ConfigurationSpec extends AnyFlatSpec with FileSystemSupport with Matchers {
 
-  private val transformer = {
-    val cfgPath = File("src/main/assembly/dist/cfg")
+  private def transformer(propsFile: File) = {
     val properties = new PropertiesConfiguration() {
       setDelimiterParsingDisabled(true)
-      load((cfgPath / "application.properties").toJava)
+      load(propsFile.toJava)
     }
+    val cfgPath = propsFile.parent
     new DdmTransformer(cfgPath, getCollectionsMap(cfgPath, FedoraProvider(properties)))
   }
 
   "constructor" should "get past the first transformation when fedora is not configured" in {
-    distDir(fedoraUrl = "")
-    transformer.transform(
+    transformer(propsFile(fedoraUrl = "")).transform(
       <ddm><profile><audience>D37000</audience></profile></ddm>,
       "easy-dataset:123",
     ) shouldBe a[Success[_]]
   }
 
   it should "no longer fail on the first transformation when fedora is not available" in {
-    distDir(fedoraUrl = "https://does.not.exist.dans.knaw.nl")
+    val props = propsFile(fedoraUrl = "https://does.not.exist.dans.knaw.nl")
     // the lazy constructor argument throws an exception
     // breaking through the Try of the first call that needs it
     // this is not handled within the context of a for comprehension
-    val triedNode = transformer.transform(
+    val triedNode = transformer(props).transform(
       <ddm><profile><audience>D37000</audience></profile></ddm>,
       "easy-dataset:123",
     )
     triedNode shouldBe Success(<ddm><profile><audience>D37000</audience></profile></ddm>)
   }
 
-  private def distDir(fedoraUrl: String) = {
+  private def propsFile(fedoraUrl: String) = {
     val distSrc = File("src/main/assembly/dist")
     distSrc.copyToDirectory(testDir)
     (testDir / "dist" / "cfg" / "application.properties").writeText(
