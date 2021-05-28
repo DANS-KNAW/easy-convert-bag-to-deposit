@@ -26,7 +26,7 @@ import net.ruippeixotog.scalascraper.dsl.DSL._
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.csv.CSVFormat.RFC4180
-import org.apache.commons.csv.{ CSVFormat, CSVParser, CSVRecord }
+import org.apache.commons.csv.{ CSVFormat, CSVParser, CSVPrinter, CSVRecord }
 import org.joda.time.DateTime.now
 import resource.managed
 
@@ -56,12 +56,7 @@ object Collection extends DebugEnhancedLogging {
       .tried
   }
 
-  private val collectionCsvFormat = RFC4180.withHeader("name", "ids", "type", "comment", "members")
-
-  private def writeCollectionRecord(writer: FileWriter, c: Collection): Try[Collection] = Try {
-    collectionCsvFormat.printRecord(writer, c.name, c.ids.mkString(","), c.collectionType, c.comment, c.members.mkString(","))
-    c
-  }
+  private val collectionCsvFormat = RFC4180.withHeader("name", "EASY-dataset-id", "type", "comment", "members")
 
   private def parseCollectionRecord(r: CSVRecord) = Try {
     val memberIds = Try(r.get("members"))
@@ -69,12 +64,17 @@ object Collection extends DebugEnhancedLogging {
       .getOrElse(Array[String]())
     Collection(
       r.get("name"),
-      r.get("ids").split(", *").filter(_.startsWith("easy-dataset:")),
+      r.get("EASY-dataset-id").split(", *").filter(_.startsWith("easy-dataset:")),
       Try(r.get("type")).getOrElse(""), // TODO assuming IllegalArgumentException
       Try(r.get("comment")).getOrElse(""),
       memberIds, // compiler error when inlined
     )
   }.getOrElse(throw new IllegalArgumentException(s"invalid line $r"))
+
+  private def writeCollectionRecord(printer: CSVPrinter, c: Collection): Try[Collection] = Try {
+    printer.printRecord(c.name, c.ids.mkString(","), c.collectionType, c.comment, c.members.mkString(","))
+    c
+  }
 
   private val skosCsvFormat = RFC4180.withHeader("URI", "prefLabel", "definition", "broader", "notation")
 
@@ -95,15 +95,16 @@ object Collection extends DebugEnhancedLogging {
     def updateCollections(originalCollections: Seq[Collection], fedoraProvider: FedoraProvider): Try[List[Collection]] = {
       for { // TODO unit test writes to src/main/assembly/dist/cfg
         _ <- Try(collectionsFile.moveTo(File(collectionsFile.toString().replace(".csv", s"-$now.csv"))))
-        writer = collectionsFile.newFileWriter()
+        printer = collectionCsvFormat.print(collectionsFile.newFileWriter(append = true))
         updated <- originalCollections.toList.map { original =>
           trace(original)
           writeCollectionRecord(
-            writer,
+            printer,
             if (original.members.nonEmpty) original
             else original.copy(members = original.ids.flatMap(membersOf(fedoraProvider)))
           )
         }.sequence
+        _ = printer.close(true) // TODO dispose?
       } yield updated
     }
 

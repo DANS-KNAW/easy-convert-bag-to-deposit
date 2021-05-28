@@ -27,7 +27,6 @@ import resource.managed
 
 import java.io.InputStream
 import java.net.UnknownHostException
-import java.nio.charset.Charset
 import scala.util.{ Failure, Success, Try }
 
 class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with Matchers with FileSystemSupport with MockFactory {
@@ -35,17 +34,34 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
   private val jumpoffMocks = File("src/test/resources/sample-jumpoff")
 
   "getCollectionsMap" should "create valid elements for each collection dataset" in {
-    val fedoraProvider = expectJumpoff("easy-dataset:33895", jumpoffMocks / "3931-for-dataset-34359.html")
+    val mockedProvider: FedoraProvider = mock[FedoraProvider]
+    expectJumpoff("easy-dataset:33834", jumpoffMocks / "for-33834.html", mockedProvider)
+    expectJumpoff("easy-dataset:33976", jumpoffMocks / "for-33976.html", mockedProvider)
     val cfgDir = propsFile("").parent
-    (cfgDir / "ThematischeCollecties.csv").writeText(
+    val csvFile = cfgDir / "ThemathischeCollecties.csv"
+    csvFile.writeText(
       """naam,EASY-dataset-id,type,opmerkingen,members
-        |Verzamelpagina Archeologie,easy-dataset:33895,N/A,Dit is de 'verzamelpagina van verzamelpagina's': totaaloverzicht van archeologische collecties per organisatie en project
+        |Diachron bv,"easy-dataset:33834,easy-dataset:33976",organisatie
         |""".stripMargin)
-    Collection.getCollectionsMap(cfgDir,Some(fedoraProvider)) shouldBe ""
+
+    // just sampling one returned tuple
+    Collection.getCollectionsMap(cfgDir, Some(mockedProvider)) should contain(
+      "easy-dataset:64188" ->
+        <ddm:inCollection
+          schemeURI="http://easy.dans.knaw.nl/vocabularies/collecties"
+          valueURI="http://easy.dans.knaw.nl/vocabularies/collecties#Diachronbv"
+          subjectScheme="DANS Collection"
+        >Diachron bv</ddm:inCollection>
+    )
+    csvFile.contentAsString.replace("\r", "") shouldBe // TODO why windows style new lines?
+      """name,EASY-dataset-id,type,comment,members
+        |Diachron bv,"easy-dataset:33834,easy-dataset:33976",organisatie,,"easy-dataset:58025,easy-dataset:33807,easy-dataset:33812,easy-dataset:51902,easy-dataset:64418,easy-dataset:34202,easy-dataset:33811,easy-dataset:33772,easy-dataset:52088,easy-dataset:33808,easy-dataset:59157,easy-dataset:52839,easy-dataset:34201,easy-dataset:53179,easy-dataset:64528,easy-dataset:64415,easy-dataset:64157,easy-dataset:64176,easy-dataset:64165,easy-dataset:33948,easy-dataset:33819,easy-dataset:33814,easy-dataset:64175,easy-dataset:33949,easy-dataset:34216,easy-dataset:33813,easy-dataset:33817,easy-dataset:50269,easy-dataset:33771,easy-dataset:64311,easy-dataset:64414,easy-dataset:33557,easy-dataset:33816,easy-dataset:64195,easy-dataset:53064,easy-dataset:33777,easy-dataset:64549,easy-dataset:64503,easy-dataset:64188,easy-dataset:64163,easy-dataset:34203,easy-dataset:64090,easy-dataset:33815,easy-dataset:64164,easy-dataset:34219,easy-dataset:33818,easy-dataset:33504,easy-dataset:51426,easy-dataset:51902,easy-dataset:26437,easy-dataset:64418,easy-dataset:113273,easy-dataset:59157,easy-dataset:52839,easy-dataset:53179,easy-dataset:64528,easy-dataset:64415,easy-dataset:64157,easy-dataset:64165,easy-dataset:57123,easy-dataset:106716,easy-dataset:106588,easy-dataset:64175,easy-dataset:51885,easy-dataset:39175,easy-dataset:64311,easy-dataset:64414,easy-dataset:64195,easy-dataset:53064,easy-dataset:64549,easy-dataset:64503,easy-dataset:64188,easy-dataset:64163,easy-dataset:64090,easy-dataset:58025,easy-dataset:64164"
+        |""".stripMargin
   }
 
   "memberDatasetIdToInCollection" should "return members from xhtml" in {
-    val fedoraProvider = expectJumpoff("easy-dataset:mocked1", jumpoffMocks / "3931-for-dataset-34359.html")
+    val mockedProvider: FedoraProvider = mock[FedoraProvider]
+    expectJumpoff("easy-dataset:mocked1", jumpoffMocks / "3931-for-dataset-34359.html", mockedProvider)
     val mockedJumpoffMembers = List("easy-dataset:34099", "easy-dataset:57698", "easy-dataset:57517", "easy-dataset:50715", "easy-dataset:46315", "easy-dataset:50635", "easy-dataset:62503", "easy-dataset:31688", "easy-dataset:48388", "easy-dataset:57281", "easy-dataset:50610", "easy-dataset:62773", "easy-dataset:41884", "easy-dataset:68647", "easy-dataset:54459", "easy-dataset:50636", "easy-dataset:54529", "easy-dataset:61129", "easy-dataset:55947", "easy-dataset:47464", "easy-dataset:60949", "easy-dataset:55302", "easy-dataset:62505", "easy-dataset:50711")
     // TODO
   }
@@ -89,31 +105,29 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     }
   }
 
-  private def expectJumpoff(datasetId: String, file: File) = {
-    val fedoraProvider: FedoraProvider = mock[FedoraProvider]
-
-    (fedoraProvider.getSubordinates(
+  private def expectJumpoff(datasetId: String, file: File, mockedProvider: FedoraProvider) = {
+    (mockedProvider.getJumpoff(
       _: String
-    )) expects datasetId returning Success(Seq("dans-jumpoff:mocked", "easy-file:123"))
+    )) expects datasetId returning Success(Some("dans-jumpoff:mocked"))
 
-    (fedoraProvider.disseminateDatastream(
+    (mockedProvider.disseminateDatastream(
       _: String,
       _: String,
     )) expects("dans-jumpoff:mocked", "HTML_MU") returning managed(file.newFileInputStream) once()
 
-    fedoraProvider
+    mockedProvider
   }
 
   private def expectJumpoffTxt(datasetId: String, file: File) = {
     val fedoraProvider: FedoraProvider = mock[FedoraProvider]
 
     val mockedInputStream = mock[InputStream]
-    (mockedInputStream.read(_: Array[Byte], _: Int, _: Int)) expects (*,*,*) throwing new FedoraClientException(404,"mocked fedora stream ont found")
-    mockedInputStream.close _ expects ()
+    (mockedInputStream.read(_: Array[Byte], _: Int, _: Int)) expects(*, *, *) throwing new FedoraClientException(404, "mocked fedora stream ont found")
+    mockedInputStream.close _ expects()
 
-    (fedoraProvider.getSubordinates(
+    (fedoraProvider.getJumpoff(
       _: String
-    )) expects datasetId returning Success(Seq("dans-jumpoff:mocked", "easy-file:123"))
+    )) expects datasetId returning Success(Some("dans-jumpoff:mocked"))
 
     (fedoraProvider.disseminateDatastream(
       _: String,
