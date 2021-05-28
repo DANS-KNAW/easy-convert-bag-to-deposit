@@ -32,10 +32,16 @@ import scala.util.{ Failure, Success, Try }
 
 class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with Matchers with FileSystemSupport with MockFactory {
   override val schema = "https://raw.githubusercontent.com/DANS-KNAW/easy-schema/eade34a3c05669d05ec8cdbeb91a085d83c6c030/lib/src/main/resources/md/2021/02/ddm.xsd"
-  private val cfgDir = File("src/main/assembly/dist/cfg")
   private val jumpoffMocks = File("src/test/resources/sample-jumpoff")
 
   "getCollectionsMap" should "create valid elements for each collection dataset" in {
+    val fedoraProvider = expectJumpoff("easy-dataset:33895", jumpoffMocks / "3931-for-dataset-34359.html")
+    val cfgDir = propsFile("").parent
+    (cfgDir / "ThematischeCollecties.csv").writeText(
+      """naam,EASY-dataset-id,type,opmerkingen,members
+        |Verzamelpagina Archeologie,easy-dataset:33895,N/A,Dit is de 'verzamelpagina van verzamelpagina's': totaaloverzicht van archeologische collecties per organisatie en project
+        |""".stripMargin)
+    Collection.getCollectionsMap(cfgDir,Some(fedoraProvider)) shouldBe ""
   }
 
   "memberDatasetIdToInCollection" should "return members from xhtml" in {

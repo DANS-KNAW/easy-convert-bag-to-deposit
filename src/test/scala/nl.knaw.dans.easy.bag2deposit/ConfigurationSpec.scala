@@ -55,13 +55,4 @@ class ConfigurationSpec extends AnyFlatSpec with FileSystemSupport with Matchers
     )
     triedNode shouldBe Success(<ddm><profile><audience>D37000</audience></profile></ddm>)
   }
-
-  private def propsFile(fedoraUrl: String) = {
-    val distSrc = File("src/main/assembly/dist")
-    distSrc.copyToDirectory(testDir)
-    (testDir / "dist" / "cfg" / "application.properties").writeText(
-      (distSrc / "cfg" / "application.properties").contentAsString
-        .replace("http://localhost:20120/", fedoraUrl)
-    )
-  }
 }

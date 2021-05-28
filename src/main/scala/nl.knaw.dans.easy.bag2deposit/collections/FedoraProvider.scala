@@ -31,13 +31,13 @@ class FedoraProvider(fedoraClient: FedoraClient) extends DebugEnhancedLogging {
 
   // which is a copy of https://github.com/DANS-KNAW/easy-export-dataset/blob/6e656c6e6dad19bdea70694d63ce929ab7b0ad2b/src/main/scala/nl.knaw.dans.easy.export/FedoraProvider.scala
   // variant of https://github.com/DANS-KNAW/easy-deposit-agreement-creator/blob/e718655515ad5d597fd227bc29776c074a959f00/src/main/scala/nl/knaw/dans/easy/agreement/datafetch/Fedora.scala#L52
-  def getSubordinates(datasetId: String): Try[Seq[String]] = {
+  def getJumpoff(datasetId: String): Try[Option[String]] = {
     search(
       s"""
          |PREFIX dans: <http://dans.knaw.nl/ontologies/relations#>
-         |SELECT ?s WHERE {?s dans:isSubordinateTo <info:fedora/$datasetId> . }
+         |SELECT ?s WHERE {?s dans:isJumpoffPageFor <info:fedora/$datasetId> . }
          |""".stripMargin)
-      .map(_.drop(1).map(_.split("/").last))
+      .map(_.drop(1).map(_.split("/").last).headOption)
   }
 
   private def search(query: String): Try[Seq[String]] = {

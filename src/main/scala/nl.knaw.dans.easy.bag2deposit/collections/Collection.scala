@@ -153,7 +153,7 @@ object Collection extends DebugEnhancedLogging {
     //   urn:nbn:nl:ui:13-
     val regexp = "(?s).*(doi.org.*dans|urn:nbn:nl:ui:13-).*"
     for {
-      maybeJumpoffId <- jumpoff(datasetId, fedoraProvider)
+      maybeJumpoffId <- fedoraProvider.getJumpoff(datasetId)
       jumpoffId = maybeJumpoffId.getOrElse(throw new Exception(s"no jumpoff for $datasetId"))
       doc <- getMuAsHtmlDoc(jumpoffId)
       items = doc >> elementList("a")
@@ -166,13 +166,6 @@ object Collection extends DebugEnhancedLogging {
     } yield maybeIds.withFilter(_.isDefined).map(_.get)
   }.doIfFailure { case e => logger.error(s"could not find members of $datasetId: $e", e) }
     .getOrElse(Seq.empty)
-
-  private def jumpoff(datasetId: String, fedoraProvider: FedoraProvider): Try[Option[String]] = {
-    for {
-      ids <- fedoraProvider.getSubordinates(datasetId)
-      jumpofId = ids.find(_.startsWith("dans-jumpoff:"))
-    } yield jumpofId
-  }
 
   private def toDatasetId(str: String): Option[String] = {
     val trimmed = str
