@@ -98,6 +98,21 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     csvFile.contentAsString shouldBe expectedCsv
   }
 
+  it should "not stumble over verzamelpagina van verzamelpagina's" in {
+    val originalCsv =
+      """naam,EASY-dataset-id,type,opmerkingen,members
+        |Verzamelpagina Archeologie,easy-dataset:33895,N/A,Dit is de 'verzamelpagina van verzamelpagina's': totaaloverzicht van archeologische collecties per organisatie en project
+        |""".stripMargin
+    val mockedProvider: FedoraProvider = mock[FedoraProvider]
+    expectJumpoff("easy-dataset:33895", jumpoffMocks / "for-33895.html", mockedProvider)
+    val cfgDir = propsFile("").parent
+    val csvFile = cfgDir / "ThemathischeCollecties.csv"
+    csvFile.writeText(originalCsv)
+
+    Collection.getCollectionsMap(cfgDir, Some(mockedProvider)) shouldBe a[Map[_,_]]
+    csvFile.contentAsString shouldBe originalCsv
+  }
+
   it should "not stumble <br> nor over not found DOI" in {
     val originalCsv =
       """naam,EASY-dataset-id,type,opmerkingen,members
