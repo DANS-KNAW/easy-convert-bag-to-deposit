@@ -102,8 +102,9 @@ object Collection extends DebugEnhancedLogging {
     val collectionsFile = cfgDir / "ThemathischeCollecties.csv"
 
     def updateCollections(originalCollections: Seq[Collection], fedoraProvider: FedoraProvider): Try[List[Collection]] = {
+      val backUp = File(collectionsFile.toString().replace(".csv", s"-$now.csv"))
       for { // TODO unit test writes to src/main/assembly/dist/cfg
-        _ <- Try(collectionsFile.moveTo(File(collectionsFile.toString().replace(".csv", s"-$now.csv"))))
+        _ <- Try(collectionsFile.moveTo(backUp))
         printer = collectionCsvFormat.print(collectionsFile.newFileWriter(append = true))
         updated <- originalCollections.toList.map { original =>
           trace(original)
@@ -114,7 +115,7 @@ object Collection extends DebugEnhancedLogging {
           )
         }.sequence
         _ = printer.close(true) // TODO dispose?
-      } yield updated
+            } yield updated
     }
 
     trace(skosFile, collectionsFile)
