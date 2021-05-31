@@ -30,7 +30,6 @@ import org.apache.commons.csv.{ CSVFormat, CSVParser, CSVPrinter, CSVRecord }
 import org.joda.time.DateTime.now
 import resource.managed
 
-import java.io.FileWriter
 import java.nio.charset.{ Charset, StandardCharsets }
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Success, Try }
@@ -86,7 +85,6 @@ object Collection extends DebugEnhancedLogging {
     .withRecordSeparator('\n')
     .withAutoFlush(true)
 
-
   private def parseSkosRecord(r: CSVRecord) = {
     r.get("definition") ->
         <ddm:inCollection
@@ -102,20 +100,19 @@ object Collection extends DebugEnhancedLogging {
     val collectionsFile = cfgDir / "ThemathischeCollecties.csv"
 
     def updateCollections(originalCollections: Seq[Collection], fedoraProvider: FedoraProvider): Try[List[Collection]] = {
-      val backUp = File(collectionsFile.toString().replace(".csv", s"-$now.csv"))
-      for { // TODO unit test writes to src/main/assembly/dist/cfg
-        _ <- Try(collectionsFile.moveTo(backUp))
-        printer = collectionCsvFormat.print(collectionsFile.newFileWriter(append = true))
-        updated <- originalCollections.toList.map { original =>
-          trace(original)
-          writeCollectionRecord(
-            printer,
-            if (original.members.nonEmpty) original
-            else original.copy(members = original.ids.flatMap(membersOf(fedoraProvider)))
-          )
-        }.sequence
-        _ = printer.close(true) // TODO dispose?
-            } yield updated
+      def updateWhenNotProvided(printer: CSVPrinter)(original: Collection): Try[Collection] = {
+        trace(original)
+        val updated = if (original.members.nonEmpty) original
+                      else original.copy(members = original.ids.flatMap(membersOf(fedoraProvider)))
+        writeCollectionRecord(printer, updated).map(_ => updated)
+      }
+
+      for {
+        _ <- Try(collectionsFile.moveTo(File(collectionsFile.toString().replace(".csv", s"-$now.csv"))))
+        printer = collectionCsvFormat.print(collectionsFile.newFileWriter(append = true)) // TODO dispose?
+        updated <- originalCollections.map(updateWhenNotProvided(printer)).toList.sequence
+        _ = printer.close(true)
+      } yield updated
     }
 
     trace(skosFile, collectionsFile)
