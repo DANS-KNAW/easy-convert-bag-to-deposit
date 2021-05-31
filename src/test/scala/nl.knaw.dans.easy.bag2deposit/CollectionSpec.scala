@@ -34,7 +34,7 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
   override val schema = "https://raw.githubusercontent.com/DANS-KNAW/easy-schema/eade34a3c05669d05ec8cdbeb91a085d83c6c030/lib/src/main/resources/md/2021/02/ddm.xsd"
   private val jumpoffMocks = File("src/test/resources/sample-jumpoff")
 
-  "getCollectionsMap" should "return members from html containing <br>" in {
+  "getCollectionsMap" should "not stumble over <br> and combine multiple datasets into a single collection" in {
     val originalCsv =
       """naam,EASY-dataset-id,type,opmerkingen,members
         |Diachron bv,"easy-dataset:33834,easy-dataset:33976",organisatie
@@ -79,14 +79,26 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     csvBackUpFiles(cfgDir) should have size 0
   }
 
-  "memberDatasetIdToInCollection" should "return members from xhtml" in {
+  it should "return members from xhtml" in {
+    val originalCsv =
+      """naam,EASY-dataset-id,type,opmerkingen,members
+        |"Odyssee onderzoeksprojecten",easy-dataset:34359,organisatie
+        |""".stripMargin
+    val expectedCsv = // note that the quotes on the first field disappear
+      """name,EASY-dataset-id,type,comment,members
+        |Odyssee onderzoeksprojecten,easy-dataset:34359,organisatie,,"easy-dataset:62503,easy-dataset:62773,easy-dataset:31688,easy-dataset:34099,easy-dataset:47464,easy-dataset:55947,easy-dataset:57517,easy-dataset:54529,easy-dataset:48388,easy-dataset:54459,easy-dataset:50635,easy-dataset:46315,easy-dataset:41884,easy-dataset:62505,easy-dataset:61129,easy-dataset:50636,easy-dataset:50610,easy-dataset:57281,easy-dataset:50715,easy-dataset:60949,easy-dataset:55302,easy-dataset:50711,easy-dataset:68647,easy-dataset:57698"
+        |""".stripMargin
     val mockedProvider: FedoraProvider = mock[FedoraProvider]
-    //    expectJumpoff("easy-dataset:mocked1", jumpoffMocks / "3931-for-dataset-34359.html", mockedProvider)
-    val mockedJumpoffMembers = List("easy-dataset:34099", "easy-dataset:57698", "easy-dataset:57517", "easy-dataset:50715", "easy-dataset:46315", "easy-dataset:50635", "easy-dataset:62503", "easy-dataset:31688", "easy-dataset:48388", "easy-dataset:57281", "easy-dataset:50610", "easy-dataset:62773", "easy-dataset:41884", "easy-dataset:68647", "easy-dataset:54459", "easy-dataset:50636", "easy-dataset:54529", "easy-dataset:61129", "easy-dataset:55947", "easy-dataset:47464", "easy-dataset:60949", "easy-dataset:55302", "easy-dataset:62505", "easy-dataset:50711")
-    // TODO
+    expectJumpoff("easy-dataset:34359", jumpoffMocks / "3931-for-dataset-34359.html", mockedProvider)
+    val cfgDir = propsFile("").parent
+    val csvFile = cfgDir / "ThemathischeCollecties.csv"
+    csvFile.writeText(originalCsv)
+
+    Collection.getCollectionsMap(cfgDir, Some(mockedProvider)) shouldBe a[Map[_,_]]
+    csvFile.contentAsString shouldBe expectedCsv
   }
 
-  it should "not stumble over not found DOI" in {
+  it should "not stumble <br> nor over not found DOI" in {
     val originalCsv =
       """naam,EASY-dataset-id,type,opmerkingen,members
         |Oral history,"easy-dataset:64608",organisatie
