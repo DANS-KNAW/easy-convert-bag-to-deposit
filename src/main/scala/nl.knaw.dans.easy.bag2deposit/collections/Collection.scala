@@ -56,7 +56,11 @@ object Collection extends DebugEnhancedLogging {
       .tried
   }
 
-  private val collectionCsvFormat = RFC4180.withHeader("name", "EASY-dataset-id", "type", "comment", "members")
+  private val collectionCsvFormat = RFC4180
+    .withHeader("name", "EASY-dataset-id", "type", "comment", "members")
+    .withDelimiter(',')
+    .withRecordSeparator('\n')
+    .withAutoFlush(true)
 
   private def parseCollectionRecord(r: CSVRecord) = Try {
     val memberIds = Try(r.get("members"))
@@ -76,7 +80,12 @@ object Collection extends DebugEnhancedLogging {
     c
   }
 
-  private val skosCsvFormat = RFC4180.withHeader("URI", "prefLabel", "definition", "broader", "notation")
+  private val skosCsvFormat = RFC4180
+    .withHeader("URI", "prefLabel", "definition", "broader", "notation")
+    .withDelimiter(',')
+    .withRecordSeparator('\n')
+    .withAutoFlush(true)
+
 
   private def parseSkosRecord(r: CSVRecord) = {
     r.get("definition") ->
