@@ -107,10 +107,13 @@ object Collection extends DebugEnhancedLogging {
         writeCollectionRecord(printer, updated).map(_ => updated)
       }
 
-      new Dispose(collectionCsvFormat.print(collectionsFile.newFileWriter()))
-        .apply(implicit csvPrinter =>
-          originalCollections.map(updateWhenNotProvided).toList.sequence
-        )
+      for {
+        _ <- Try(collectionsFile.moveTo(File(collectionsFile.toString().replace(".csv", s"-$now.csv"))))
+        updates <- new Dispose(collectionCsvFormat.print(collectionsFile.newFileWriter()))
+          .apply(implicit csvPrinter =>
+            originalCollections.map(updateWhenNotProvided).toList.sequence
+          )
+      } yield updates
     }
 
     trace(skosFile, collectionsFile)
@@ -119,7 +122,6 @@ object Collection extends DebugEnhancedLogging {
       collectionRecords <- parseCsv(collectionsFile, collectionCsvFormat)
       originalCollections = collectionRecords.toList.map(parseCollectionRecord)
       skosMap = skosRecords.map(parseSkosRecord).toMap
-      _ = collectionsFile.moveTo(File(collectionsFile.toString().replace(".csv", s"-$now.csv")))
       updatedCollections <- maybeFedoraProvider
         .map(fedora => updateCollections(originalCollections, fedora))
         .getOrElse(Success(originalCollections))

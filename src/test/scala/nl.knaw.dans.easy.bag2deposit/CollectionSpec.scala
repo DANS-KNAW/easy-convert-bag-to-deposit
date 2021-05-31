@@ -58,21 +58,24 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
         >Diachron bv</ddm:inCollection>
 
     // precondition
-    def backUpFiles = {
-      cfgDir.list.filter(_.name.startsWith("ThemathischeCollecties-")).toArray
-    }
-    backUpFiles should have size 0
+    csvBackUpFiles(cfgDir) should have size 0
 
-    // the jump offs are read and parsed just onece by the first call
+    // the mocked jump offs are read and parsed just once (by the first call)
     Collection.getCollectionsMap(cfgDir, Some(mockedProvider)) should contain(sampleTuple)
     Collection.getCollectionsMap(cfgDir, Some(mockedProvider)) should contain(sampleTuple)
 
     // post conditions
-    val files = backUpFiles
+    val files = csvBackUpFiles(cfgDir)
     files should have size 2 // one for each call
     files.minBy(_.name).contentAsString shouldBe originalCsv
     files.maxBy(_.name).contentAsString shouldBe expectedNewCsv
     csvFile.contentAsString shouldBe expectedNewCsv
+  }
+
+  it should "not duplicate CSV when fedora is not configured" in {
+    val cfgDir = propsFile("").parent
+    Collection.getCollectionsMap(cfgDir, None) shouldBe a[Map[_,_]]
+    csvBackUpFiles(cfgDir) should have size 0
   }
 
   "memberDatasetIdToInCollection" should "return members from xhtml" in {
@@ -109,6 +112,9 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
       addProperty("fcrepo.password", "mocked")
     }) shouldBe a[Some[_]]
     // ConfigurationSpec shows the application won't start in this case
+  }
+  private def csvBackUpFiles(cfgDir: File) = {
+    cfgDir.list.filter(_.name.startsWith("ThemathischeCollecties-")).toArray
   }
 
   private def getIgnoreOrThrow[T](tried: Try[T]): T = {
