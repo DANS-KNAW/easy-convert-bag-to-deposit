@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.bag2deposit.collections
 
-import better.files.File
+import better.files.{ Dispose, File }
 import cats.implicits.catsStdInstancesForTry
 import cats.instances.list._
 import cats.syntax.traverse._
@@ -100,19 +100,17 @@ object Collection extends DebugEnhancedLogging {
     val collectionsFile = cfgDir / "ThemathischeCollecties.csv"
 
     def updateCollections(originalCollections: Seq[Collection], fedoraProvider: FedoraProvider): Try[List[Collection]] = {
-      def updateWhenNotProvided(printer: CSVPrinter)(original: Collection): Try[Collection] = {
+      def updateWhenNotProvided(original: Collection)(implicit printer: CSVPrinter): Try[Collection] = {
         trace(original)
         val updated = if (original.members.nonEmpty) original
                       else original.copy(members = original.ids.flatMap(membersOf(fedoraProvider)))
         writeCollectionRecord(printer, updated).map(_ => updated)
       }
 
-      for {
-        _ <- Try(collectionsFile.moveTo(File(collectionsFile.toString().replace(".csv", s"-$now.csv"))))
-        printer = collectionCsvFormat.print(collectionsFile.newFileWriter(append = true)) // TODO dispose?
-        updated <- originalCollections.map(updateWhenNotProvided(printer)).toList.sequence
-        _ = printer.close(true)
-      } yield updated
+      new Dispose(collectionCsvFormat.print(collectionsFile.newFileWriter()))
+        .apply(implicit csvPrinter =>
+          originalCollections.map(updateWhenNotProvided).toList.sequence
+        )
     }
 
     trace(skosFile, collectionsFile)
@@ -121,6 +119,7 @@ object Collection extends DebugEnhancedLogging {
       collectionRecords <- parseCsv(collectionsFile, collectionCsvFormat)
       originalCollections = collectionRecords.toList.map(parseCollectionRecord)
       skosMap = skosRecords.map(parseSkosRecord).toMap
+      _ = collectionsFile.moveTo(File(collectionsFile.toString().replace(".csv", s"-$now.csv")))
       updatedCollections <- maybeFedoraProvider
         .map(fedora => updateCollections(originalCollections, fedora))
         .getOrElse(Success(originalCollections))
