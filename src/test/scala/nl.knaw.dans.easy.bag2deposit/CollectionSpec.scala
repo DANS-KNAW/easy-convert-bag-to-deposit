@@ -20,6 +20,7 @@ import com.yourmediashelf.fedora.client.FedoraClientException
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ DdmSupport, FileSystemSupport, SchemaSupport }
 import nl.knaw.dans.easy.bag2deposit.collections.{ Collection, FedoraProvider }
 import org.apache.commons.configuration.PropertiesConfiguration
+import org.joda.time.{ DateTime, DateTimeUtils }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

@@ -16,11 +16,19 @@
 package nl.knaw.dans.easy.bag2deposit.Fixture
 
 import org.joda.time.{ DateTime, DateTimeUtils }
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.flatspec.AnyFlatSpec
 
-trait FixedCurrentDateTimeSupport {
+trait FixedCurrentDateTimeSupport extends BeforeAndAfterEach {
+  this: AnyFlatSpec =>
 
-  val nowYMD = "2020-02-02"
-  val nowUTC = s"${ nowYMD }T20:20:02.000Z"
-  /** Causes DateTime.now() to return a predefined value. */
-  DateTimeUtils.setCurrentMillisFixed(new DateTime(nowUTC).getMillis)
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    DateTimeUtils.setCurrentMillisFixed(new DateTime("2020-02-02T20:20:02.000Z").getMillis)
+  }
+
+  override def afterEach(): Unit = {
+    super.afterEach()
+    DateTimeUtils.setCurrentMillisSystem()
+  }
 }
