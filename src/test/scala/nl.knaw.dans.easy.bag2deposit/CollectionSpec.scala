@@ -34,12 +34,12 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
   override val schema = "https://raw.githubusercontent.com/DANS-KNAW/easy-schema/eade34a3c05669d05ec8cdbeb91a085d83c6c030/lib/src/main/resources/md/2021/02/ddm.xsd"
   private val jumpoffMocks = File("src/test/resources/sample-jumpoff")
 
-  "getCollectionsMap" should "create valid elements for each collection dataset" in {
+  "getCollectionsMap" should "return members from html containing <br>" in {
     val originalCsv =
       """naam,EASY-dataset-id,type,opmerkingen,members
         |Diachron bv,"easy-dataset:33834,easy-dataset:33976",organisatie
         |""".stripMargin
-    val expectedNewCsv =
+    val expectedCsv =
       """name,EASY-dataset-id,type,comment,members
         |Diachron bv,"easy-dataset:33834,easy-dataset:33976",organisatie,,"easy-dataset:58025,easy-dataset:33807,easy-dataset:33812,easy-dataset:51902,easy-dataset:64418,easy-dataset:34202,easy-dataset:33811,easy-dataset:33772,easy-dataset:52088,easy-dataset:33808,easy-dataset:59157,easy-dataset:52839,easy-dataset:34201,easy-dataset:53179,easy-dataset:64528,easy-dataset:64415,easy-dataset:64157,easy-dataset:64176,easy-dataset:64165,easy-dataset:33948,easy-dataset:33819,easy-dataset:33814,easy-dataset:64175,easy-dataset:33949,easy-dataset:34216,easy-dataset:33813,easy-dataset:33817,easy-dataset:50269,easy-dataset:33771,easy-dataset:64311,easy-dataset:64414,easy-dataset:33557,easy-dataset:33816,easy-dataset:64195,easy-dataset:53064,easy-dataset:33777,easy-dataset:64549,easy-dataset:64503,easy-dataset:64188,easy-dataset:64163,easy-dataset:34203,easy-dataset:64090,easy-dataset:33815,easy-dataset:64164,easy-dataset:34219,easy-dataset:33818,easy-dataset:33504,easy-dataset:51426,easy-dataset:51902,easy-dataset:26437,easy-dataset:64418,easy-dataset:113273,easy-dataset:59157,easy-dataset:52839,easy-dataset:53179,easy-dataset:64528,easy-dataset:64415,easy-dataset:64157,easy-dataset:64165,easy-dataset:57123,easy-dataset:106716,easy-dataset:106588,easy-dataset:64175,easy-dataset:51885,easy-dataset:39175,easy-dataset:64311,easy-dataset:64414,easy-dataset:64195,easy-dataset:53064,easy-dataset:64549,easy-dataset:64503,easy-dataset:64188,easy-dataset:64163,easy-dataset:64090,easy-dataset:58025,easy-dataset:64164"
         |""".stripMargin
@@ -69,8 +69,8 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     val files = csvBackUpFiles(cfgDir)
     files should have size 2 // one for each call
     files.minBy(_.name).contentAsString shouldBe originalCsv
-    files.maxBy(_.name).contentAsString shouldBe expectedNewCsv
-    csvFile.contentAsString shouldBe expectedNewCsv
+    files.maxBy(_.name).contentAsString shouldBe expectedCsv
+    csvFile.contentAsString shouldBe expectedCsv
   }
 
   it should "not duplicate CSV when fedora is not configured" in {
@@ -86,10 +86,23 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     // TODO
   }
 
-  it should "return members from html containing <br>" in {
-    //    val fedoraProvider = expectJumpoffTxt("easy-dataset:mocked2", jumpoffMocks / "for-dataset-64608.html")
-    val mockedJumpoffMembers = List("easy-dataset:113728", "easy-dataset:113729", "easy-dataset:113730", "easy-dataset:113731", "easy-dataset:113732", "easy-dataset:113733", "easy-dataset:113734", "easy-dataset:113735", "easy-dataset:113736", "easy-dataset:113737", "easy-dataset:113738", "easy-dataset:113749", "easy-dataset:113750", "easy-dataset:113751", "easy-dataset:113752", "easy-dataset:113753", "easy-dataset:113754", "easy-dataset:113755", "easy-dataset:113757", "easy-dataset:113758", "easy-dataset:113759", "easy-dataset:113760", "easy-dataset:113761", "easy-dataset:113762", "easy-dataset:113763", "easy-dataset:113764", "easy-dataset:113765", "easy-dataset:113766", "easy-dataset:113777", "easy-dataset:113778", "easy-dataset:113782", "easy-dataset:113784", "easy-dataset:190096", "easy-dataset:190097", "easy-dataset:190098", "easy-dataset:190099", "easy-dataset:190100", "easy-dataset:190101", "easy-dataset:190102", "easy-dataset:190103", "easy-dataset:190104", "easy-dataset:190105", "easy-dataset:190106", "easy-dataset:190107", "easy-dataset:190108", "easy-dataset:190109", "easy-dataset:190110", "easy-dataset:190111", "easy-dataset:190112", "easy-dataset:190113", "easy-dataset:190114", "easy-dataset:190117", "easy-dataset:190118", "easy-dataset:190119", "easy-dataset:190120", "easy-dataset:190121", "easy-dataset:190122", "easy-dataset:190123", "easy-dataset:190124", "easy-dataset:190126", "easy-dataset:190127", "easy-dataset:190128", "easy-dataset:190129", "easy-dataset:190130", "easy-dataset:190132", "easy-dataset:190133", "easy-dataset:190134", "easy-dataset:190135", "easy-dataset:190136", "easy-dataset:190137", "easy-dataset:190138", "easy-dataset:190139")
+  it should "not stumble over not found DOI" in {
+    val originalCsv =
+      """naam,EASY-dataset-id,type,opmerkingen,members
+        |Oral history,"easy-dataset:64608",organisatie
+        |""".stripMargin
+    val expectedCsv = // note that the quotes on the second field disappear
+      """name,EASY-dataset-id,type,comment,members
+        |Oral history,easy-dataset:64608,organisatie,,"easy-dataset:113753,easy-dataset:190103,easy-dataset:190111,easy-dataset:190102,easy-dataset:190121,easy-dataset:113778,easy-dataset:190109,easy-dataset:190114,easy-dataset:190137,easy-dataset:190096,easy-dataset:190108,easy-dataset:190130,easy-dataset:190117,easy-dataset:190139,easy-dataset:190118,easy-dataset:190106,easy-dataset:113765,easy-dataset:113782,easy-dataset:113734,easy-dataset:190100,easy-dataset:113759,easy-dataset:113777,easy-dataset:190127,easy-dataset:190128,easy-dataset:190099,easy-dataset:113764,easy-dataset:113749,easy-dataset:113751,easy-dataset:190107,easy-dataset:190098,easy-dataset:190112,easy-dataset:190105,easy-dataset:190136,easy-dataset:190124,easy-dataset:190138,easy-dataset:113730,easy-dataset:113750,easy-dataset:190119,easy-dataset:113752,easy-dataset:190129,easy-dataset:113758,easy-dataset:190133,easy-dataset:113766,easy-dataset:113733,easy-dataset:190110,easy-dataset:190101,easy-dataset:190123,easy-dataset:190120,easy-dataset:113728,easy-dataset:113736,easy-dataset:190097,easy-dataset:113729,easy-dataset:190132,easy-dataset:113757,easy-dataset:113754,easy-dataset:190104,easy-dataset:113735,easy-dataset:113784,easy-dataset:190113,easy-dataset:113732,easy-dataset:190135,easy-dataset:113755,easy-dataset:190134,easy-dataset:113737,easy-dataset:113762,easy-dataset:190122,easy-dataset:190126,easy-dataset:113738,easy-dataset:113760,easy-dataset:113763,easy-dataset:113761,easy-dataset:113731"
+        |""".stripMargin
+    val mockedProvider: FedoraProvider = mock[FedoraProvider]
+    expectJumpoff("easy-dataset:64608", jumpoffMocks / "for-64608.html", mockedProvider)
+    val cfgDir = propsFile("").parent
+    val csvFile = cfgDir / "ThemathischeCollecties.csv"
+    csvFile.writeText(originalCsv)
 
+    Collection.getCollectionsMap(cfgDir, Some(mockedProvider)) shouldBe a[Map[_,_]]
+    csvFile.contentAsString shouldBe expectedCsv
     // TODO manual check: should log "ERROR not found: https://doi.org/10.17026/dans-xg5-6zwxBLABLABLA"
   }
 
