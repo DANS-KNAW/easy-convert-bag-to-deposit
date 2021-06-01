@@ -25,6 +25,7 @@ import org.apache.commons.configuration.PropertiesConfiguration
 
 import java.net.URI
 import scala.language.reflectiveCalls
+import scala.xml.Elem
 
 object Command extends App with DebugEnhancedLogging {
   type FeedBackMessage = String
@@ -51,14 +52,15 @@ object Command extends App with DebugEnhancedLogging {
   private val bagParentDirs = commandLine.bagParentDir.map(Iterator(_))
     .getOrElse(commandLine.bagGrandParentDir.map(_.children)
       .getOrElse(Iterator.empty))
-
-
+  private val collectionMap = FedoraProvider(properties)
+    .map(getCollectionsMap(cfgPath))
+    .getOrElse(Map.empty)
   val configuration = Configuration(
     version,
     dansDoiPrefixes = properties.getStringArray("dans-doi.prefixes"),
     dataverseIdAuthority = properties.getString("dataverse.id-authority"),
     bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
-    ddmTransformer = new DdmTransformer(cfgPath, getCollectionsMap(cfgPath, FedoraProvider(properties))),
+    ddmTransformer = new DdmTransformer(cfgPath, collectionMap),
     userTransformer = new UserTransformer(cfgPath)
   )
   private val propertiesFactory = DepositPropertiesFactory(

@@ -18,17 +18,16 @@ package nl.knaw.dans.easy.bag2deposit
 import better.files.File
 import com.yourmediashelf.fedora.client.FedoraClientException
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ DdmSupport, FileSystemSupport, SchemaSupport }
+import nl.knaw.dans.easy.bag2deposit.collections.Collection.{ collectionCsvFormat, parseCsv }
 import nl.knaw.dans.easy.bag2deposit.collections.{ Collection, FedoraProvider }
 import org.apache.commons.configuration.PropertiesConfiguration
-import org.joda.time.{ DateTime, DateTimeUtils }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import resource.managed
 
 import java.io.InputStream
-import java.net.UnknownHostException
-import scala.util.{ Failure, Success, Try }
+import scala.util.Success
 
 class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with Matchers with FileSystemSupport with MockFactory {
   override val schema = "https://raw.githubusercontent.com/DANS-KNAW/easy-schema/eade34a3c05669d05ec8cdbeb91a085d83c6c030/lib/src/main/resources/md/2021/02/ddm.xsd"
@@ -45,7 +44,7 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
         |""".stripMargin
     val mockedProvider: FedoraProvider = mock[FedoraProvider]
     expectJumpoff("easy-dataset:33834", jumpoffMocks / "for-33834.html", mockedProvider)
-    expectJumpoff("easy-dataset:33976", jumpoffMocks / "for-33976.html", mockedProvider)
+    expectJumpoffTxt("easy-dataset:33976", jumpoffMocks / "for-33976.html", mockedProvider)
     val cfgDir = propsFile("").parent
     val csvFile = cfgDir / "ThemathischeCollecties.csv"
     csvFile.writeText(originalCsv)
@@ -62,8 +61,8 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     csvBackUpFiles(cfgDir) should have size 0
 
     // the mocked jump offs are read and parsed just once (by the first call)
-    Collection.getCollectionsMap(cfgDir, Some(mockedProvider)) should contain(sampleTuple)
-    Collection.getCollectionsMap(cfgDir, Some(mockedProvider)) should contain(sampleTuple)
+    Collection.getCollectionsMap(cfgDir)(mockedProvider) should contain(sampleTuple)
+    Collection.getCollectionsMap(cfgDir)(mockedProvider) should contain(sampleTuple)
 
     // post conditions
     val files = csvBackUpFiles(cfgDir)
@@ -71,12 +70,6 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     files.minBy(_.name).contentAsString shouldBe originalCsv
     files.maxBy(_.name).contentAsString shouldBe expectedCsv
     csvFile.contentAsString shouldBe expectedCsv
-  }
-
-  it should "not duplicate CSV when fedora is not configured" in {
-    val cfgDir = propsFile("").parent
-    Collection.getCollectionsMap(cfgDir, None) shouldBe a[Map[_,_]]
-    csvBackUpFiles(cfgDir) should have size 0
   }
 
   it should "return members from xhtml" in {
@@ -89,12 +82,12 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
         |Odyssee onderzoeksprojecten,easy-dataset:34359,organisatie,,"easy-dataset:62503,easy-dataset:62773,easy-dataset:31688,easy-dataset:34099,easy-dataset:47464,easy-dataset:55947,easy-dataset:57517,easy-dataset:54529,easy-dataset:48388,easy-dataset:54459,easy-dataset:50635,easy-dataset:46315,easy-dataset:41884,easy-dataset:62505,easy-dataset:61129,easy-dataset:50636,easy-dataset:50610,easy-dataset:57281,easy-dataset:50715,easy-dataset:60949,easy-dataset:55302,easy-dataset:50711,easy-dataset:68647,easy-dataset:57698"
         |""".stripMargin
     val mockedProvider: FedoraProvider = mock[FedoraProvider]
-    expectJumpoff("easy-dataset:34359", jumpoffMocks / "3931-for-dataset-34359.html", mockedProvider)
+    expectJumpoffTxt("easy-dataset:34359", jumpoffMocks / "3931-for-dataset-34359.html", mockedProvider)
     val cfgDir = propsFile("").parent
     val csvFile = cfgDir / "ThemathischeCollecties.csv"
     csvFile.writeText(originalCsv)
 
-    Collection.getCollectionsMap(cfgDir, Some(mockedProvider)) shouldBe a[Map[_,_]]
+    Collection.getCollectionsMap(cfgDir)(mockedProvider) shouldBe a[Map[_, _]]
     csvFile.contentAsString shouldBe expectedCsv
   }
 
@@ -103,14 +96,27 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
       """naam,EASY-dataset-id,type,opmerkingen,members
         |Verzamelpagina Archeologie,easy-dataset:33895,N/A,Dit is de 'verzamelpagina van verzamelpagina's': totaaloverzicht van archeologische collecties per organisatie en project
         |""".stripMargin
+    val expectedCsv =
+      """name,EASY-dataset-id,type,comment,members
+        |Verzamelpagina Archeologie,easy-dataset:33895,N/A,Dit is de 'verzamelpagina van verzamelpagina's': totaaloverzicht van archeologische collecties per organisatie en project,"easy-dataset:67448,easy-dataset:62268,easy-dataset:40219,easy-dataset:33755,easy-dataset:34105,easy-dataset:33589,easy-dataset:31719,easy-dataset:61090,easy-dataset:33828,easy-dataset:53557,easy-dataset:34083,easy-dataset:72615,easy-dataset:33964,easy-dataset:74256,easy-dataset:32085,easy-dataset:33601,easy-dataset:31948,easy-dataset:35543,easy-dataset:33925,easy-dataset:74255,easy-dataset:34138,easy-dataset:33834,easy-dataset:34501,easy-dataset:33887,easy-dataset:72624,easy-dataset:72605,easy-dataset:73112,easy-dataset:75452,easy-dataset:75432,easy-dataset:73619,easy-dataset:75441,easy-dataset:34141,easy-dataset:34176,easy-dataset:34144,easy-dataset:77105,easy-dataset:77152,easy-dataset:40373,easy-dataset:75443,easy-dataset:33886,easy-dataset:35522,easy-dataset:32076,easy-dataset:34081,easy-dataset:44053,easy-dataset:32045,easy-dataset:34509,easy-dataset:32516,easy-dataset:32806,easy-dataset:33998,easy-dataset:33604,easy-dataset:72627,easy-dataset:33841,easy-dataset:34090,easy-dataset:34148,easy-dataset:34106,easy-dataset:75451,easy-dataset:34149,easy-dataset:34352,easy-dataset:33946,easy-dataset:44722,easy-dataset:54328,easy-dataset:60377,easy-dataset:32660,easy-dataset:33551,easy-dataset:34383,easy-dataset:33600,easy-dataset:33598,easy-dataset:34385,easy-dataset:75442,easy-dataset:61052,easy-dataset:33731,easy-dataset:61089,easy-dataset:33976,easy-dataset:34118,easy-dataset:60381,easy-dataset:60382,easy-dataset:33458,easy-dataset:33094,easy-dataset:34150,easy-dataset:34359,easy-dataset:48192,easy-dataset:52784,easy-dataset:61393,easy-dataset:40460,easy-dataset:49278,easy-dataset:49230,easy-dataset:40120,easy-dataset:44093,easy-dataset:50396,easy-dataset:49288,easy-dataset:42923,easy-dataset:60384,easy-dataset:64371"
+        |""".stripMargin
     val mockedProvider: FedoraProvider = mock[FedoraProvider]
     expectJumpoff("easy-dataset:33895", jumpoffMocks / "for-33895.html", mockedProvider)
     val cfgDir = propsFile("").parent
     val csvFile = cfgDir / "ThemathischeCollecties.csv"
+    val expectedIds = parseCsv(csvFile, 1).map(r => r.get(1).split(","))
+      .toArray.flatten.toSeq
+      .filter(_.startsWith("easy-dataset"))
+      .filterNot(_.startsWith("easy-dataset:33895"))
+      .sortBy(identity)
     csvFile.writeText(originalCsv)
 
-    Collection.getCollectionsMap(cfgDir, Some(mockedProvider)) shouldBe a[Map[_,_]]
-    csvFile.contentAsString shouldBe originalCsv
+    val collectionMap = Collection.getCollectionsMap(cfgDir)(mockedProvider)
+    collectionMap.values.toList.distinct shouldBe List(
+      <notImplemented>Verzamelpagina Archeologie not found in collections skos</notImplemented>
+    )
+    csvFile.contentAsString shouldBe expectedCsv
+    collectionMap.keys.toSeq.sortBy(identity) shouldBe expectedIds
   }
 
   it should "not stumble <br> nor over not found DOI" in {
@@ -128,7 +134,7 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     val csvFile = cfgDir / "ThemathischeCollecties.csv"
     csvFile.writeText(originalCsv)
 
-    Collection.getCollectionsMap(cfgDir, Some(mockedProvider)) shouldBe a[Map[_,_]]
+    Collection.getCollectionsMap(cfgDir)(mockedProvider) shouldBe a[Map[_, _]]
     csvFile.contentAsString shouldBe expectedCsv
     // TODO manual check: should log "ERROR not found: https://doi.org/10.17026/dans-xg5-6zwxBLABLABLA"
   }
@@ -154,18 +160,9 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     }) shouldBe a[Some[_]]
     // ConfigurationSpec shows the application won't start in this case
   }
+
   private def csvBackUpFiles(cfgDir: File) = {
     cfgDir.list.filter(_.name.startsWith("ThemathischeCollecties-")).toArray
-  }
-
-  private def getIgnoreOrThrow[T](tried: Try[T]): T = {
-    tried match {
-      case Success(t) => t
-      case Failure(e: UnknownHostException) =>
-        assume(false)
-        throw e
-      case Failure(e) => throw e
-    }
   }
 
   private def expectJumpoff(datasetId: String, file: File, mockedProvider: FedoraProvider) = {
@@ -181,9 +178,7 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     mockedProvider
   }
 
-  private def expectJumpoffTxt(datasetId: String, file: File) = {
-    val fedoraProvider: FedoraProvider = mock[FedoraProvider]
-
+  private def expectJumpoffTxt(datasetId: String, file: File, fedoraProvider: FedoraProvider) = {
     val mockedInputStream = mock[InputStream]
     (mockedInputStream.read(_: Array[Byte], _: Int, _: Int)) expects(*, *, *) throwing new FedoraClientException(404, "mocked fedora stream ont found")
     mockedInputStream.close _ expects()
