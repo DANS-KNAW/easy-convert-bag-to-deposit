@@ -104,11 +104,8 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     expectJumpoff("easy-dataset:33895", jumpoffMocks / "for-33895.html", mockedProvider)
     val cfgDir = propsFile("").parent
     val csvFile = cfgDir / "ThemathischeCollecties.csv"
-    val expectedIds = parseCsv(csvFile, 1).map(r => r.get(1).split(","))
-      .toArray.flatten.toSeq
-      .filter(_.startsWith("easy-dataset"))
-      .filterNot(_.startsWith("easy-dataset:33895"))
-      .sortBy(identity)
+    val expectedIds = parseCsv(csvFile, nrOfHeaderLines = 2).map(r => r.get(1).split(","))
+      .toArray.flatten.toSeq.filter(_.startsWith("easy-dataset")).sortBy(identity)
     csvFile.writeText(originalCsv)
 
     val collectionMap = Collection.getCollectionsMap(cfgDir)(mockedProvider)
