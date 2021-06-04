@@ -26,17 +26,16 @@ import scalaj.http.HttpResponse
 import scala.util.Success
 
 class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileSystemSupport {
+  private val resourceBags: File = File("src/test/resources/bags/01")
+  private val validUUID = "04e638eb-3af1-44fb-985d-36af12fccb2d"
 
   "addPropsToBags" should "move valid exports" in {
     val delegate = mock[MockBagIndex]
-    val resourceBags: File = File("src/test/resources/bags/01")
-    val validUUID = "04e638eb-3af1-44fb-985d-36af12fccb2d"
     val noBaseBagUUID = "87151a3a-12ed-426a-94f2-97313c7ae1f2"
-    val noRightsHolder = "c7367405-b2dc-4d35-b5b3-ec4a350f58ae"
-    Seq(validUUID, noBaseBagUUID, noRightsHolder).foreach(uuid =>
-      (delegate.execute(_: String)) expects s"bag-sequence?contains=$uuid" returning
-        new HttpResponse[String]("123", 200, Map.empty)
-    )
+    (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
+      new HttpResponse[String]("123", 200, Map.empty)
+    (delegate.execute(_: String)) expects s"bag-sequence?contains=$noBaseBagUUID" returning
+      new HttpResponse[String]("123", 200, Map.empty)
     (delegate.execute(_: String)) expects s"bags/4722d09d-e431-4899-904c-0733cd773034" returning
       new HttpResponse[String]("<result><bag-info><urn>urn:nbn:nl:ui:13-z4-f8cm</urn><doi>10.5072/dans-2xg-umq8</doi></bag-info></result>", 200, Map.empty)
     val appConfig = testConfig(delegatingBagIndex(delegate))
@@ -70,7 +69,7 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     // total number of deposits should not change
     movedDirs.size + leftDirs.size shouldBe resourceBags.children.toList.size
 
-    movedDirs.size shouldBe 3 // base-bag-not-found is moved together with the valid bag-revision-1
+    movedDirs.size shouldBe 2 // base-bag-not-found is moved together with the valid bag-revision-1
     // TODO should addPropsToBags check existence of base-bag in case of versioned bags?
     //  If so, can the base-bag have been moved to ingest-dir while processing?
 
@@ -104,10 +103,5 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     (validBag / "metadata" / "amd.xml").contentAsString should include("<depositorId>user001</depositorId>")
     (movedBag / "metadata" / "amd.xml").contentAsString should
       (include("<depositorId>USer</depositorId>") and not include "<depositorId>user001</depositorId>")
-
-    //////// end of changes made to the valid bag
-
-    (testDir / "ingest-dir" / noRightsHolder / "77f7e674-b73e-4eec-ac00-1ccbe2938de8" / "metadata" / "dataset.xml")
-      .contentAsString should include ("<dcterms:rightsHolder>Unknown</dcterms:rightsHolder>")
   }
 }
