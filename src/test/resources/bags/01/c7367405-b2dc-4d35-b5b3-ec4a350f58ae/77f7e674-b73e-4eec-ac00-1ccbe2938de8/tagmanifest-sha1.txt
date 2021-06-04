@@ -1,9 +1,0 @@
-8010d7758f1793d0221c529fef818ff988dda141  bagit.txt
-4545276a5e694e7faeefcd7c3356cc8366a7aa09  metadata/depositor-info/agreements.xml
-c362351d5f3696c5ad0196237d90ef9ad87502f5  metadata/amd.xml
-30bfd92d63e169ca43c563973a6530ec04766551  metadata/depositor-info/depositor-agreement.pdf
-050ac043222f53cf2a4337c6f5ce308796a68c76  bag-info.txt
-e73027e453e3aa19560be9a8d7cc6a1d01b477da  metadata/dataset.xml
-e50638ddf9a81542936194063c8857752640dc5d  metadata/emd.xml
-da39a3ee5e6b4b0d3255bfef95601890afd80709  manifest-sha1.txt
-7f7c35258b2cf6e40019f768b4670df75d4b405d  metadata/files.xml
