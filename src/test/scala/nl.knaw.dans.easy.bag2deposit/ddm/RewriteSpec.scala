@@ -314,6 +314,28 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       Success(normalized(expectedDdm))
   }
 
+  it should "not replace the rightsHolder" in {
+    val ddmIn = ddm(title = "Locatie 'Wadensteinse steeg' te Herwijnen, gemeente Lingewaal.", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+           <dct:alternative>Een bureauonderzoek</dct:alternative>
+           <dct:rightsHolder>Jacobs en Burnier Projectbureau</dct:rightsHolder>
+        </ddm:dcmiMetadata>
+    )
+    val expectedDdm = ddm(title = "Locatie 'Wadensteinse steeg' te Herwijnen, gemeente Lingewaal.", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+           <ddm:acquisitionMethod
+              schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/554ca1ec-3ed8-42d3-ae4b-47bcb848b238"
+              valueURI="https://data.cultureelerfgoed.nl/term/id/abr/d4ecc89b-d52e-49a1-880a-296db5c2953e"
+              subjectScheme="ABR verwervingswijzen"
+           >Een bureauonderzoek</ddm:acquisitionMethod>
+           <dct:rightsHolder>Jacobs en Burnier Projectbureau</dct:rightsHolder>
+        </ddm:dcmiMetadata>
+    )
+
+    ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+      Success(normalized(expectedDdm))
+  }
+
   "ddmTransformer" should "add inCollection for archaeology" in {
     val profile = <dc:title>blabla</dc:title><dct:description/> +: creator +: created +: available +: archaeology +: openAccess
     val ddmIn = ddm(
