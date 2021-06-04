@@ -16,10 +16,13 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import org.apache.commons.configuration.{ PropertiesConfiguration, XMLPropertiesConfiguration }
 import org.joda.time.DateTime.now
 import org.joda.time.format.DateTimeFormat
 
-import scala.xml.{ Elem, Node }
+import java.io.ByteArrayOutputStream
+import scala.collection.JavaConverters.asScalaIteratorConverter
+import scala.xml.{ Elem, Node, XML }
 
 class Provenance(app: String, version: String) extends DebugEnhancedLogging {
   private val dateFormat = now().toString(DateTimeFormat.forPattern("yyyy-MM-dd"))
@@ -58,6 +61,7 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging {
 object Provenance {
   /**
    * Creates the content for a <prov:migration> by comparing the direct child elements of each XML.
+   *
    * @param oldXml the original instance
    * @param newXml the modified instance
    * @return and empty list if both versions have the same children
@@ -74,5 +78,19 @@ object Provenance {
     if (onlyInOld.isEmpty && onlyInNew.isEmpty) Seq.empty
     else <prov:old>{ onlyInOld }</prov:old>
          <prov:new>{ onlyInNew }</prov:new>
+  }
+
+  def compare(oldProps: PropertiesConfiguration, newProps: PropertiesConfiguration): Seq[Node] = {
+    compare(toXml(oldProps), toXml(newProps))
+  }
+
+  private def toXml(oldProps: PropertiesConfiguration) = {
+    val outputStream = new ByteArrayOutputStream()
+    new XMLPropertiesConfiguration() {
+      oldProps.getKeys.asScala.foreach(k =>
+        addProperty(k, oldProps.getProperty(k))
+      )
+    }.save(outputStream)
+    XML.loadString(outputStream.toString)
   }
 }
