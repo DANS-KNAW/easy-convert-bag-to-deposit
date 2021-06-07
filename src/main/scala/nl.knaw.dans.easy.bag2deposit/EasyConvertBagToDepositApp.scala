@@ -78,7 +78,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
     val migrationFiles = Seq("provenance.xml", "emd.xml", "dataset.xml", "files.xml")
-    val changedMetadata = Seq("bag-info.xml", "metadata/amd.xml", "metadata/dataset.xml", "metadata/provenance.xml").map(Paths.get(_))
+    val changedMetadata = Seq("bag-info.txt", "metadata/amd.xml", "metadata/dataset.xml", "metadata/provenance.xml").map(Paths.get(_))
     val bagInfoKeysToRemove = Seq(
       BagFacade.EASY_USER_ACCOUNT_KEY,
       BagInfo.baseUrnKey,
@@ -98,7 +98,6 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       datasetId = props.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
       _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
-      _ = props.save((bagParentDir / "deposit.properties").toJava)
       _ = ddmFile.writeText(ddmOut.serialize)
       oldDcmi = (ddmIn \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
@@ -108,8 +107,10 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
         "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
       )).foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
       migrationDir = (bagDir / "data" / "easy-migration").createDirectories()
+      maybeNewAccount = amdChanges \ "new" \ "depositorID" // TODO make sure amd, not ddm
+      // TODO replace account from amdChanges into props() and mutableBagMetadata(EASY-User-Account)
+      _ = props.save((bagParentDir / "deposit.properties").toJava)
       _ = migrationFiles.foreach(name => (metadata / name).copyTo(migrationDir / name))
-      _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
       _ = trace("updating payload manifest")
