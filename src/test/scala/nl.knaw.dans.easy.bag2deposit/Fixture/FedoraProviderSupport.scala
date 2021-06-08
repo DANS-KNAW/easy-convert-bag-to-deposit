@@ -15,22 +15,11 @@
  */
 package nl.knaw.dans.easy.bag2deposit.Fixture
 
-import better.files.File
+import com.yourmediashelf.fedora.client.FedoraClient
 import nl.knaw.dans.easy.bag2deposit.collections.FedoraProvider
-import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer
-import nl.knaw.dans.easy.bag2deposit.{BagIndex, Configuration, UserTransformer}
+import org.scalamock.scalatest.MockFactory
 
-trait AppConfigSupport extends BagIndexSupport with FedoraProviderSupport {
-  def testConfig(bagIndex: BagIndex, fedoraProvider: Option[FedoraProvider]): Configuration = {
-    val cfgFile = File("src/main/assembly/dist/cfg")
-    new Configuration(
-      version = "testVersion",
-      dansDoiPrefixes = Seq("10.17026", "10.5072"),
-      dataverseIdAuthority = "10.80270",
-      bagIndex = bagIndex,
-      ddmTransformer = new DdmTransformer(cfgFile),
-      userTransformer = new UserTransformer(cfgFile),
-      fedoraProvider = fedoraProvider,
-    )
-  }
+trait FedoraProviderSupport extends MockFactory {
+
+  class MockFedoraProvider(fedoraClient: FedoraClient) extends FedoraProvider(fedoraClient)
 }

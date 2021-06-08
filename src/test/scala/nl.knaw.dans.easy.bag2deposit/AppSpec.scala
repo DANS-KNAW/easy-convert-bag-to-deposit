@@ -17,16 +17,18 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.BagSource._
-import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, FileSystemSupport }
+import nl.knaw.dans.easy.bag2deposit.Fixture.{AppConfigSupport, FileSystemSupport, XmlSupport}
 import nl.knaw.dans.easy.bag2deposit.IdType._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import scalaj.http.HttpResponse
 
-import scala.util.Success
+import scala.util.{Success, Try}
+import scala.xml.XML
 
-class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileSystemSupport {
+class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSupport with FileSystemSupport {
   private val resourceBags: File = File("src/test/resources/bags/01")
+  private val resourceBags_2: File = File("src/test/resources/bags/02")
   private val validUUID = "04e638eb-3af1-44fb-985d-36af12fccb2d"
 
   "addPropsToBags" should "move valid exports" in {
@@ -38,7 +40,7 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
       new HttpResponse[String]("123", 200, Map.empty)
     (delegate.execute(_: String)) expects s"bags/4722d09d-e431-4899-904c-0733cd773034" returning
       new HttpResponse[String]("<result><bag-info><urn>urn:nbn:nl:ui:13-z4-f8cm</urn><doi>10.5072/dans-2xg-umq8</doi></bag-info></result>", 200, Map.empty)
-    val appConfig = testConfig(delegatingBagIndex(delegate))
+    val appConfig = testConfig(delegatingBagIndex(delegate), null)
 
     (resourceBags.children.toArray).foreach { testBag =>
       testBag.copyTo(
@@ -103,5 +105,68 @@ class AppSpec extends AnyFlatSpec with Matchers with AppConfigSupport with FileS
     (validBag / "metadata" / "amd.xml").contentAsString should include("<depositorId>user001</depositorId>")
     (movedBag / "metadata" / "amd.xml").contentAsString should
       (include("<depositorId>USer</depositorId>") and not include "<depositorId>user001</depositorId>")
+  }
+
+  it should "load amd.xml from Fedora and write it into data/easy-migration when source is VAULT and Fedora provided" in {
+    val delegate = mock[MockBagIndex]
+    (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
+      new HttpResponse[String]("123", 200, Map.empty)
+
+    val loadFoXmlResult =
+      <foxml:digitalObject xsi:schemaLocation="info:fedora/fedora-system:def/foxml# http://www.fedora.info/definitions/1/0/foxml1-1.xsd" PID="easy-dataset:17" VERSION="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:foxml="info:fedora/fedora-system:def/foxml#">
+        <foxml:datastream VERSIONABLE="false" CONTROL_GROUP="X" STATE="A" ID="AMD">
+          <foxml:datastreamVersion SIZE="4820" MIMETYPE="text/xml" CREATED="2021-06-04T12:06:56.477Z" LABEL="Administrative metadata for this dataset" ID="AMD.0">
+            <foxml:xmlContent>
+              <damd:administrative-md version="0.1" xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
+                <datasetState>SUBMITTED</datasetState>
+                <previousState>DRAFT</previousState>
+                <lastStateChange>2021-06-04T14:06:46.860+02:00</lastStateChange>
+                <depositorId>easyadmin</depositorId>
+                <stateChangeDates>
+                  <damd:stateChangeDate>
+                    <fromState>DRAFT</fromState>
+                    <toState>SUBMITTED</toState>
+                    <changeDate>2021-06-04T14:06:46.860+02:00</changeDate>
+                  </damd:stateChangeDate>
+                </stateChangeDates>
+                <groupIds/>
+              </damd:administrative-md>
+            </foxml:xmlContent>
+          </foxml:datastreamVersion>
+        </foxml:datastream>
+      </foxml:digitalObject>
+    val getAmdResult =
+      <damd:administrative-md version="0.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:foxml="info:fedora/fedora-system:def/foxml#" xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
+        <datasetState>SUBMITTED</datasetState>
+        <previousState>DRAFT</previousState>
+        <lastStateChange>2021-06-04T14:06:46.860+02:00</lastStateChange>
+        <depositorId>easyadmin</depositorId>
+        <stateChangeDates>
+          <damd:stateChangeDate>
+            <fromState>DRAFT</fromState>
+            <toState>SUBMITTED</toState>
+            <changeDate>2021-06-04T14:06:46.860+02:00</changeDate>
+          </damd:stateChangeDate>
+        </stateChangeDates>
+        <groupIds/>
+      </damd:administrative-md>
+
+    val fedoraProvider = mock[MockFedoraProvider]
+    (fedoraProvider.loadFoXml _).expects("easy-dataset:162288").returning(Try(loadFoXmlResult)).once()
+    val appConfig = testConfig(delegatingBagIndex(delegate), Option(fedoraProvider))
+
+    (resourceBags_2.children.toArray).foreach { testBag =>
+      testBag.copyTo(
+        (testDir / "exports" / testBag.name).createDirectories()
+      )
+    }
+    new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
+      (testDir / "exports").children,
+      maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
+      DepositPropertiesFactory(appConfig, DOI, VAULT)
+    ) shouldBe Success("No fatal errors")
+
+    val amdXml = testDir / "ingest-dir" / validUUID / "bag-revision-1/data/easy-migration/amd.xml"
+    normalized(XML.loadFile(amdXml.toJava)) shouldBe(normalized(getAmdResult))
   }
 }

@@ -25,6 +25,7 @@ import resource.{ ManagedResource, managed }
 import java.io.InputStream
 import java.net.URL
 import scala.util.{ Failure, Try }
+import scala.xml.{ Elem, XML }
 
 class FedoraProvider(fedoraClient: FedoraClient) extends DebugEnhancedLogging {
   // dressed down copy of https://github.com/DANS-KNAW/easy-fedora-tobag
@@ -56,6 +57,15 @@ class FedoraProvider(fedoraClient: FedoraClient) extends DebugEnhancedLogging {
   def disseminateDatastream(objectId: String, streamId: String): ManagedResource[InputStream] = {
     trace(objectId, streamId)
     managed(FedoraClient.getDatastreamDissemination(objectId, streamId).execute(fedoraClient))
+      .flatMap(response => managed(response.getEntityInputStream))
+  }
+
+  def loadFoXml(objectId: String): Try[Elem] = {
+    getObject(objectId).map(XML.load).tried
+  }
+
+  private def getObject(objectId: String): ManagedResource[InputStream] = {
+    managed(FedoraClient.getObjectXML(objectId).execute(fedoraClient))
       .flatMap(response => managed(response.getEntityInputStream))
   }
 }

@@ -109,11 +109,17 @@ object BagFacade {
     }
   }
 
-  /** (re)writes payload and tagmanifest files for all present algorithms */
-  def writeManifests(bag: Bag): Try[Unit] = Try {
+  /** (re)writes payload files for all present algorithms */
+  def writePayloadManifests(bag: Bag): Try[Unit] = Try {
     val bagRoot = bag.getRootDir
     val encoding = bag.getFileEncoding
     ManifestWriter.writePayloadManifests(bag.getPayLoadManifests, bagRoot, bagRoot, encoding)
+  }
+
+  /** (re)writes tagmanifest files for all present algorithms */
+  def writeTagManifests(bag: Bag): Try[Unit] = Try {
+    val bagRoot = bag.getRootDir
+    val encoding = bag.getFileEncoding
     ManifestWriter.writeTagManifests(bag.getTagManifests, bagRoot, bagRoot, encoding)
   }
 }

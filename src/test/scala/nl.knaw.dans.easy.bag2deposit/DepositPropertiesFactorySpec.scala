@@ -39,7 +39,7 @@ class DepositPropertiesFactorySpec extends AnyFlatSpec with Matchers with AppCon
     val delegate = mock[MockBagIndex]
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$uuid" returning
       new HttpResponse[String](body = "123", code = 200, Map.empty)
-    val cfg = testConfig(delegatingBagIndex(delegate))
+    val cfg = testConfig(delegatingBagIndex(delegate), null)
 
     DepositPropertiesFactory(cfg, IdType.DOI, BagSource.VAULT)
       .create(
@@ -95,7 +95,7 @@ class DepositPropertiesFactorySpec extends AnyFlatSpec with Matchers with AppCon
       new HttpResponse[String](body = bagIndexBody, code = 200, Map.empty)
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$bagUUID" returning
       new HttpResponse[String](body = "123", code = 200, Map.empty)
-    val cfg = testConfig(delegatingBagIndex(delegate))
+    val cfg = testConfig(delegatingBagIndex(delegate), null)
 
     DepositPropertiesFactory(cfg, IdType.URN, BagSource.VAULT)
       .create(bagInfo, ddm)
@@ -133,7 +133,7 @@ class DepositPropertiesFactorySpec extends AnyFlatSpec with Matchers with AppCon
                 </ddm:dcmiMetadata>
               </ddm:DDM>
 
-    val cfg = testConfig(delegatingBagIndex(mock[MockBagIndex]))
+    val cfg = testConfig(delegatingBagIndex(mock[MockBagIndex]), null)
 
     DepositPropertiesFactory(cfg, IdType.URN, BagSource.FEDORA)
       .create(bagInfo, ddm)
@@ -168,7 +168,7 @@ class DepositPropertiesFactorySpec extends AnyFlatSpec with Matchers with AppCon
     val delegate = mock[MockBagIndex]
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$bagUUID" returning
       new HttpResponse[String](body = "123", code = 200, Map.empty)
-    val cfg = testConfig(delegatingBagIndex(delegate))
+    val cfg = testConfig(delegatingBagIndex(delegate), null)
 
     DepositPropertiesFactory(cfg, IdType.URN, BagSource.VAULT)
       .create(bagInfo, ddm)

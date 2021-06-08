@@ -31,4 +31,5 @@ case class Configuration(version: String,
                          bagIndex: BagIndex,
                          ddmTransformer: DdmTransformer,
                          userTransformer: UserTransformer,
+                         fedoraProvider: Option[FedoraProvider],
                         )

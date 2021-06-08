@@ -35,8 +35,6 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
       regexp = r.get(2).trim,
     )).toSeq
 
-  val nodeLabels = Seq("title", "alternative", "identifier")
-
   override def transform(node: Node): Seq[Node] = {
     lazy val value = node.text
     lazy val lowerCaseValue = value.trim.toLowerCase
@@ -50,9 +48,9 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
     val reports = node.label match {
       case "title" | "alternative" =>
         logIfMissed(transformTitle(value, lowerCaseValue))
-      case _ if value.matches(s"$nrRegexp *[(].*") =>
+      case "identifier" if value.matches(s"$nrRegexp *[(].*") =>
         logIfMissed(transformIdWithBrackets(value, lowerCaseValue))
-      case _ if value.contains(" ") =>
+      case "identifier" if value.contains(" ") =>
         logIfMissed(transformId(value, lowerCaseValue))
       case _ => node
     }

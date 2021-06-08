@@ -18,6 +18,7 @@ package nl.knaw.dans.easy.bag2deposit
 import better.files.File
 import better.files.File.CopyOptions
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
+import nl.knaw.dans.easy.bag2deposit.FoXml.getAmd
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.compare
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
@@ -77,7 +78,6 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
-    val migrationFiles = Seq("provenance.xml", "emd.xml", "dataset.xml", "files.xml")
     val changedMetadata = Seq("bag-info.txt", "metadata/amd.xml", "metadata/dataset.xml", "metadata/provenance.xml").map(Paths.get(_))
     val bagInfoKeysToRemove = Seq(
       BagFacade.EASY_USER_ACCOUNT_KEY,
@@ -92,33 +92,35 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = logger.info(s"$bagInfo")
       metadata = bagDir / "metadata"
+      migration = bagDir / "data" / "easy-migration"
       ddmFile = metadata / "dataset.xml"
       ddmIn <- loadXml(ddmFile)
       props <- depositPropertiesFactory.create(bagInfo, ddmIn)
+      fromVault = props.getString("deposit.origin") == "VAULT"
       datasetId = props.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
       _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
       _ = ddmFile.writeText(ddmOut.serialize)
       oldDcmi = (ddmIn \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
+      _ = if (fromVault) addAmdXml(datasetId, metadata)
       amdChanges <- configuration.userTransformer.transform(metadata / "amd.xml")
       _ = provenance.collectChangesInXmls(Map(
         "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> amdChanges,
         "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
       )).foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
-      migrationDir = (bagDir / "data" / "easy-migration").createDirectories()
-      maybeNewAccount = amdChanges \ "new" \ "depositorID" // TODO make sure amd, not ddm
-      // TODO replace account from amdChanges into props() and mutableBagMetadata(EASY-User-Account)
-      _ = props.save((bagParentDir / "deposit.properties").toJava)
-      _ = migrationFiles.foreach(name => (metadata / name).copyTo(migrationDir / name))
+      _ = copyMigrationFiles(metadata, migration, fromVault)
+      _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
       _ = trace("updating payload manifest")
       _ <- BagFacade.updatePayloadManifests(bag, Paths.get("data/easy-migration"))
+      _ = trace("writing payload manifests")
+      _ <- BagFacade.writePayloadManifests(bag)
       _ = trace("updating tag manifest")
       _ <- BagFacade.updateTagManifests(bag, changedMetadata)
-      _ = trace("writing manifests")
-      _ <- BagFacade.writeManifests(bag)
+      _ = trace("writing tagmanifests")
+      _ <- BagFacade.writeTagManifests(bag)
       _ = maybeOutputDir.foreach(move(bagParentDir))
       _ = logger.info(s"OK $datasetId ${ bagParentDir.name }/${ bagDir.name }")
     } yield true
@@ -132,6 +134,23 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     case e: Throwable =>
       logger.error(s"${ bagParentDir.name } failed with not expected error: ${ e.getClass.getSimpleName } ${ e.getMessage }")
       Failure(e)
+  }
+
+  private def addAmdXml(datasetId: String, metadata: File): Try[Unit] = Try {
+    configuration.fedoraProvider.map {
+      provider =>
+        val foXml = provider.loadFoXml(datasetId).get
+        val amd = getAmd(foXml).get
+        (metadata / "amd.xml").writeText(amd.serialize)
+    }.getOrElse {
+      logger.warn(s"No amd.xml added, no fedora was configured")
+    }
+  }
+
+  private def copyMigrationFiles(metadata: File, migration: File, fromVault: Boolean): Try[Unit] = Try {
+    val migrationFiles = Seq("provenance.xml", "dataset.xml", "files.xml", if (fromVault) "amd.xml" else "emd.xml")
+    val migrationDir = migration.createDirectories()
+    migrationFiles.foreach(name => (metadata / name).copyTo(migrationDir / name))
   }
 
   private def move(bagParentDir: File)(outputDir: File) = {

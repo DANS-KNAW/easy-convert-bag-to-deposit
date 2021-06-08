@@ -52,7 +52,10 @@ object Command extends App with DebugEnhancedLogging {
   private val bagParentDirs = commandLine.bagParentDir.map(Iterator(_))
     .getOrElse(commandLine.bagGrandParentDir.map(_.children)
       .getOrElse(Iterator.empty))
-  private val collectionMap = FedoraProvider(properties)
+  val fedoraProvider = FedoraProvider(properties)
+
+
+  private val collectionMap = fedoraProvider
     .map(getCollectionsMap(cfgPath))
     .getOrElse(Map.empty)
   val configuration = Configuration(
@@ -61,7 +64,8 @@ object Command extends App with DebugEnhancedLogging {
     dataverseIdAuthority = properties.getString("dataverse.id-authority"),
     bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
     ddmTransformer = new DdmTransformer(cfgPath, collectionMap),
-    userTransformer = new UserTransformer(cfgPath)
+    userTransformer = new UserTransformer(cfgPath),
+    fedoraProvider = fedoraProvider,
   )
   private val propertiesFactory = DepositPropertiesFactory(
     configuration,
