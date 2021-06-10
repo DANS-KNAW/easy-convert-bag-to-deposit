@@ -28,9 +28,11 @@ import java.nio.file.Paths
 import java.nio.charset.Charset
 import scala.collection.mutable.ListBuffer
 import scala.util.{ Failure, Success, Try }
-import scala.xml.NodeSeq
+import scala.xml.{ NodeSeq, PrettyPrinter, XML }
 
 class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnhancedLogging {
+
+  private val printer = new PrettyPrinter(160, 2)
 
   def addPropsToBags(bagParentDirs: Iterator[File],
                      maybeOutputDir: Option[File],
@@ -149,9 +151,22 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
   }
 
   private def copyMigrationFiles(metadata: File, migration: File, fromVault: Boolean): Try[Unit] = Try {
+    val filesXmlFile = (metadata /"files.xml").toString()
     val migrationFiles = Seq("provenance.xml", "dataset.xml", "files.xml", if (fromVault) "amd.xml" else "emd.xml")
     val migrationDir = migration.createDirectories()
     migrationFiles.foreach(name => (metadata / name).copyTo(migrationDir / name))
+    addToXmlFile(filesXmlFile, migrationFiles)
+  }
+
+  private def addToXmlFile(filesXmlFile: String, filesToAdd: Seq[String]): Try[File] = Try {
+    val oldFilesXml = XML.loadFile(filesXmlFile)
+    val newFilesXml = FilesXml(oldFilesXml, "data/easy-migration", filesToAdd, "text/xml")
+    File(filesXmlFile).delete()
+    // Notice: here we use PrettyPrinter to format the xml-file, to get all the new elements line up neatly.
+    // However, generally we discourage its usage because PrettyPrinter removes white spaces and this may cause
+    // problems, for instance in EMD.xml and DDM.xml.  Usage of 'serialize' is encouraged
+    // (https://github.com/DANS-KNAW/easy-convert-bag-to-deposit/blob/23f0eb93dbc2cfa9cddd78904a0c5b9a1f63eede/src/main/scala/nl.knaw.dans.easy.bag2deposit/package.scala#L69-L72)
+    File(filesXmlFile).writeText(printer.format(newFilesXml))
   }
 
   private def move(bagParentDir: File)(outputDir: File) = {
