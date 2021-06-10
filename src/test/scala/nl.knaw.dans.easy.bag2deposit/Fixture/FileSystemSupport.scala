@@ -34,4 +34,13 @@ trait FileSystemSupport extends BeforeAndAfterEach {
   }
 
   lazy val testDir: File = currentWorkingDirectory / "target" / "test" / getClass.getSimpleName
+
+  def propsFile(fedoraUrl: String): File = {
+    val distSrc = File("src/main/assembly/dist")
+    distSrc.copyToDirectory(testDir)
+    (testDir / "dist" / "cfg" / "application.properties").writeText(
+      (distSrc / "cfg" / "application.properties").contentAsString
+        .replace("http://localhost:20120/", fedoraUrl)
+    )
+  }
 }

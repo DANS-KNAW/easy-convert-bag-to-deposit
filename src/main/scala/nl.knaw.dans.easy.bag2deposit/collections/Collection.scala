@@ -15,7 +15,10 @@
  */
 package nl.knaw.dans.easy.bag2deposit.collections
 
-import better.files.File
+import better.files.{ Dispose, File }
+import cats.implicits.catsStdInstancesForTry
+import cats.instances.list._
+import cats.syntax.traverse._
 import com.yourmediashelf.fedora.client.FedoraClientException
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
@@ -23,7 +26,8 @@ import net.ruippeixotog.scalascraper.dsl.DSL._
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.csv.CSVFormat.RFC4180
-import org.apache.commons.csv.{ CSVFormat, CSVParser, CSVRecord }
+import org.apache.commons.csv.{ CSVFormat, CSVParser, CSVPrinter, CSVRecord }
+import org.joda.time.DateTime.now
 import resource.managed
 
 import java.nio.charset.{ Charset, StandardCharsets }
@@ -31,7 +35,9 @@ import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
 import scala.xml.Elem
 
-object Collections extends DebugEnhancedLogging {
+case class Collection(name: String, ids: Seq[String], collectionType: String, comment: String, members: Seq[String])
+
+object Collection extends DebugEnhancedLogging {
 
   private val browser = JsoupBrowser()
   private val resolver: Resolver = Resolver()
@@ -49,10 +55,35 @@ object Collections extends DebugEnhancedLogging {
       .tried
   }
 
-  private val skosCsvFormat = RFC4180.withHeader("URI", "prefLabel", "definition", "broader", "notation")
-  private val collectionCsvFormat = RFC4180.withHeader("name", "ids", "type", "comment")
+  private val collectionCsvFormat = RFC4180
+    .withHeader("name", "EASY-dataset-id", "type", "comment", "members")
+    .withDelimiter(',')
+    .withRecordSeparator('\n')
+    .withAutoFlush(true)
 
-  private def parseCollectionRecord(r: CSVRecord) = r.get("name").trim -> r.get("ids")
+  private def parseCollectionRecord(r: CSVRecord) = Try {
+    val memberIds = Try(r.get("members"))
+      .map(_.split(", *"))
+      .getOrElse(Array[String]())
+    Collection(
+      r.get("name"),
+      r.get("EASY-dataset-id").split(", *").filter(_.startsWith("easy-dataset:")),
+      Try(r.get("type")).getOrElse(""), // TODO assuming IllegalArgumentException
+      Try(r.get("comment")).getOrElse(""),
+      memberIds, // compiler error when inlined
+    )
+  }.getOrElse(throw new IllegalArgumentException(s"invalid line $r"))
+
+  private def writeCollectionRecord(printer: CSVPrinter, c: Collection): Try[Collection] = Try {
+    printer.printRecord(c.name, c.ids.mkString(","), c.collectionType, c.comment, c.members.mkString(","))
+    c
+  }
+
+  private val skosCsvFormat = RFC4180
+    .withHeader("URI", "prefLabel", "definition", "broader", "notation")
+    .withDelimiter(',')
+    .withRecordSeparator('\n')
+    .withAutoFlush(true)
 
   private def parseSkosRecord(r: CSVRecord) = {
     r.get("definition") ->
@@ -63,58 +94,47 @@ object Collections extends DebugEnhancedLogging {
         >{ r.get("prefLabel") }</ddm:inCollection>
   }
 
-  def getCollectionsMap(cfgPath: File, maybeFedoraProvider: Option[FedoraProvider]): Map[String, Elem] = {
-    trace(())
-    val result: Map[String, Elem] = maybeFedoraProvider
-      .map { provider =>
-        memberDatasetIdToInCollection(collectionDatasetIdToInCollection(cfgPath), provider)
+  /** @return collection-member-dataset-id -> <ddm:inCollection> */
+  def getCollectionsMap(cfgDir: File)(fedoraProvider: FedoraProvider): Map[String, Elem] = {
+    val skosFile = cfgDir / "excel2skos-collecties.csv"
+    val collectionsFile = cfgDir / "ThemathischeCollecties.csv"
+
+    def updateCollections(originalCollections: Seq[Collection]): Try[List[Collection]] = {
+      def updateWhenNotProvided(original: Collection)(implicit printer: CSVPrinter): Try[Collection] = {
+        trace(original)
+        val updated = if (original.members.nonEmpty) original
+                      else original.copy(members = original.ids.flatMap(membersOf(fedoraProvider)))
+        writeCollectionRecord(printer, updated).map(_ => updated)
       }
-      .getOrElse {
-        logger.info(s"No <inCollection> added to DDM, no fedora was configured")
-        Map.empty
-      }
-    result.foreach { case (datasetId, inCollection: Elem) =>
-      val x = (inCollection \@ "valueURI").replaceAll(".*/", "")
-      logger.info(s"$datasetId $x")
-    }
-    result
-  }
 
-  def collectionDatasetIdToInCollection(cfgDir: File): Seq[(String, Elem)] = {
-
-    val skosMap = parseCsv(cfgDir / "excel2skos-collecties.csv", skosCsvFormat)
-      .unsafeGetOrThrow
-      .map(parseSkosRecord).toMap
-
-    def inCollectionElem(name: String) = {
-      skosMap.getOrElse(
-        name,
-        <notImplemented>{ s"$name not found in collections skos" }</notImplemented>
-      )
+      for {
+        _ <- Try(collectionsFile.moveTo(File(collectionsFile.toString().replace(".csv", s"-$now.csv"))))
+        updates <- new Dispose(collectionCsvFormat.print(collectionsFile.newFileWriter()))
+          .apply(implicit csvPrinter =>
+            originalCollections.map(updateWhenNotProvided).toList.sequence
+          )
+      } yield updates
     }
 
-    parseCsv(cfgDir / "ThemathischeCollecties.csv", collectionCsvFormat)
-      .unsafeGetOrThrow
-      .map(parseCollectionRecord)
-      .toList
-      .filter(_._2.startsWith("easy-dataset:"))
-      .flatMap { case (name, datasetIds) =>
-        datasetIds.split(",").toSeq
-          .map(_ -> inCollectionElem(name))
-      }
-  }
-
-  def memberDatasetIdToInCollection(collectionDatasetIdToInCollection: Seq[(String, Elem)], fedoraProvider: FedoraProvider): Map[String, Elem] = Try {
-    collectionDatasetIdToInCollection
-      .flatMap { case (datasetId, inCollection) =>
-        logger.info(s"looking for members of $datasetId for ${ inCollection.text }")
-        membersOf(datasetId, fedoraProvider)
-          .map(_ -> inCollection)
-      }.toMap
-  }.doIfFailure { case e => logger.error(s"could not build collectionMap: $e", e) }
+    trace(skosFile, collectionsFile)
+    for {
+      skosRecords <- parseCsv(skosFile, skosCsvFormat)
+      collectionRecords <- parseCsv(collectionsFile, collectionCsvFormat)
+      originalCollections = collectionRecords.toList.map(parseCollectionRecord)
+      skosMap = skosRecords.map(parseSkosRecord).toMap
+      updatedCollections <- updateCollections(originalCollections)
+    } yield updatedCollections.flatMap { collection =>
+      val name = collection.name
+      lazy val default = <notImplemented>{ s"$name not found in collections skos" }</notImplemented>
+      val elem = skosMap.getOrElse(name, default)
+      collection.members.map(id => id -> elem)
+    }.toMap
+  }.doIfFailure { case e => logger.error(s"could not build CollectionsMap: $cfgDir $e", e) }
     .getOrElse(Map.empty)
 
-  private def membersOf(datasetId: String, fedoraProvider: FedoraProvider): Seq[String] = {
+  private def membersOf(fedoraProvider: FedoraProvider)(datasetId: String): Seq[String] = {
+    trace(datasetId)
+
     def getMu(jumpoffId: String, streamId: String) = {
       fedoraProvider
         .disseminateDatastream(jumpoffId, streamId)
@@ -140,7 +160,7 @@ object Collections extends DebugEnhancedLogging {
     //   urn:nbn:nl:ui:13-
     val regexp = "(?s).*(doi.org.*dans|urn:nbn:nl:ui:13-).*"
     for {
-      maybeJumpoffId <- jumpoff(datasetId, fedoraProvider)
+      maybeJumpoffId <- fedoraProvider.getJumpoff(datasetId)
       jumpoffId = maybeJumpoffId.getOrElse(throw new Exception(s"no jumpoff for $datasetId"))
       doc <- getMuAsHtmlDoc(jumpoffId)
       items = doc >> elementList("a")
@@ -153,13 +173,6 @@ object Collections extends DebugEnhancedLogging {
     } yield maybeIds.withFilter(_.isDefined).map(_.get)
   }.doIfFailure { case e => logger.error(s"could not find members of $datasetId: $e", e) }
     .getOrElse(Seq.empty)
-
-  private def jumpoff(datasetId: String, fedoraProvider: FedoraProvider): Try[Option[String]] = {
-    for {
-      ids <- fedoraProvider.getSubordinates(datasetId)
-      jumpofId = ids.find(_.startsWith("dans-jumpoff:"))
-    } yield jumpofId
-  }
 
   private def toDatasetId(str: String): Option[String] = {
     val trimmed = str

@@ -100,10 +100,10 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       datasetId = props.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
       _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
-      _ = props.save((bagParentDir / "deposit.properties").toJava)
       _ = ddmFile.writeText(ddmOut.serialize)
       oldDcmi = (ddmIn \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
+      _ = props.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
       _ = if (fromVault) addAmdXml(datasetId, metadata)
       amdChanges <- configuration.userTransformer.transform(metadata / "amd.xml")
       _ = provenance.collectChangesInXmls(Map(
