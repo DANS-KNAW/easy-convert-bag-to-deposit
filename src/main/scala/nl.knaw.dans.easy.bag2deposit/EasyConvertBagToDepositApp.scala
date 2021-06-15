@@ -28,7 +28,7 @@ import java.nio.file.Paths
 import java.nio.charset.Charset
 import scala.collection.mutable.ListBuffer
 import scala.util.{ Failure, Success, Try }
-import scala.xml.{ NodeSeq, PrettyPrinter, XML }
+import scala.xml.{ Node, NodeSeq, PrettyPrinter, XML }
 
 class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnhancedLogging {
 
@@ -102,16 +102,19 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       datasetId = props.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
       _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
-      _ = ddmFile.writeText(ddmOut.serialize)
       oldDcmi = (ddmIn \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
-      _ = props.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
-      _ = if (fromVault) addAmdXml(datasetId, metadata)
-      amdChanges <- configuration.userTransformer.transform(metadata / "amd.xml")
-      _ = provenance.collectChangesInXmls(Map(
-        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> amdChanges,
+      amdFile = metadata / "amd.xml"
+      amdIn <- getAmdXml(datasetId, amdFile)
+      amdOut <- configuration.userTransformer.transform(amdIn)
+      maybeProvenance = provenance.collectChangesInXmls(Map(
+        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
         "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
-      )).foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
+      ))
+      _ = props.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
+      _ = ddmFile.writeText(ddmOut.serialize)
+      _ = amdFile.writeText(amdOut.serialize)
+      _ = maybeProvenance.foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
       _ = copyMigrationFiles(metadata, migration, fromVault)
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = trace("updating metadata")
@@ -139,14 +142,13 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       Failure(e)
   }
 
-  private def addAmdXml(datasetId: String, metadata: File): Try[Unit] = Try {
-    configuration.fedoraProvider.map {
-      provider =>
-        val foXml = provider.loadFoXml(datasetId).get
-        val amd = getAmd(foXml).get
-        (metadata / "amd.xml").writeText(amd.serialize)
-    }.getOrElse {
-      logger.warn(s"No amd.xml added, no fedora was configured")
+  private def getAmdXml(datasetId: String, amdFile: File): Try[Node] = {
+    if (amdFile.exists)
+      loadXml(amdFile)
+    else {
+      configuration.fedoraProvider.map { provider =>
+        provider.loadFoXml(datasetId).flatMap(getAmd)
+      }.getOrElse(Failure(new IllegalStateException(s"no AMD for $datasetId and no fedora configured")))
     }
   }
 
