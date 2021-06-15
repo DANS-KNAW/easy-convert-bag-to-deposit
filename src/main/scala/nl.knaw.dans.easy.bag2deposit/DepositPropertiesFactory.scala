@@ -69,6 +69,7 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
     }
 
     new PropertiesConfiguration() {
+      setAutoSave(false)
       addProperty("state.label", "SUBMITTED")
       addProperty("state.description", submittedStateDescription(bagSource))
       addProperty("deposit.origin", bagSource.toString)

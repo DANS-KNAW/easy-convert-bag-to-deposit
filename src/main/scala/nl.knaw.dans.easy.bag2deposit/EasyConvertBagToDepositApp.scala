@@ -17,18 +17,20 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import better.files.File.CopyOptions
+import gov.loc.repository.bagit.domain.Metadata
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
 import nl.knaw.dans.easy.bag2deposit.FoXml.getAmd
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.compare
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import org.apache.commons.configuration.PropertiesConfiguration
 
 import java.io.{ FileNotFoundException, IOException }
 import java.nio.file.Paths
 import java.nio.charset.Charset
 import scala.collection.mutable.ListBuffer
 import scala.util.{ Failure, Success, Try }
-import scala.xml.{ Node, NodeSeq, PrettyPrinter, XML }
+import scala.xml.{ Elem, Node, NodeSeq, PrettyPrinter, XML }
 
 class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnhancedLogging {
 
@@ -91,7 +93,6 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       bag <- BagFacade.getBag(bagDir)
       mutableBagMetadata = bag.getMetadata
       bagInfo <- BagInfo(bagDir, mutableBagMetadata)
-      _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = logger.info(s"$bagInfo")
       metadata = bagDir / "metadata"
       migration = bagDir / "data" / "easy-migration"
@@ -111,12 +112,13 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
         "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
         "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
       ))
+      _ = maybeProvenance.flatMap(changeUser(mutableBagMetadata, props))
+      _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove) // TODO maybe also EASY-User-Account
       _ = props.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = amdFile.writeText(amdOut.serialize)
       _ = maybeProvenance.foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
       _ = copyMigrationFiles(metadata, migration, fromVault)
-      _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
       _ = trace("updating payload manifest")
@@ -140,6 +142,16 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     case e: Throwable =>
       logger.error(s"${ bagParentDir.name } failed with not expected error: ${ e.getClass.getSimpleName } ${ e.getMessage }")
       Failure(e)
+  }
+
+  private def changeUser(bagProperties: Metadata, depositProperties: PropertiesConfiguration)(provenance: Elem) = {
+    val bagKey = "EASY-User-Account"
+    val depositKey = "depositor.userId"
+    (provenance \ "userId").headOption.map{ user =>
+      bagProperties.remove(bagKey)
+      bagProperties.add(bagKey, user.text)
+      depositProperties.setProperty(depositKey, user.text)
+    }
   }
 
   private def getAmdXml(datasetId: String, amdFile: File): Try[Node] = {
