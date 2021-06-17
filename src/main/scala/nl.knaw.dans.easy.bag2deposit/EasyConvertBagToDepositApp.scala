@@ -82,7 +82,13 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
-    val changedMetadata = Seq("bag-info.txt", "metadata/amd.xml", "metadata/dataset.xml", "metadata/provenance.xml").map(Paths.get(_))
+    val changedMetadata = Seq(
+      "bag-info.txt",
+      "metadata/amd.xml",
+      "metadata/files.xml",
+      "metadata/dataset.xml",
+      "metadata/provenance.xml",
+    ).map(Paths.get(_))
     val bagInfoKeysToRemove = Seq(
       BagFacade.EASY_USER_ACCOUNT_KEY,
       BagInfo.baseUrnKey,

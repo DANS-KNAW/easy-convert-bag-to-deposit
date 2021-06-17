@@ -101,7 +101,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
       (include("<depositorId>USer</depositorId>") and not include "<depositorId>user001</depositorId>")
   }
 
-  it should "load amd.xml from Fedora and write it into data/easy-migration when not in the input bag" in {
+  it should "load amd.xml from Fedora when not in the input bag" in {
     val delegate = mock[MockBagIndex]
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
       new HttpResponse[String]("123", 200, Map.empty)
@@ -163,7 +163,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     normalized(XML.loadFile(amdXml.toJava)) shouldBe normalized(getAmdResult)
   }
 
-  it should "add the files written into data/easy-migration into metadata/files.xml" in {
+  it should "add the new data/easy-migration files into metadata/files.xml" in {
     val delegate = mock[MockBagIndex]
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
       new HttpResponse[String]("123", 200, Map.empty)
