@@ -104,9 +104,9 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       migration = bagDir / "data" / "easy-migration"
       ddmFile = metadata / "dataset.xml"
       ddmIn <- loadXml(ddmFile)
-      props <- depositPropertiesFactory.create(bagInfo, ddmIn)
-      fromVault = props.getString("deposit.origin") == "VAULT"
-      datasetId = props.getString("identifier.fedora", "")
+      depositProps <- depositPropertiesFactory.create(bagInfo, ddmIn)
+      fromVault = depositProps.getString("deposit.origin") == "VAULT"
+      datasetId = depositProps.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
       _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
       oldDcmi = (ddmIn \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
@@ -118,9 +118,9 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
         "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
         "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
       ))
-      _ = maybeProvenance.flatMap(changeUser(mutableBagMetadata, props))
+      _ = maybeProvenance.flatMap(changeUser(depositProps))
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove) // TODO maybe also EASY-User-Account
-      _ = props.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
+      _ = depositProps.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = amdFile.writeText(amdOut.serialize)
       _ = maybeProvenance.foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
@@ -150,12 +150,9 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       Failure(e)
   }
 
-  private def changeUser(bagProperties: Metadata, depositProperties: PropertiesConfiguration)(provenance: Elem) = {
-    val bagKey = "EASY-User-Account"
+  private def changeUser(depositProperties: PropertiesConfiguration)(provenance: Elem) = {
     val depositKey = "depositor.userId"
     (provenance \ "userId").headOption.map{ user =>
-      bagProperties.remove(bagKey)
-      bagProperties.add(bagKey, user.text)
       depositProperties.setProperty(depositKey, user.text)
     }
   }
