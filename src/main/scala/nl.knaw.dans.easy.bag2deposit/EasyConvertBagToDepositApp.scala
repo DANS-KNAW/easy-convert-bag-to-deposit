@@ -119,7 +119,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
         "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
       ))
       _ = maybeProvenance.flatMap(changeUser(depositProps))
-      _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove) // TODO maybe also EASY-User-Account
+      _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = depositProps.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = amdFile.writeText(amdOut.serialize)
