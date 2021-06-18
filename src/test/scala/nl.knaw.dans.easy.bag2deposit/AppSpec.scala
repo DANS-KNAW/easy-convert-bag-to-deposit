@@ -39,7 +39,8 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
       new HttpResponse[String]("123", 200, Map.empty)
     (delegate.execute(_: String)) expects s"bags/4722d09d-e431-4899-904c-0733cd773034" returning
       new HttpResponse[String]("<result><bag-info><urn>urn:nbn:nl:ui:13-z4-f8cm</urn><doi>10.5072/dans-2xg-umq8</doi></bag-info></result>", 200, Map.empty)
-    val appConfig = testConfig(delegatingBagIndex(delegate), null)
+    val appConfig = testConfig(delegatingBagIndex(delegate), None)
+    (appConfig.preStagedProvider.get(_: String, _: Int)) expects (*,1) returning Success(Seq.empty)
     resourceBags.copyTo(testDir / "exports")
 
     //////// end of mocking and preparations
@@ -148,6 +149,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     val fedoraProvider = mock[MockFedoraProvider]
     (fedoraProvider.loadFoXml _).expects("easy-dataset:162288").returning(Try(loadFoXmlResult)).once()
     val appConfig = testConfig(delegatingBagIndex(delegate), Option(fedoraProvider))
+    (appConfig.preStagedProvider.get(_: String, _: Int)) expects (*,1) returning Success(Seq.empty)
 
     (resourceBags / validUUID).copyTo(testDir / "exports" / validUUID)
     (testDir / "exports" / validUUID / "bag-revision-1" / "metadata" / "amd.xml")
@@ -168,6 +170,8 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
       new HttpResponse[String]("123", 200, Map.empty)
     val appConfig = testConfig(delegatingBagIndex(delegate), null)
+    (appConfig.preStagedProvider.get(_: String, _: Int)) expects (*,1) returning Success(Seq.empty)
+
     val originalFilesXml =
       <files xmlns:dcterms="http://purl.org/dc/terms/" xmlns="http://easy.dans.knaw.nl/schemas/bag/metadata/files/">
         <file filepath="data/leeg.txt">
@@ -213,6 +217,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
       new HttpResponse[String]("123", 200, Map.empty)
     val appConfig = testConfig(delegatingBagIndex(delegate), null)
+    (appConfig.preStagedProvider.get(_: String, _: Int)) expects (*,1) returning Success(Seq.empty)
     val originalFilesXml =
       <files xmlns:dc="http://purl.org/dc/terms/" xmlns="http://easy.dans.knaw.nl/schemas/bag/metadata/files/">
         <file filepath="data/leeg.txt">

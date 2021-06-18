@@ -32,4 +32,5 @@ case class Configuration(version: String,
                          ddmTransformer: DdmTransformer,
                          userTransformer: UserTransformer,
                          fedoraProvider: Option[FedoraProvider],
+                         preStagedProvider: PreStagedProvider,
                         )

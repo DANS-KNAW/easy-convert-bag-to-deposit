@@ -66,6 +66,7 @@ object Command extends App with DebugEnhancedLogging {
     ddmTransformer = new DdmTransformer(cfgPath, collectionMap),
     userTransformer = new UserTransformer(cfgPath),
     fedoraProvider = fedoraProvider,
+    preStagedProvider = PreStagedProvider(new URI(properties.getString("migration-info.url"))),
   )
   private val propertiesFactory = DepositPropertiesFactory(
     configuration,

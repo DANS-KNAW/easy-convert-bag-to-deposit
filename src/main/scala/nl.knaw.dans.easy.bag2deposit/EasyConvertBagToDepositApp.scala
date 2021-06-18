@@ -118,6 +118,8 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
       "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
       ))
+      preStaged = bagInfo.versionOf.map(_ => Seq.empty)
+        .getOrElse(configuration.preStagedProvider.get(datasetId))
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = depositProps.setProperty("depositor.userId", (amdOut \ "depositorId").text)
       _ = depositProps.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
