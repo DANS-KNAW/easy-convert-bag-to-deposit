@@ -18,7 +18,6 @@ package nl.knaw.dans.easy.bag2deposit
 import better.files.File
 import com.yourmediashelf.fedora.client.FedoraClientException
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ DdmSupport, FileSystemSupport, SchemaSupport }
-import nl.knaw.dans.easy.bag2deposit.collections.Collection.{ collectionCsvFormat, parseCsv }
 import nl.knaw.dans.easy.bag2deposit.collections.{ Collection, FedoraProvider }
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.scalamock.scalatest.MockFactory
@@ -104,8 +103,6 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     expectJumpoff("easy-dataset:33895", jumpoffMocks / "for-33895.html", mockedProvider)
     val cfgDir = propsFile("").parent
     val csvFile = cfgDir / "ThemathischeCollecties.csv"
-    val expectedIds = parseCsv(csvFile, nrOfHeaderLines = 2).map(r => r.get(1).split(","))
-      .toArray.flatten.toSeq.filter(_.startsWith("easy-dataset")).sortBy(identity)
     csvFile.writeText(originalCsv)
 
     val collectionMap = Collection.getCollectionsMap(cfgDir)(mockedProvider)
@@ -113,7 +110,6 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
       <notImplemented>Verzamelpagina Archeologie not found in collections skos</notImplemented>
     )
     csvFile.contentAsString shouldBe expectedCsv
-   // TODO collectionMap.keys.toSeq.sortBy(identity) shouldBe expectedIds
   }
 
   it should "not stumble <br> nor over not found DOI" in {
