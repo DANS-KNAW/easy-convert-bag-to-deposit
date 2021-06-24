@@ -208,7 +208,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     normalized(XML.loadFile(filesXml.toJava)) shouldBe normalized(expectedFilesXml)
   }
 
-  it should "prefix the new elements in metadata/files.xml with 'dc:'" in {
+  it should "produce proper prefix in new files.xml elements AND apply preferred user ID" in {
     val delegate = mock[MockBagIndex]
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
       new HttpResponse[String]("123", 200, Map.empty)
@@ -239,8 +239,13 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
         </file>
       </files>
     (resourceBags / validUUID).copyTo(testDir / "exports" / validUUID)
-    (testDir / "exports" / validUUID / "bag-revision-1" / "metadata" / "files.xml")
+    val testBag = testDir / "exports" / validUUID / "bag-revision-1"
+    (testBag / "metadata" / "files.xml")
       .writeText(originalFilesXml.serialize)
+
+    // pre-condition: another user than in account-substitutes.csv
+    (testBag / "metadata" / "amd.xml").contentAsString should
+      include ("<depositorId>user001</depositorId>")
 
     new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
       (testDir / "exports").children,
@@ -251,5 +256,11 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
     val filesXml = movedBag / "metadata" / "files.xml"
     normalized(XML.loadFile(filesXml.toJava)) shouldBe normalized(expectedFilesXml)
+
+    // post-condition: user from account-substitutes.csv
+    (movedBag / ".." / "deposit.properties").contentAsString should
+      include("depositor.userId = USer")
+    (movedBag / "metadata" / "amd.xml").contentAsString should
+      include ("<depositorId>USer</depositorId>")
   }
 }
