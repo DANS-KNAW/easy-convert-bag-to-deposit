@@ -17,7 +17,6 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import better.files.File.CopyOptions
-import gov.loc.repository.bagit.domain.Metadata
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
 import nl.knaw.dans.easy.bag2deposit.FoXml.getAmd
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
@@ -26,11 +25,11 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration
 
 import java.io.{ FileNotFoundException, IOException }
-import java.nio.file.Paths
 import java.nio.charset.Charset
+import java.nio.file.Paths
 import scala.collection.mutable.ListBuffer
 import scala.util.{ Failure, Success, Try }
-import scala.xml.{ Elem, Node, NodeSeq, PrettyPrinter, XML }
+import scala.xml._
 
 class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnhancedLogging {
 
@@ -115,11 +114,11 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       amdIn <- getAmdXml(datasetId, amdFile)
       amdOut <- configuration.userTransformer.transform(amdIn)
       maybeProvenance = provenance.collectChangesInXmls(Map(
-        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
-        "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
+      "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
+      "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
       ))
-      _ = maybeProvenance.flatMap(changeUser(depositProps))
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
+      _ = depositProps.setProperty("depositor.userId", (amdOut \ "depositorId").text)
       _ = depositProps.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = amdFile.writeText(amdOut.serialize)
@@ -150,13 +149,6 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       Failure(e)
   }
 
-  private def changeUser(depositProperties: PropertiesConfiguration)(provenance: Elem) = {
-    val depositKey = "depositor.userId"
-    (provenance \ "userId").headOption.map{ user =>
-      depositProperties.setProperty(depositKey, user.text)
-    }
-  }
-
   private def getAmdXml(datasetId: String, amdFile: File): Try[Node] = {
     if (amdFile.exists)
       loadXml(amdFile)
@@ -168,8 +160,9 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
   }
 
   private def copyMigrationFiles(metadata: File, migration: File, fromVault: Boolean): Try[Unit] = Try {
-    val filesXmlFile = (metadata /"files.xml").toString()
-    val migrationFiles = Seq("provenance.xml", "dataset.xml", "files.xml", if (fromVault) "amd.xml" else "emd.xml")
+    val filesXmlFile = (metadata / "files.xml").toString()
+    val migrationFiles = Seq("provenance.xml", "dataset.xml", "files.xml", if (fromVault) "amd.xml"
+                                                                           else "emd.xml")
     val migrationDir = migration.createDirectories()
     migrationFiles.foreach(name => (metadata / name).copyTo(migrationDir / name))
     addToXmlFile(filesXmlFile, migrationFiles)
