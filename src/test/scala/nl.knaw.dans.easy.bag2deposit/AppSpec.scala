@@ -159,7 +159,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
       DepositPropertiesFactory(appConfig, DOI, VAULT)
     ) shouldBe Success("No fatal errors")
 
-    val amdXml = testDir / "ingest-dir" / validUUID / "bag-revision-1/data/easy-migration/amd.xml"
+    val amdXml = testDir / "ingest-dir" / validUUID / "bag-revision-1/metadata/amd.xml"
     normalized(XML.loadFile(amdXml.toJava)) shouldBe normalized(getAmdResult)
   }
 
@@ -189,7 +189,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
         <file filepath="data/easy-migration/files.xml">
           <dcterms:format>text/xml</dcterms:format>
         </file>
-        <file filepath="data/easy-migration/amd.xml">
+        <file filepath="data/easy-migration/emd.xml">
           <dcterms:format>text/xml</dcterms:format>
         </file>
       </files>
@@ -234,7 +234,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
         <file filepath="data/easy-migration/files.xml">
           <dc:format>text/xml</dc:format>
         </file>
-        <file filepath="data/easy-migration/amd.xml">
+        <file filepath="data/easy-migration/emd.xml">
           <dc:format>text/xml</dc:format>
         </file>
       </files>

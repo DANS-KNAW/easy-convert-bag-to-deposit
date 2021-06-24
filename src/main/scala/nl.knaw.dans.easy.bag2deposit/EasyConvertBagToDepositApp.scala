@@ -161,8 +161,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
 
   private def copyMigrationFiles(metadata: File, migration: File, fromVault: Boolean): Try[Unit] = Try {
     val filesXmlFile = (metadata / "files.xml").toString()
-    val migrationFiles = Seq("provenance.xml", "dataset.xml", "files.xml", if (fromVault) "amd.xml"
-                                                                           else "emd.xml")
+    val migrationFiles = Seq("provenance.xml", "dataset.xml", "files.xml", "emd.xml")
     val migrationDir = migration.createDirectories()
     migrationFiles.foreach(name => (metadata / name).copyTo(migrationDir / name))
     addToXmlFile(filesXmlFile, migrationFiles)
