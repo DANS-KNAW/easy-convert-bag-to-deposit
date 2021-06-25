@@ -60,9 +60,10 @@ object BagFacade {
    *
    * @param bag            changed bag
    * @param payloadEntries directory or file relatieve to the root of the bag
+   * @param preStageds     files to be removed from the bag and the payload manifests
    * @return
    */
-  def updatePayloadManifests(bag: Bag, payloadEntries: Path): Try[Unit] = Try {
+  def updatePayloadManifests(bag: Bag, payloadEntries: Path, preStageds: Seq[PreStaged]): Try[Unit] = Try {
     trace(bag.getRootDir)
     if (!payloadEntries.toString.startsWith("data/")) {
       throw new IllegalArgumentException(s"path must start with data, found $payloadEntries")
@@ -76,6 +77,14 @@ object BagFacade {
     val visitor = new CreatePayloadManifestsVistor(map, includeHiddenFiles)
     Files.walkFileTree(bag.getRootDir.resolve(payloadEntries), visitor)
     mergeManifests(payloadManifests, map)
+
+    val bagRoot = File(bag.getRootDir)
+    preStageds.foreach { preStaged =>
+      (bagRoot / preStaged.path.toString).delete()
+      payloadManifests.asScala.foreach {
+        m => m.getFileToChecksumMap.remove(preStaged)
+      }
+    }
   }
 
   /** Recalculates the checksums for changed metadata files (and payload manifests) for all present algorithms */

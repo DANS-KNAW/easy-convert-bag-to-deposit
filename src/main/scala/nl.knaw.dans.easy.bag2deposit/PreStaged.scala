@@ -44,6 +44,7 @@ object PreStaged {
     .withAutoFlush(true)
 
   def write(seq: Seq[PreStaged], metadataDir: File): Try[Unit] = Try {
+    trace(seq)
     new Dispose(csvFormat.print((metadataDir / "pre-staged.csv").newFileWriter()))
       .apply(implicit csvPrinter =>
         seq.foreach(r =>
