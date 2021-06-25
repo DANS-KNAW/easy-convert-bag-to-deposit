@@ -83,7 +83,8 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     logger.debug(s"creating application.properties for $bagParentDir")
     val changedMetadata = Seq(
       "bag-info.txt",
-      "metadata/amd.xml", "metadata/emd.xml", // in practice one of both
+      "metadata/amd.xml", 
+      "metadata/emd.xml", 
       "metadata/files.xml",
       "metadata/dataset.xml",
       "metadata/provenance.xml",
