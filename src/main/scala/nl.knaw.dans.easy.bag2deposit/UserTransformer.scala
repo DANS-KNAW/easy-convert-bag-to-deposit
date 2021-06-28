@@ -16,18 +16,17 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
 import org.apache.commons.csv.CSVFormat.RFC4180
 
 import java.nio.charset.Charset
-import scala.util.Try
+import scala.util.{ Failure, Success, Try }
 import scala.xml.Node
 import scala.xml.transform.{ RewriteRule, RuleTransformer }
 
 class UserTransformer(cfgDir: File) {
   private val csvFile: File = cfgDir / "account-substitutes.csv"
   private val userMap = if (!csvFile.exists || csvFile.isEmpty)
-                          Map[String,String]()
+                          Map[String, String]()
                         else parseCsv(
                           csvFile,
                           nrOfHeaderLines = 1,
@@ -48,14 +47,8 @@ class UserTransformer(cfgDir: File) {
   // depends upon the locale and charset of the underlying operating system.
   implicit val charset: Charset = Charset.forName("UTF-8")
 
-  def transform(file: File): Try[Seq[Node]] = {
-    for {
-      xmlIn <- loadXml(file)
-      xmlOut = transformer.transform(xmlIn).headOption
-        .getOrElse(throw new Exception("programming error: AmdTransformer returned multiple roots"))
-      _ = file.writeText(xmlOut.serialize)
-      diff = Provenance.compare(xmlIn, xmlOut)
-      _ = trace(diff.map(_.serialize))
-    } yield diff
+  def transform(xmlIn: Node): Try[Node] = {
+    transformer.transform(xmlIn).headOption.map(Success(_))
+      .getOrElse(Failure(new Exception("transformer did not return an AMD")))
   }
 }

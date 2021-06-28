@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<files xmlns:dc="http://purl.org/dc/terms/" xmlns="http://easy.dans.knaw.nl/schemas/bag/metadata/files/">
-
-    <file filepath="data/leeg.txt">
-        <dc:format>text/xml</dc:format>
-    </file>
-</files>

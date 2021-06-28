@@ -16,8 +16,9 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.UserTransformer
+import nl.knaw.dans.easy.bag2deposit.{ UserTransformer, loadXml }
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ FileSystemSupport, FixedCurrentDateTimeSupport, XmlSupport }
+import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.compare
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -141,9 +142,10 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     )
 
     val transformer = new UserTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
+    val amdIn = loadXml(testDir / "amd.xml").getOrElse(fail("could not load AMD"))
+    val amdOut = transformer.transform(amdIn).getOrElse(fail("could not transform"))
     new Provenance("EasyConvertBagToDepositApp", "1.0.5").collectChangesInXmls(Map(
-      "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" ->
-        transformer.transform(testDir / "amd.xml").getOrElse(fail("could not transform")),
+      "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
     )).map(normalized) shouldBe Some(normalized(
       <prov:provenance xsi:schemaLocation="
         http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
