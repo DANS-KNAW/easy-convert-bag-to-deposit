@@ -105,7 +105,6 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       ddmFile = metadata / "dataset.xml"
       ddmIn <- loadXml(ddmFile)
       depositProps <- depositPropertiesFactory.create(bagInfo, ddmIn)
-      fromVault = depositProps.getString("deposit.origin") == "VAULT"
       datasetId = depositProps.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
       _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")

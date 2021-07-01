@@ -23,6 +23,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import scalaj.http.HttpResponse
 
+import java.nio.file.Paths
 import scala.util.{ Success, Try }
 import scala.xml.XML
 
@@ -163,6 +164,28 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
 
     val amdXml = testDir / "ingest-dir" / validUUID / "bag-revision-1/metadata/amd.xml"
     normalized(XML.loadFile(amdXml.toJava)) shouldBe normalized(getAmdResult)
+  }
+
+  it should "remove pre-staged files" in {
+    val delegate = mock[MockBagIndex]
+    (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
+      new HttpResponse[String]("123", 200, Map.empty)
+    val appConfig = testConfig(delegatingBagIndex(delegate), null)
+    (appConfig.preStagedProvider.get(_: String, _: Int)) expects (*,1) returning Success(
+      Seq(PreStaged(Paths.get("data/leeg.txt"),0,"text/plain","md5","xxx","foo:bar"))
+    )
+
+    (resourceBags / validUUID).copyTo(testDir / "exports" / validUUID)
+
+    new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
+      (testDir / "exports").children,
+      maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
+      DepositPropertiesFactory(appConfig, DOI, VAULT)
+    ) shouldBe Success("No fatal errors")
+
+    val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
+    (movedBag / "data").list.toSeq.map(_.name) shouldBe Seq("easy-migration") // and no real payload
+    (movedBag / "manifest-md5.txt").contentAsString shouldNot include("leeg.txt")
   }
 
   it should "add the new data/easy-migration files into metadata/files.xml" in {

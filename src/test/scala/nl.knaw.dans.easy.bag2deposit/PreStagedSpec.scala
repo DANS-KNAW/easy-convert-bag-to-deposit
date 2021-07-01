@@ -34,24 +34,54 @@ class PreStagedSpec extends AnyFlatSpec with Matchers with FileSystemSupport {
       |      "fileName": "empty.txt",
       |      "mimeType": "text/plain",
       |      "checksum": {
-      |        "@type": "md5",
-      |        "@value": "d41d8cd98f00b204e9800998ecf8427e"
+      |        "@type": "sha1",
+      |        "@value": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+      |      },
+      |      "fileSize": 0
+      |    }
+      |  },
+      |  {
+      |    "label": "stringABC",
+      |    "directoryLabel": "another/path/to",
+      |    "datasetSequenceNumber": "1",
+      |    "dataFile": {
+      |      "storageIdentifier": "123",
+      |      "fileName": "empty.txt",
+      |      "mimeType": "text/plain",
+      |      "checksum": {
+      |        "@type": "sha1",
+      |        "@value": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+      |      },
+      |      "fileSize": 0
+      |    }
+      |  },
+      |  {
+      |    "label": "stringABC",
+      |    "directoryLabel": "some/path/to",
+      |    "datasetSequenceNumber": "1",
+      |    "dataFile": {
+      |      "storageIdentifier": "123",
+      |      "fileName": "something.txt",
+      |      "mimeType": "text/plain",
+      |      "checksum": {
+      |        "@type": "sha1",
+      |        "@value": "blabla"
       |      },
       |      "fileSize": 0
       |    }
       |  }
       |]""".stripMargin
   private val sampleObject = new PreStaged(
-    Paths.get("path/to/empty.txt"),
+    Paths.get("some/path/to/something.txt"),
     0,
     "text/plain",
-    "md5",
-    "d41d8cd98f00b204e9800998ecf8427e",
+    "sha1",
+    "blabla",
     "123",
   )
   private val expectedCsv =
     """path,checksum,storageId
-      |path/to/empty.txt,d41d8cd98f00b204e9800998ecf8427e,123
+      |some/path/to/something.txt,blabla,123
       |""".stripMargin
 
   "apply" should "parse json" in {

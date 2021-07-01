@@ -68,7 +68,9 @@ object PreStaged {
         mi.dataFile.checksum.`@type`,
         mi.dataFile.checksum.`@value`,
         mi.dataFile.storageIdentifier,
-      ))
+      )).groupBy(_.checksumValue)
+      .filter(_._2.size==1)
+      .values.flatten.toList
   }
 }
 case class PreStagedProvider(migrationInfoUri: URI) {
