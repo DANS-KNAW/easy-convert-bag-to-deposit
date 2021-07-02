@@ -172,7 +172,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
       new HttpResponse[String]("123", 200, Map.empty)
     val appConfig = testConfig(delegatingBagIndex(delegate), null)
     (appConfig.preStagedProvider.get(_: String, _: Int)) expects (*,1) returning Success(
-      Seq(PreStaged(Paths.get("data/leeg.txt"),0,"text/plain","sha1","da39a3ee5e6b4b0d3255bfef95601890afd80709","foo:bar"))
+      Seq(PreStaged(Paths.get("data/foo.txt"),0,"text/plain","sha1","62cdb7020ff920e5aa642c3d4066950dd1f01f4d","foo:bar"))
     )
 
     (resourceBags / validUUID).copyTo(testDir / "exports" / validUUID)
@@ -185,7 +185,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
 
     val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
     (movedBag / "data").list.toSeq.map(_.name) shouldBe Seq("easy-migration") // and no real payload
-    (movedBag / "manifest-md5.txt").contentAsString shouldNot include("leeg.txt")
+    (movedBag / "manifest-sha1.txt").contentAsString shouldNot include("foo.txt")
   }
 
   it should "add the new data/easy-migration files into metadata/files.xml" in {

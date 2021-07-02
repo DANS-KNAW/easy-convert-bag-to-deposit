@@ -88,7 +88,7 @@ object BagFacade {
       .collect { case (x, List(_, _, _*)) => x }
       .toList
     val preStagedShas = preStageds
-      .withFilter(p => duplicateShasInManifest.contains(p.checksumValue))
+      .withFilter(p => !duplicateShasInManifest.contains(p.checksumValue))
       .map(p => p.checksumValue)
     val preStagedPaths = fileToChecksumMap.asScala
       .withFilter { case (_, checksum) => preStagedShas.contains(checksum) }
