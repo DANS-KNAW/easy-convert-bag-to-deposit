@@ -16,10 +16,11 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
+import better.files.File.apply
 import gov.loc.repository.bagit.creator.{ CreatePayloadManifestsVistor, CreateTagManifestsVistor }
 import gov.loc.repository.bagit.domain
 import gov.loc.repository.bagit.domain.Bag
-import gov.loc.repository.bagit.hash.Hasher
+import gov.loc.repository.bagit.hash.{ Hasher, StandardSupportedAlgorithms }
 import gov.loc.repository.bagit.reader.BagReader
 import gov.loc.repository.bagit.writer.{ ManifestWriter, MetadataWriter }
 
@@ -78,12 +79,23 @@ object BagFacade {
     Files.walkFileTree(bag.getRootDir.resolve(payloadEntries), visitor)
     mergeManifests(payloadManifests, map)
 
-    val bagRoot = File(bag.getRootDir)
-    preStageds.foreach { preStaged =>
-      (bagRoot / preStaged.path.toString).delete()
-      payloadManifests.asScala.foreach {
-        m => m.getFileToChecksumMap.remove(preStaged)
-      }
+    val fileToChecksumMap = payloadManifests.asScala
+      .find(m => m.getAlgorithm == StandardSupportedAlgorithms.SHA1)
+      .map(_.getFileToChecksumMap)
+      .getOrElse(throw new Exception("no SHA1 manifest in ${bag.getRootDir}"))
+    val duplicateShasInManifest = fileToChecksumMap.values().asScala
+      .groupBy(identity)
+      .collect { case (x, List(_, _, _*)) => x }
+      .toList
+    val preStagedShas = preStageds
+      .withFilter(p => duplicateShasInManifest.contains(p.checksumValue))
+      .map(p => p.checksumValue)
+    val preStagedPaths = fileToChecksumMap.asScala
+      .withFilter { case (_, checksum) => preStagedShas.contains(checksum) }
+      .map { case (path, _) => path }
+    preStagedPaths.foreach { path =>
+      path.delete()
+      fileToChecksumMap.remove(path)
     }
   }
 

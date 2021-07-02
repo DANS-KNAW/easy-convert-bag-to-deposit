@@ -172,7 +172,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
       new HttpResponse[String]("123", 200, Map.empty)
     val appConfig = testConfig(delegatingBagIndex(delegate), null)
     (appConfig.preStagedProvider.get(_: String, _: Int)) expects (*,1) returning Success(
-      Seq(PreStaged(Paths.get("data/leeg.txt"),0,"text/plain","md5","xxx","foo:bar"))
+      Seq(PreStaged(Paths.get("data/leeg.txt"),0,"text/plain","sha1","da39a3ee5e6b4b0d3255bfef95601890afd80709","foo:bar"))
     )
 
     (resourceBags / validUUID).copyTo(testDir / "exports" / validUUID)
