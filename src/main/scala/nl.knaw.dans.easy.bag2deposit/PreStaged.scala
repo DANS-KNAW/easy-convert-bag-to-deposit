@@ -23,7 +23,7 @@ import scalaj.http.{ Http, HttpResponse }
 
 import java.net.URI
 import java.nio.file.{ Path, Paths }
-import scala.util.{ Failure, Try }
+import scala.util.{ Failure, Success, Try }
 
 /**
  * @param path      as in the manifest file
@@ -58,7 +58,7 @@ object PreStaged {
   private case class MigrationInfo(label: String, directoryLabel: String, datasetSequenceNumber: String, dataFile: DataFile)
   private implicit val jsonFormats: Formats = new DefaultFormats {}
 
-  def apply(json: String): Try[List[PreStaged]] = Try{
+  def apply(json: String): Try[List[PreStaged]] = Try {
     parse(json, useBigDecimalForDouble = true)
       .extract[List[MigrationInfo]]
       .map(mi => new PreStaged(
@@ -69,13 +69,19 @@ object PreStaged {
         mi.dataFile.checksum.`@value`,
         mi.dataFile.storageIdentifier,
       )).groupBy(_.checksumValue)
-      .filter(_._2.size==1)
+      .filter(_._2.size == 1)
       .values.flatten.toList
   }
 }
 case class PreStagedProvider(migrationInfoUri: URI) {
-  def get(datasetId: String, seqNr: Int = 1): Try[Seq[PreStaged]] = {
-    find(s"/datasets/$datasetId/seq/$seqNr/basic-file-metas")
+  def get(bagInfo: BagInfo, seqNr: Int = 1): Try[Seq[PreStaged]] = {
+    val maybeDoi = for {
+      _ <- bagInfo.versionOf
+      pids <- bagInfo.basePids
+    } yield pids.doi
+    maybeDoi.map(doi =>
+      find(s"/datasets/:persistentId/seq/$seqNr/basic-file-metas?persistentId=doi:$doi")
+    ).getOrElse(Success("[]")) // empty json
       .flatMap(PreStaged(_))
   }
 

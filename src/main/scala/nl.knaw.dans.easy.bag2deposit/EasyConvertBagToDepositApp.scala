@@ -117,8 +117,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
       "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
       ))
-      preStaged <- bagInfo.versionOf.map(_ => Success(Seq.empty)) // TODO so far no versioned bags
-        .getOrElse(configuration.preStagedProvider.get(datasetId))
+      preStaged <- configuration.preStagedProvider.get(bagInfo)
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = depositProps.setProperty("depositor.userId", (amdOut \ "depositorId").text)
       // so far collecting changes
