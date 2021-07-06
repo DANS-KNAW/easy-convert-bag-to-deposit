@@ -17,16 +17,17 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import better.files.File.CopyOptions
+import nl.knaw.dans.easy.bag2deposit.BagFacade.sha1Manifest
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
 import nl.knaw.dans.easy.bag2deposit.FoXml.getAmd
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.compare
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.apache.commons.configuration.PropertiesConfiguration
 
 import java.io.{ FileNotFoundException, IOException }
 import java.nio.charset.Charset
 import java.nio.file.Paths
+import scala.collection.JavaConverters.mapAsScalaMapConverter
 import scala.collection.mutable.ListBuffer
 import scala.util.{ Failure, Success, Try }
 import scala.xml._
@@ -81,13 +82,14 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
-    val changedMetadata = Seq(
+    val changedMetadata = Seq( // TODO error prone optimisation, update complete tag-manifest
       "bag-info.txt",
-      "metadata/amd.xml", 
-      "metadata/emd.xml", 
+      "metadata/amd.xml",
+      "metadata/emd.xml",
       "metadata/files.xml",
       "metadata/dataset.xml",
       "metadata/provenance.xml",
+      "metadata/pre-staged.csv",
     ).map(Paths.get(_))
     val bagInfoKeysToRemove = Seq(
       BagFacade.EASY_USER_ACCOUNT_KEY,
@@ -105,7 +107,6 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       ddmFile = metadata / "dataset.xml"
       ddmIn <- loadXml(ddmFile)
       depositProps <- depositPropertiesFactory.create(bagInfo, ddmIn)
-      fromVault = depositProps.getString("deposit.origin") == "VAULT"
       datasetId = depositProps.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
       _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
@@ -115,20 +116,25 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       amdIn <- getAmdXml(datasetId, amdFile)
       amdOut <- configuration.userTransformer.transform(amdIn)
       maybeProvenance = provenance.collectChangesInXmls(Map(
-      "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
-      "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
+        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
+        "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
       ))
+      shaToPath = sha1Manifest(bag.getPayLoadManifests).asScala.map {case (path, sha) => sha -> path}.toMap
+      preStaged1 <- configuration.preStagedProvider.get(bagInfo) // paths from migration info
+      preStaged = preStaged1.map(r => r.copy(path = shaToPath(r.checksumValue))) // paths from manifest
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = depositProps.setProperty("depositor.userId", (amdOut \ "depositorId").text)
+      // so far collecting changes
       _ = depositProps.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = amdFile.writeText(amdOut.serialize)
+      _ = PreStaged.write(preStaged, metadata)
       _ = maybeProvenance.foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
-      _ = copyMigrationFiles(metadata, migration, fromVault)
       _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
       _ = trace("updating payload manifest")
-      _ <- BagFacade.updatePayloadManifests(bag, Paths.get("data/easy-migration"))
+      _ = copyMigrationFiles(metadata, migration)
+      _ <- BagFacade.updatePayloadManifests(bag, Paths.get("data/easy-migration"), preStaged)
       _ = trace("writing payload manifests")
       _ <- BagFacade.writePayloadManifests(bag)
       _ = trace("updating tag manifest")
@@ -160,7 +166,8 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     }
   }
 
-  private def copyMigrationFiles(metadata: File, migration: File, fromVault: Boolean): Try[Unit] = Try {
+  private def copyMigrationFiles(metadata: File, migration: File): Try[Unit] = Try {
+    trace(metadata, migration)
     val filesXmlFile = (metadata / "files.xml").toString()
     val migrationFiles = Seq("provenance.xml", "dataset.xml", "files.xml", "emd.xml")
     val migrationDir = migration.createDirectories()

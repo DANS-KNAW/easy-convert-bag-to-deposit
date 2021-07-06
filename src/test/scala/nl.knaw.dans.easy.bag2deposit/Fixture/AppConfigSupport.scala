@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.bag2deposit.Fixture
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.collections.FedoraProvider
 import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer
-import nl.knaw.dans.easy.bag2deposit.{BagIndex, Configuration, UserTransformer}
+import nl.knaw.dans.easy.bag2deposit.{ BagIndex, Configuration, PreStagedProvider, UserTransformer }
 
 trait AppConfigSupport extends BagIndexSupport with FedoraProviderSupport {
   def testConfig(bagIndex: BagIndex, fedoraProvider: Option[FedoraProvider]): Configuration = {
@@ -31,6 +31,7 @@ trait AppConfigSupport extends BagIndexSupport with FedoraProviderSupport {
       ddmTransformer = new DdmTransformer(cfgFile),
       userTransformer = new UserTransformer(cfgFile),
       fedoraProvider = fedoraProvider,
+      preStagedProvider = mock[PreStagedProvider],
     )
   }
 }
