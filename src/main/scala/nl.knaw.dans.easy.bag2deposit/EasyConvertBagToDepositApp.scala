@@ -124,13 +124,13 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ = depositProps.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = amdFile.writeText(amdOut.serialize)
-      _ = PreStaged.write(preStaged.map(r => r.copy(path = r.path)), metadata) // replace path from payloadManifest
+      _ = PreStaged.write(preStaged.map(r => r.copy(path = r.path)), metadata) // TODO replace path from payloadManifest
       _ = maybeProvenance.foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
       _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
       _ = trace("updating payload manifest")
       _ = copyMigrationFiles(metadata, migration)
-      _ <- BagFacade.updatePayloadManifests(bag, Paths.get("data/easy-migration"), preStaged)
+      _ <- BagFacade.updatePayloadManifests(bag, Paths.get("data/easy-migration"), preStaged) // TODO above needs info retrieved here
       _ = trace("writing payload manifests")
       _ <- BagFacade.writePayloadManifests(bag)
       _ = trace("updating tag manifest")
@@ -163,6 +163,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
   }
 
   private def copyMigrationFiles(metadata: File, migration: File): Try[Unit] = Try {
+    trace(metadata, migration)
     val filesXmlFile = (metadata / "files.xml").toString()
     val migrationFiles = Seq("provenance.xml", "dataset.xml", "files.xml", "emd.xml")
     val migrationDir = migration.createDirectories()
