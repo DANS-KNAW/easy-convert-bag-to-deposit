@@ -172,6 +172,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
       new HttpResponse[String]("123", 200, Map.empty)
     val appConfig = testConfig(delegatingBagIndex(delegate), null)
+    // TODO replace get with execute and/or create higher level examples in PreStagedSpec
     (appConfig.preStagedProvider.get(_: BagInfo, _: Int)) expects (*,1) returning Success(
       Seq(PreStaged(Paths.get("data/foo.txt"),0,"text/plain","sha1","62cdb7020ff920e5aa642c3d4066950dd1f01f4d","foo:bar"))
     )

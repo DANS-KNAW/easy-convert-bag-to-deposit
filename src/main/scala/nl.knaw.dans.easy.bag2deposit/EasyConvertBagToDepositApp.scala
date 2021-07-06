@@ -124,7 +124,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ = depositProps.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = amdFile.writeText(amdOut.serialize)
-      _ = PreStaged.write(preStaged, metadata)
+      _ = PreStaged.write(preStaged.map(r => r.copy(path = r.path)), metadata) // replace path from payloadManifest
       _ = maybeProvenance.foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
       _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
