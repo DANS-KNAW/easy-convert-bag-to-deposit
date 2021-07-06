@@ -119,15 +119,16 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
         "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
         "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
       ))
-      preStaged <- configuration.preStagedProvider.get(bagInfo)
       shaToPath = sha1Manifest(bag.getPayLoadManifests).asScala.map {case (path, sha) => sha -> path}.toMap
+      preStaged1 <- configuration.preStagedProvider.get(bagInfo) // paths from migration info
+      preStaged = preStaged1.map(r => r.copy(path = shaToPath(r.checksumValue))) // paths from manifest
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = depositProps.setProperty("depositor.userId", (amdOut \ "depositorId").text)
       // so far collecting changes
       _ = depositProps.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = amdFile.writeText(amdOut.serialize)
-      _ = PreStaged.write(preStaged.map(r => r.copy(path = shaToPath(r.checksumValue))), metadata)
+      _ = PreStaged.write(preStaged, metadata)
       _ = maybeProvenance.foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
       _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
