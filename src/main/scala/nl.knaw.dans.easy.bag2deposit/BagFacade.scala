@@ -79,10 +79,7 @@ object BagFacade {
     Files.walkFileTree(bag.getRootDir.resolve(payloadEntries), visitor)
     mergeManifests(payloadManifests, map)
 
-    val fileToChecksumMap = payloadManifests.asScala
-      .find(m => m.getAlgorithm == StandardSupportedAlgorithms.SHA1)
-      .map(_.getFileToChecksumMap)
-      .getOrElse(throw new Exception("no SHA1 manifest in ${bag.getRootDir}"))
+    val fileToChecksumMap = sha1Manifest(payloadManifests)
     val duplicateShasInManifest = fileToChecksumMap.values().asScala
       .groupBy(identity)
       .collect { case (x, List(_, _, _*)) => x }
@@ -97,6 +94,13 @@ object BagFacade {
       path.delete()
       fileToChecksumMap.remove(path)
     }
+  }
+
+  def sha1Manifest(payloadManifests: util.Set[domain.Manifest]): util.Map[Path, String] = {
+    payloadManifests.asScala
+      .find(m => m.getAlgorithm == StandardSupportedAlgorithms.SHA1)
+      .map(_.getFileToChecksumMap)
+      .getOrElse(throw new Exception("no SHA1 manifest in ${bag.getRootDir}"))
   }
 
   /** Recalculates the checksums for changed metadata files (and payload manifests) for all present algorithms */
