@@ -82,13 +82,14 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
-    val changedMetadata = Seq(
+    val changedMetadata = Seq( // TODO error prone optimisation, update complete tag-manifest
       "bag-info.txt",
       "metadata/amd.xml",
       "metadata/emd.xml",
       "metadata/files.xml",
       "metadata/dataset.xml",
       "metadata/provenance.xml",
+      "metadata/pre-staged.csv",
     ).map(Paths.get(_))
     val bagInfoKeysToRemove = Seq(
       BagFacade.EASY_USER_ACCOUNT_KEY,
@@ -119,13 +120,13 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
         "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
       ))
       preStaged <- configuration.preStagedProvider.get(bagInfo)
+      shaToPath = sha1Manifest(bag.getPayLoadManifests).asScala.map {case (path, sha) => sha -> path}.toMap
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = depositProps.setProperty("depositor.userId", (amdOut \ "depositorId").text)
       // so far collecting changes
       _ = depositProps.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = amdFile.writeText(amdOut.serialize)
-      shaToPath = sha1Manifest(bag.getPayLoadManifests).asScala.map {case (path, sha) => sha -> path}.toMap
       _ = PreStaged.write(preStaged.map(r => r.copy(path = shaToPath(r.checksumValue))), metadata)
       _ = maybeProvenance.foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
       _ = trace("updating metadata")
