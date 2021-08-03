@@ -73,12 +73,12 @@ class PreStagedSpec extends AnyFlatSpec with Matchers with FileSystemSupport wit
       |  }
       |]""".stripMargin
   private val sampleObject = new PreStaged(
-    Paths.get("some/path/to/something.txt"),
-    0,
-    "text/plain",
-    "sha1",
-    "blabla",
-    "123",
+    path = Paths.get("some/path/to/something.txt"),
+    fileSize = 0,
+    mimeType = "text/plain",
+    checksumType = "sha1",
+    checksumValue = "blabla",
+    storageId = "123",
   )
   private val expectedCsv =
     """path,checksum,storageId
@@ -87,7 +87,8 @@ class PreStagedSpec extends AnyFlatSpec with Matchers with FileSystemSupport wit
 
   "provider.get" should "return a seq" in {
     val mockedProvider = mock[PreStagedProvider]
-    (mockedProvider.execute(_: String)) expects * returning HttpResponse(sampleJson, 200, Map.empty)
+    (mockedProvider.execute(_: String)) expects "/datasets/:persistentId/seq/1/basic-file-metas?persistentId=doi:some-doi" returning
+      HttpResponse(sampleJson, 200, Map.empty)
     delegatingPreStagedProvider(mockedProvider).get("some-doi") shouldBe Success(Seq(sampleObject))
   }
 
