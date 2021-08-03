@@ -15,15 +15,16 @@
  */
 package nl.knaw.dans.easy.bag2deposit
 
-import nl.knaw.dans.easy.bag2deposit.Fixture.FileSystemSupport
+import nl.knaw.dans.easy.bag2deposit.Fixture.{ FileSystemSupport, PreStagedSupport }
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import scalaj.http.HttpResponse
 
 import java.nio.file.Paths
 import scala.util.Success
 
-class PreStagedSpec extends AnyFlatSpec with Matchers with FileSystemSupport {
-  private val sampleJson: String =
+class PreStagedSpec extends AnyFlatSpec with Matchers with FileSystemSupport with PreStagedSupport {
+  val sampleJson: String =
     """[
       |  {
       |    "label": "stringABC",
@@ -84,8 +85,10 @@ class PreStagedSpec extends AnyFlatSpec with Matchers with FileSystemSupport {
       |some/path/to/something.txt,blabla,123
       |""".stripMargin
 
-  "apply" should "parse json" in {
-    PreStaged(sampleJson) shouldBe Success(Seq(sampleObject))
+  "provider.get" should "return a seq" in {
+    val mockedProvider = mock[PreStagedProvider]
+    (mockedProvider.execute(_: String)) expects * returning HttpResponse(sampleJson, 200, Map.empty)
+    delegatingPreStagedProvider(mockedProvider).get("some-doi") shouldBe Success(Seq(sampleObject))
   }
 
   "write" should "create csv" in {

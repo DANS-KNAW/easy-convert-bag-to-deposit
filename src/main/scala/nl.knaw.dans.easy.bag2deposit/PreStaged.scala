@@ -74,14 +74,8 @@ object PreStaged {
   }
 }
 case class PreStagedProvider(migrationInfoUri: URI) {
-  def get(bagInfo: BagInfo, seqNr: Int = 1): Try[Seq[PreStaged]] = {
-    val maybeDoi = for {
-      _ <- bagInfo.versionOf
-      pids <- bagInfo.basePids
-    } yield pids.doi
-    maybeDoi.map(doi =>
-      find(s"/datasets/:persistentId/seq/$seqNr/basic-file-metas?persistentId=doi:$doi")
-    ).getOrElse(Success("[]")) // empty json
+  def get(doi: String, seqNr: Int = 1): Try[Seq[PreStaged]] = {
+    find(s"/datasets/:persistentId/seq/$seqNr/basic-file-metas?persistentId=doi:$doi")
       .flatMap(PreStaged(_))
   }
 
