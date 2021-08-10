@@ -30,7 +30,6 @@ import scala.util.{ Failure, Success, Try }
  * @param storageId as returned from the migration-info-service
  */
 case class PreStaged(path: Path,
-                     fileSize: Double,
                      mimeType: String,
                      checksumType: String,
                      checksumValue: String,
@@ -54,21 +53,22 @@ object PreStaged {
   }
 
   private case class CheckSum(`@type`: String, `@value`: String)
-  private case class DataFile(storageIdentifier: String, fileName: String, mimeType: String, checksum: CheckSum, fileSize: Double)
-  private case class MigrationInfo(label: String, directoryLabel: String, datasetSequenceNumber: String, dataFile: DataFile)
+  private case class PrestagedFile(storageIdentifier: String, fileName: String, mimeType: String, checksum: CheckSum)
+  private case class MigrationInfo(label: String, directoryLabel: Option[String], versionSequenceNumber: String, prestagedFile: PrestagedFile)
   private implicit val jsonFormats: Formats = new DefaultFormats {}
 
   def apply(json: String): Try[List[PreStaged]] = Try {
-    parse(json, useBigDecimalForDouble = true)
+    val migrationInfoes = parse(json, useBigDecimalForDouble = true)
       .extract[List[MigrationInfo]]
+    val preStagedFiles = migrationInfoes
       .map(mi => new PreStaged(
-        Paths.get(s"${ mi.directoryLabel }/${ mi.dataFile.fileName }"),
-        mi.dataFile.fileSize,
-        mi.dataFile.mimeType,
-        mi.dataFile.checksum.`@type`,
-        mi.dataFile.checksum.`@value`,
-        mi.dataFile.storageIdentifier,
-      )).groupBy(_.checksumValue)
+        Paths.get(s"${ mi.directoryLabel.map(l => s"$l/").getOrElse("") }${ mi.prestagedFile.fileName }"),
+        mi.prestagedFile.mimeType,
+        mi.prestagedFile.checksum.`@type`,
+        mi.prestagedFile.checksum.`@value`,
+        mi.prestagedFile.storageIdentifier,
+      ))
+    preStagedFiles.groupBy(_.checksumValue)
       .filter(_._2.size == 1)
       .values.flatten.toList
   }

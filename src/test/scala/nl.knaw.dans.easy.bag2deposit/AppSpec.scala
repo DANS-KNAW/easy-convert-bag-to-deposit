@@ -175,8 +175,8 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
           |  {
           |    "label": "stringABC",
           |    "directoryLabel": "data",
-          |    "datasetSequenceNumber": "1",
-          |    "dataFile": {
+          |    "versionSequenceNumber": "1",
+          |    "prestagedFile": {
           |      "storageIdentifier": "123",
           |      "fileName": "foo.txt",
           |      "mimeType": "text/plain",
@@ -184,7 +184,6 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
           |        "@type": "sha1",
           |        "@value": "62cdb7020ff920e5aa642c3d4066950dd1f01f4d"
           |      },
-          |      "fileSize": 0
           |    }
           |  }
           |]""".stripMargin

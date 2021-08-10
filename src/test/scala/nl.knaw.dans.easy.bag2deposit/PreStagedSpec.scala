@@ -27,59 +27,43 @@ class PreStagedSpec extends AnyFlatSpec with Matchers with FileSystemSupport wit
   val sampleJson: String =
     """[
       |  {
-      |    "label": "stringABC",
-      |    "directoryLabel": "path/to",
-      |    "datasetSequenceNumber": "1",
-      |    "dataFile": {
-      |      "storageIdentifier": "123",
-      |      "fileName": "empty.txt",
-      |      "mimeType": "text/plain",
-      |      "checksum": {
-      |        "@type": "sha1",
-      |        "@value": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+      |    "label":"3-of-4.jpg",
+      |    "versionSequenceNumber":1,
+      |    "prestagedFile":{
+      |      "storageIdentifier":"file://17b2f03c4c8-c08fbd7eee88",
+      |      "fileName":"3-of-4.jpg",
+      |      "mimeType":"image/jpeg",
+      |      "checksum":{
+      |        "@type":"SHA-1",
+      |        "@value":"1776070b9338352a5be96847187c96b30987dfd5"
       |      },
-      |      "fileSize": 0
+      |      "categories":[
+      |
+      |      ],
+      |      "restrict":false,
+      |      "forceReplace":false
       |    }
       |  },
       |  {
-      |    "label": "stringABC",
-      |    "directoryLabel": "another/path/to",
-      |    "datasetSequenceNumber": "1",
-      |    "dataFile": {
-      |      "storageIdentifier": "123",
-      |      "fileName": "empty.txt",
-      |      "mimeType": "text/plain",
-      |      "checksum": {
-      |        "@type": "sha1",
-      |        "@value": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+      |    "label":"brick-to-overlap-choices.png",
+      |    "directoryLabel":"gf/diagrams",
+      |    "versionSequenceNumber":1,
+      |    "prestagedFile":{
+      |      "storageIdentifier":"file://17b2f042ee9-ed12da9cbf50",
+      |      "fileName":"brick-to-overlap-choices.png",
+      |      "mimeType":"image/png",
+      |      "checksum":{
+      |        "@type":"SHA-1",
+      |        "@value":"393432fcc68b5cd8b4b3bf15c5244c2631577694"
       |      },
-      |      "fileSize": 0
-      |    }
-      |  },
-      |  {
-      |    "label": "stringABC",
-      |    "directoryLabel": "some/path/to",
-      |    "datasetSequenceNumber": "1",
-      |    "dataFile": {
-      |      "storageIdentifier": "123",
-      |      "fileName": "something.txt",
-      |      "mimeType": "text/plain",
-      |      "checksum": {
-      |        "@type": "sha1",
-      |        "@value": "blabla"
-      |      },
-      |      "fileSize": 0
+      |      "categories":[
+      |
+      |      ],
+      |      "restrict":false,
+      |      "forceReplace":false
       |    }
       |  }
       |]""".stripMargin
-  private val sampleObject = new PreStaged(
-    path = Paths.get("some/path/to/something.txt"),
-    fileSize = 0,
-    mimeType = "text/plain",
-    checksumType = "sha1",
-    checksumValue = "blabla",
-    storageId = "123",
-  )
   private val expectedCsv =
     """path,checksum,storageId
       |some/path/to/something.txt,blabla,123
@@ -89,11 +73,34 @@ class PreStagedSpec extends AnyFlatSpec with Matchers with FileSystemSupport wit
     val mockedProvider = mock[PreStagedProvider]
     (mockedProvider.execute(_: String)) expects "/datasets/:persistentId/seq/1/basic-file-metas?persistentId=doi:some-doi" returning
       HttpResponse(sampleJson, 200, Map.empty)
-    delegatingPreStagedProvider(mockedProvider).get("some-doi") shouldBe Success(Seq(sampleObject))
+    val preStaged = Seq(
+      new PreStaged(
+        path = Paths.get("gf/diagrams/brick-to-overlap-choices.png"),
+        mimeType = "image/png",
+        checksumType = "SHA-1",
+        checksumValue = "393432fcc68b5cd8b4b3bf15c5244c2631577694",
+        storageId = "file://17b2f042ee9-ed12da9cbf50",
+      ),
+      new PreStaged(
+        path = Paths.get("3-of-4.jpg"),
+        mimeType = "image/jpeg",
+        checksumType = "SHA-1",
+        checksumValue = "1776070b9338352a5be96847187c96b30987dfd5",
+        storageId = "file://17b2f03c4c8-c08fbd7eee88",
+      ),
+    )
+    delegatingPreStagedProvider(mockedProvider).get("some-doi") shouldBe Success(preStaged)
   }
 
   "write" should "create csv" in {
-    PreStaged.write(Seq(sampleObject), testDir) shouldBe Success(())
+    val preStaged = new PreStaged(
+      path = Paths.get("some/path/to/something.txt"),
+      mimeType = "text/plain",
+      checksumType = "sha1",
+      checksumValue = "blabla",
+      storageId = "123",
+    )
+    PreStaged.write(Seq(preStaged), testDir) shouldBe Success(())
     (testDir / "pre-staged.csv").contentAsString shouldBe expectedCsv
   }
 }
