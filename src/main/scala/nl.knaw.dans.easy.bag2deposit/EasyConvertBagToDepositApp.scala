@@ -154,7 +154,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       logger.error(s"${ bagParentDir.name } failed: ${ e.getMessage }")
       Success(false)
     case e: Throwable =>
-      logger.error(s"${ bagParentDir.name } failed with not expected error: ${ e.getClass.getSimpleName } ${ e.getMessage }")
+      logger.error(s"${ bagParentDir.name } failed with not expected error: ${ e.getClass.getSimpleName } ${ e.getMessage }", e)
       Failure(e)
   }
 
