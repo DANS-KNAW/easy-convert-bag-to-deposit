@@ -122,8 +122,16 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       shaToPath = sha1Manifest(bag.getPayLoadManifests).asScala.map {case (path, sha) => sha -> path}.toMap
       doi = depositProps.getString("identifier.doi")
       _ = trace(bagInfo, doi)
-      preStaged1 <- configuration.preStagedProvider.get(doi) // paths from migration info
-      preStaged = preStaged1.map(r => r.copy(path = shaToPath(r.checksumValue))) // paths from manifest
+      migratedFiles <- configuration.preStagedProvider.get(doi) // paths from migration info
+      migratedPayloadFiles = migratedFiles.filterNot(_.path.toString.startsWith("easy-migration/")) // exclude metadata migrated as data for provenance
+      existingMigratedFiles = migratedPayloadFiles.filter(p => shaToPath.keySet.contains(p.checksumValue))
+      _ = debug(s"ignored for pre-staged.csv: ${migratedFiles.diff(migratedPayloadFiles)}")
+      _ = if(migratedPayloadFiles.size != existingMigratedFiles.size)
+            logger.warn(s"no longer found previously migrated files: ${migratedPayloadFiles.diff(existingMigratedFiles)}")
+      _ = trace(shaToPath)
+      _ = trace(existingMigratedFiles)
+      preStaged = existingMigratedFiles // resulting in paths from manifest
+        .map(r => r.copy(path = shaToPath(r.checksumValue)))
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = depositProps.setProperty("depositor.userId", (amdOut \ "depositorId").text)
       // so far collecting changes
