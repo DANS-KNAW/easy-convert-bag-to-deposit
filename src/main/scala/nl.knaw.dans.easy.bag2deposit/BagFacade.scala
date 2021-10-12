@@ -104,20 +104,13 @@ object BagFacade {
   }
 
   /** Recalculates the checksums for changed metadata files (and payload manifests) for all present algorithms */
-  def updateTagManifests(bag: Bag, changed: Seq[Path]): Try[Unit] = Try {
+  def updateTagManifests(bag: Bag): Try[Unit] = Try {
     val bagRoot = bag.getRootDir
+    (bagRoot / "tagmanifest-sha1.txt").delete()
     val tagManifests = bag.getTagManifests
     val algorithms = tagManifests.asScala.map(_.getAlgorithm).asJava
     val map = Hasher.createManifestToMessageDigestMap(algorithms)
-    val visitor = new CreateTagManifestsVistor(map, includeHiddenFiles) {
-      override def visitFile(path: Path, attrs: BasicFileAttributes): FileVisitResult = {
-        val relativePath = bagRoot.relativize(path)
-        if (relativePath.toString.startsWith("manifest-") ||
-          changed.contains(relativePath)
-        ) super.visitFile(path, attrs)
-        else FileVisitResult.CONTINUE
-      }
-    }
+    val visitor = new CreateTagManifestsVistor(map, includeHiddenFiles)
     Files.walkFileTree(bagRoot, visitor)
     mergeManifests(tagManifests, map)
   }

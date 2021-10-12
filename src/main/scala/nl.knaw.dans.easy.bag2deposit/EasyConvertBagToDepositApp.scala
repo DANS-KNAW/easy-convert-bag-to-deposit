@@ -82,15 +82,6 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
-    val changedMetadata = Seq( // TODO error prone optimisation, update complete tag-manifest
-      "bag-info.txt",
-      "metadata/amd.xml",
-      "metadata/emd.xml",
-      "metadata/files.xml",
-      "metadata/dataset.xml",
-      "metadata/provenance.xml",
-      "metadata/pre-staged.csv",
-    ).map(Paths.get(_))
     val bagInfoKeysToRemove = Seq(
       BagFacade.EASY_USER_ACCOUNT_KEY,
       BagInfo.baseUrnKey,
@@ -149,7 +140,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ = trace("writing payload manifests")
       _ <- BagFacade.writePayloadManifests(bag)
       _ = trace("updating tag manifest")
-      _ <- BagFacade.updateTagManifests(bag, changedMetadata)
+      _ <- BagFacade.updateTagManifests(bag)
       _ = trace("writing tagmanifests")
       _ <- BagFacade.writeTagManifests(bag)
       _ = maybeOutputDir.foreach(move(bagParentDir))
