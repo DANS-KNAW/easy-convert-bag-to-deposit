@@ -119,7 +119,8 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
         "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
         "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
       ))
-      shaToPath = sha1Manifest(bag.getPayLoadManifests).asScala.map {case (path, sha) => sha -> path}.toMap
+      shaToPath = sha1Manifest(bag.getPayLoadManifests).asScala
+        .map { case (path, sha) => sha -> bagDir.relativize(File(path)) }.toMap
       doi = depositProps.getString("identifier.doi")
       _ = trace(bagInfo, doi)
       migratedFiles <- configuration.preStagedProvider.get(doi) // paths from migration info
