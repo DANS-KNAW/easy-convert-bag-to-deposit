@@ -31,7 +31,7 @@ trait AppConfigSupport extends BagIndexSupport with FedoraProviderSupport with P
       ddmTransformer = new DdmTransformer(cfgFile),
       userTransformer = new UserTransformer(cfgFile),
       fedoraProvider = fedoraProvider,
-      preStagedProvider = preStagedProvider,
+      maybePreStagedProvider = Some(preStagedProvider),
     )
   }
 }

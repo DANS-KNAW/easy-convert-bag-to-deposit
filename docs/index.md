@@ -31,6 +31,8 @@ ARGUMENTS
                                                   uuid of the bag as directory name, and have one bag-dir each
          -o, --output-dir  <arg>                  Optional. Directory that will receive completed deposits with
                                                   atomic moves.
+         -p, --pre-staged                         Examine migration-info from dataverse to build pre-staged.csv and
+                                                  remove corresponding payload files from the bag
          -s, --source  <arg>                      The source of the bags
          -u, --uuid  <arg>                        directory with a bag. This directory MUST be a uuid.
          -h, --help                               Show help message

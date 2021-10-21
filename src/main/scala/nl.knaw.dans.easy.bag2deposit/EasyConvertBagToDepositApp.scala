@@ -79,6 +79,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     version = configuration.version
   )
   implicit val charset: Charset = Charset.forName("UTF-8")
+
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
@@ -147,21 +148,23 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
   }
 
   private def getPreStaged(bag: Bag, bagDir: File, doi: String): Try[Seq[PreStaged]] = {
-    val shaToPath = sha1Manifest(bag.getPayLoadManifests).asScala
-      .map { case (path, sha) => sha -> bagDir.relativize(File(path)) }.toMap
-    trace(doi)
-    for {
-      migratedFiles <- configuration.preStagedProvider.get(doi) // paths from migration info
-      migratedPayloadFiles = migratedFiles.filterNot(_.path.toString.startsWith("easy-migration/")) // exclude metadata migrated as data for provenance
-      existingMigratedFiles = migratedPayloadFiles.filter(p => shaToPath.keySet.contains(p.checksumValue))
-      _ = debug(s"ignored for pre-staged.csv: ${ migratedFiles.diff(migratedPayloadFiles) }")
-      _ = if (migratedPayloadFiles.size != existingMigratedFiles.size)
-            logger.warn(s"no longer found previously migrated files: ${ migratedPayloadFiles.diff(existingMigratedFiles) }")
-      _ = trace(shaToPath)
-      _ = trace(existingMigratedFiles)
-      preStaged = existingMigratedFiles // resulting in paths from manifest
-        .map(r => r.copy(path = shaToPath(r.checksumValue)))
-    } yield preStaged
+    configuration.maybePreStagedProvider.map { provider =>
+      val shaToPath = sha1Manifest(bag.getPayLoadManifests).asScala
+        .map { case (path, sha) => sha -> bagDir.relativize(File(path)) }.toMap
+      trace(doi)
+      for {
+        migratedFiles <- provider.get(doi) // paths from migration info
+        migratedPayloadFiles = migratedFiles.filterNot(_.path.toString.startsWith("easy-migration/")) // exclude metadata migrated as data for provenance
+        existingMigratedFiles = migratedPayloadFiles.filter(p => shaToPath.keySet.contains(p.checksumValue))
+        _ = debug(s"ignored for pre-staged.csv: ${ migratedFiles.diff(migratedPayloadFiles) }")
+        _ = if (migratedPayloadFiles.size != existingMigratedFiles.size)
+              logger.warn(s"no longer found previously migrated files: ${ migratedPayloadFiles.diff(existingMigratedFiles) }")
+        _ = trace(shaToPath)
+        _ = trace(existingMigratedFiles)
+        preStaged = existingMigratedFiles // resulting in paths from manifest
+          .map(r => r.copy(path = shaToPath(r.checksumValue)))
+      } yield preStaged
+    }.getOrElse(Success(Seq.empty))
   }
 
   private def getAmdXml(datasetId: String, amdFile: File): Try[Node] = {
