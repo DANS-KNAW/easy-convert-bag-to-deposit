@@ -121,10 +121,10 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = depositProps.setProperty("depositor.userId", (amdOut \ "depositorId").text)
       _ = depositProps.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
-      _ = ddmFile.writeText(ddmOut.serialize)
       _ = amdFile.writeText(amdOut.serialize)
       _ = maybeProvenance.foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
       _ = copyMigrationFiles(metadata, migration, fromVault)
+      _ = ddmFile.writeText(ddmOut.serialize)
       _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
       _ = trace("updating payload manifest")
@@ -162,7 +162,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
 
   private def copyMigrationFiles(metadata: File, migration: File, fromVault: Boolean): Try[Unit] = Try {
     val filesXmlFile = (metadata / "files.xml").toString()
-    val migrationFiles = Seq("provenance.xml", "dataset.xml", "files.xml", "emd.xml")
+    val migrationFiles = {if (fromVault) Seq("provenance.xml", "dataset.xml", "files.xml") else Seq("provenance.xml", "dataset.xml", "files.xml", "emd.xml")}
     val migrationDir = migration.createDirectories()
     migrationFiles.foreach(name => (metadata / name).copyTo(migrationDir / name))
     addToXmlFile(filesXmlFile, migrationFiles)

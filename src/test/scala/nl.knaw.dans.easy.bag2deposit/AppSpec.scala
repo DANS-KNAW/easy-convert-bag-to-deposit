@@ -163,10 +163,50 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     normalized(XML.loadFile(amdXml.toJava)) shouldBe normalized(getAmdResult)
   }
 
-  it should "add the new data/easy-migration files into metadata/files.xml" in {
+  it should "not add the emd to data/easy-migration in VAULT datasets" in {
     val delegate = mock[MockBagIndex]
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
       new HttpResponse[String]("123", 200, Map.empty)
+    val appConfig = testConfig(delegatingBagIndex(delegate), null)
+    val originalFilesXml =
+      <files xmlns:dcterms="http://purl.org/dc/terms/" xmlns="http://easy.dans.knaw.nl/schemas/bag/metadata/files/">
+        <file filepath="data/leeg.txt">
+          <dcterms:format>text/xml</dcterms:format>
+        </file>
+      </files>
+    val expectedFilesXml =
+      <files xmlns:dcterms="http://purl.org/dc/terms/" xmlns="http://easy.dans.knaw.nl/schemas/bag/metadata/files/">
+
+        <file filepath="data/leeg.txt">
+          <dcterms:format>text/xml</dcterms:format>
+        </file>
+        <file filepath="data/easy-migration/provenance.xml">
+          <dcterms:format>text/xml</dcterms:format>
+        </file>
+        <file filepath="data/easy-migration/dataset.xml">
+          <dcterms:format>text/xml</dcterms:format>
+        </file>
+        <file filepath="data/easy-migration/files.xml">
+          <dcterms:format>text/xml</dcterms:format>
+        </file>
+      </files>
+    (resourceBags / validUUID).copyTo(testDir / "exports" / validUUID)
+    (testDir / "exports" / validUUID / "bag-revision-1" / "metadata" / "files.xml")
+      .writeText(originalFilesXml.serialize)
+
+    new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
+      (testDir / "exports").children,
+      maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
+      DepositPropertiesFactory(appConfig, DOI, VAULT)
+    ) shouldBe Success("No fatal errors")
+
+    val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
+    val filesXml = movedBag / "metadata" / "files.xml"
+    normalized(XML.loadFile(filesXml.toJava)) shouldBe normalized(expectedFilesXml)
+  }
+
+  it should "add the new data/easy-migration files into metadata/files.xml for FEDORA datasets" in {
+    val delegate = mock[MockBagIndex]
     val appConfig = testConfig(delegatingBagIndex(delegate), null)
     val originalFilesXml =
       <files xmlns:dcterms="http://purl.org/dc/terms/" xmlns="http://easy.dans.knaw.nl/schemas/bag/metadata/files/">
@@ -200,7 +240,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
       (testDir / "exports").children,
       maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
-      DepositPropertiesFactory(appConfig, DOI, VAULT)
+      DepositPropertiesFactory(appConfig, DOI, FEDORA)
     ) shouldBe Success("No fatal errors")
 
     val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
@@ -210,8 +250,6 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
 
   it should "produce proper prefix in new files.xml elements AND apply preferred user ID" in {
     val delegate = mock[MockBagIndex]
-    (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
-      new HttpResponse[String]("123", 200, Map.empty)
     val appConfig = testConfig(delegatingBagIndex(delegate), null)
     val originalFilesXml =
       <files xmlns:dc="http://purl.org/dc/terms/" xmlns="http://easy.dans.knaw.nl/schemas/bag/metadata/files/">
@@ -250,7 +288,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
       (testDir / "exports").children,
       maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
-      DepositPropertiesFactory(appConfig, DOI, VAULT)
+      DepositPropertiesFactory(appConfig, DOI, FEDORA)
     ) shouldBe Success("No fatal errors")
 
     val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
