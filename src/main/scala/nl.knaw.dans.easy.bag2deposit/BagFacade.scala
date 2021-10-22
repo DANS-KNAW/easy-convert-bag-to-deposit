@@ -16,10 +16,11 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
+import better.files.File.apply
 import gov.loc.repository.bagit.creator.{ CreatePayloadManifestsVistor, CreateTagManifestsVistor }
 import gov.loc.repository.bagit.domain
 import gov.loc.repository.bagit.domain.Bag
-import gov.loc.repository.bagit.hash.Hasher
+import gov.loc.repository.bagit.hash.{ Hasher, StandardSupportedAlgorithms }
 import gov.loc.repository.bagit.reader.BagReader
 import gov.loc.repository.bagit.writer.{ ManifestWriter, MetadataWriter }
 
@@ -60,9 +61,10 @@ object BagFacade {
    *
    * @param bag            changed bag
    * @param payloadEntries directory or file relatieve to the root of the bag
+   * @param preStageds     files to be removed from the bag and the payload manifests
    * @return
    */
-  def updatePayloadManifests(bag: Bag, payloadEntries: Path): Try[Unit] = Try {
+  def updatePayloadManifests(bag: Bag, payloadEntries: Path, preStageds: Seq[PreStaged]): Try[Unit] = Try {
     trace(bag.getRootDir)
     if (!payloadEntries.toString.startsWith("data/")) {
       throw new IllegalArgumentException(s"path must start with data, found $payloadEntries")
@@ -76,23 +78,39 @@ object BagFacade {
     val visitor = new CreatePayloadManifestsVistor(map, includeHiddenFiles)
     Files.walkFileTree(bag.getRootDir.resolve(payloadEntries), visitor)
     mergeManifests(payloadManifests, map)
+
+    val fileToChecksumMap = sha1Manifest(payloadManifests)
+    val duplicateShasInManifest = fileToChecksumMap.values().asScala
+      .groupBy(identity)
+      .collect { case (x, List(_, _, _*)) => x }
+      .toList
+    val preStagedShas = preStageds
+      .withFilter(p => !duplicateShasInManifest.contains(p.checksumValue))
+      .map(p => p.checksumValue)
+    val preStagedPaths = fileToChecksumMap.asScala
+      .withFilter { case (_, checksum) => preStagedShas.contains(checksum) }
+      .map { case (path, _) => path }
+    preStagedPaths.foreach { path =>
+      path.delete()
+      fileToChecksumMap.remove(path)
+    }
+  }
+
+  def sha1Manifest(payloadManifests: util.Set[domain.Manifest]): util.Map[Path, String] = {
+    payloadManifests.asScala
+      .find(m => m.getAlgorithm == StandardSupportedAlgorithms.SHA1)
+      .map(_.getFileToChecksumMap)
+      .getOrElse(throw new Exception("no SHA1 manifest in ${bag.getRootDir}"))
   }
 
   /** Recalculates the checksums for changed metadata files (and payload manifests) for all present algorithms */
-  def updateTagManifests(bag: Bag, changed: Seq[Path]): Try[Unit] = Try {
+  def updateTagManifests(bag: Bag): Try[Unit] = Try {
     val bagRoot = bag.getRootDir
+    (bagRoot / "tagmanifest-sha1.txt").delete()
     val tagManifests = bag.getTagManifests
     val algorithms = tagManifests.asScala.map(_.getAlgorithm).asJava
     val map = Hasher.createManifestToMessageDigestMap(algorithms)
-    val visitor = new CreateTagManifestsVistor(map, includeHiddenFiles) {
-      override def visitFile(path: Path, attrs: BasicFileAttributes): FileVisitResult = {
-        val relativePath = bagRoot.relativize(path)
-        if (relativePath.toString.startsWith("manifest-") ||
-          changed.contains(relativePath)
-        ) super.visitFile(path, attrs)
-        else FileVisitResult.CONTINUE
-      }
-    }
+    val visitor = new CreateTagManifestsVistor(map, includeHiddenFiles)
     Files.walkFileTree(bagRoot, visitor)
     mergeManifests(tagManifests, map)
   }

@@ -17,16 +17,18 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import better.files.File.CopyOptions
+import gov.loc.repository.bagit.domain.Bag
+import nl.knaw.dans.easy.bag2deposit.BagFacade.sha1Manifest
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
 import nl.knaw.dans.easy.bag2deposit.FoXml.getAmd
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.compare
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.apache.commons.configuration.PropertiesConfiguration
 
 import java.io.{ FileNotFoundException, IOException }
 import java.nio.charset.Charset
 import java.nio.file.Paths
+import scala.collection.JavaConverters.mapAsScalaMapConverter
 import scala.collection.mutable.ListBuffer
 import scala.util.{ Failure, Success, Try }
 import scala.xml._
@@ -81,14 +83,6 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
                       (bagParentDir: File): Try[Boolean] = {
     logger.debug(s"creating application.properties for $bagParentDir")
-    val changedMetadata = Seq(
-      "bag-info.txt",
-      "metadata/amd.xml", 
-      "metadata/emd.xml", 
-      "metadata/files.xml",
-      "metadata/dataset.xml",
-      "metadata/provenance.xml",
-    ).map(Paths.get(_))
     val bagInfoKeysToRemove = Seq(
       BagFacade.EASY_USER_ACCOUNT_KEY,
       BagInfo.baseUrnKey,
@@ -105,7 +99,6 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       ddmFile = metadata / "dataset.xml"
       ddmIn <- loadXml(ddmFile)
       depositProps <- depositPropertiesFactory.create(bagInfo, ddmIn)
-      fromVault = depositProps.getString("deposit.origin") == "VAULT"
       datasetId = depositProps.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
       _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
@@ -115,24 +108,28 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       amdIn <- getAmdXml(datasetId, amdFile)
       amdOut <- configuration.userTransformer.transform(amdIn)
       maybeProvenance = provenance.collectChangesInXmls(Map(
-      "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
-      "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
+        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
+        "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
       ))
+      _ = trace(bagInfo)
+      preStaged <- getPreStaged(bag, bagDir, depositProps.getString("identifier.doi"))
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = depositProps.setProperty("depositor.userId", (amdOut \ "depositorId").text)
+      // so far collecting changes
       _ = depositProps.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = amdFile.writeText(amdOut.serialize)
+      _ = if (preStaged.nonEmpty) PreStaged.write(preStaged, metadata)
       _ = maybeProvenance.foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
-      _ = copyMigrationFiles(metadata, migration, fromVault)
       _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
       _ = trace("updating payload manifest")
-      _ <- BagFacade.updatePayloadManifests(bag, Paths.get("data/easy-migration"))
+      _ = copyMigrationFiles(metadata, migration)
+      _ <- BagFacade.updatePayloadManifests(bag, Paths.get("data/easy-migration"), preStaged)
       _ = trace("writing payload manifests")
       _ <- BagFacade.writePayloadManifests(bag)
       _ = trace("updating tag manifest")
-      _ <- BagFacade.updateTagManifests(bag, changedMetadata)
+      _ <- BagFacade.updateTagManifests(bag)
       _ = trace("writing tagmanifests")
       _ <- BagFacade.writeTagManifests(bag)
       _ = maybeOutputDir.foreach(move(bagParentDir))
@@ -146,8 +143,28 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       logger.error(s"${ bagParentDir.name } failed: ${ e.getMessage }")
       Success(false)
     case e: Throwable =>
-      logger.error(s"${ bagParentDir.name } failed with not expected error: ${ e.getClass.getSimpleName } ${ e.getMessage }")
+      logger.error(s"${ bagParentDir.name } failed with not expected error: ${ e.getClass.getSimpleName } ${ e.getMessage }", e)
       Failure(e)
+  }
+
+  private def getPreStaged(bag: Bag, bagDir: File, doi: String): Try[Seq[PreStaged]] = {
+    configuration.maybePreStagedProvider.map { provider =>
+      val shaToPath = sha1Manifest(bag.getPayLoadManifests).asScala
+        .map { case (path, sha) => sha -> bagDir.relativize(File(path)) }.toMap
+      trace(doi)
+      for {
+        migratedFiles <- provider.get(doi) // paths from migration info
+        migratedPayloadFiles = migratedFiles.filterNot(_.path.toString.startsWith("easy-migration/")) // exclude metadata migrated as data for provenance
+        existingMigratedFiles = migratedPayloadFiles.filter(p => shaToPath.keySet.contains(p.checksumValue))
+        _ = debug(s"ignored for pre-staged.csv: ${ migratedFiles.diff(migratedPayloadFiles) }")
+        _ = if (migratedPayloadFiles.size != existingMigratedFiles.size)
+              logger.warn(s"no longer found previously migrated files: ${ migratedPayloadFiles.diff(existingMigratedFiles) }")
+        _ = trace(shaToPath)
+        _ = trace(existingMigratedFiles)
+        preStaged = existingMigratedFiles // resulting in paths from manifest
+          .map(r => r.copy(path = shaToPath(r.checksumValue)))
+      } yield preStaged
+    }.getOrElse(Success(Seq.empty))
   }
 
   private def getAmdXml(datasetId: String, amdFile: File): Try[Node] = {
@@ -160,7 +177,8 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     }
   }
 
-  private def copyMigrationFiles(metadata: File, migration: File, fromVault: Boolean): Try[Unit] = Try {
+  private def copyMigrationFiles(metadata: File, migration: File): Try[Unit] = Try {
+    trace(metadata, migration)
     val filesXmlFile = (metadata / "files.xml").toString()
     val migrationFiles = Seq("provenance.xml", "dataset.xml", "files.xml", "emd.xml")
     val migrationDir = migration.createDirectories()

@@ -25,7 +25,6 @@ import org.apache.commons.configuration.PropertiesConfiguration
 
 import java.net.URI
 import scala.language.reflectiveCalls
-import scala.xml.Elem
 
 object Command extends App with DebugEnhancedLogging {
   type FeedBackMessage = String
@@ -54,7 +53,6 @@ object Command extends App with DebugEnhancedLogging {
       .getOrElse(Iterator.empty))
   val fedoraProvider = FedoraProvider(properties)
 
-
   private val collectionMap = fedoraProvider
     .map(getCollectionsMap(cfgPath))
     .getOrElse(Map.empty)
@@ -66,6 +64,9 @@ object Command extends App with DebugEnhancedLogging {
     ddmTransformer = new DdmTransformer(cfgPath, collectionMap),
     userTransformer = new UserTransformer(cfgPath),
     fedoraProvider = fedoraProvider,
+    maybePreStagedProvider = if (commandLine.preStaged())
+                          Some(PreStagedProvider(new URI(properties.getString("migration-info.url"))))
+                             else None
   )
   private val propertiesFactory = DepositPropertiesFactory(
     configuration,
