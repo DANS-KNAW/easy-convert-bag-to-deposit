@@ -121,10 +121,10 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = depositProps.setProperty("depositor.userId", (amdOut \ "depositorId").text)
       _ = depositProps.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
+      _ = ddmFile.writeText(ddmOut.serialize)
       _ = amdFile.writeText(amdOut.serialize)
       _ = maybeProvenance.foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
       _ = copyMigrationFiles(metadata, migration, fromVault)
-      _ = ddmFile.writeText(ddmOut.serialize)
       _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
       _ = trace("updating payload manifest")
