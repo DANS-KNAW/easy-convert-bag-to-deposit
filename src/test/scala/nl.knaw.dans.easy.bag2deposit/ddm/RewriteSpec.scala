@@ -147,6 +147,33 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       Failure(InvalidBagException("temporal rabarbera not found; subject barbapappa not found"))
   }
 
+  "relationRewriteRule" should "convert"  in {
+    //
+    val ddmIn = ddm(title="relation test", audience="D37000", dcmi =
+      <ddm:dcmiMetadata>
+        <ddm:references
+          href="https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:48786">
+          Plangebied Harinxmaland, gemeente Sneek. Archeologisch vooronderzoek: een inventariserend veldonderzoek (waarderend onderzoek)
+        </ddm:references>
+      </ddm:dcmiMetadata>
+    )
+    val expectedDDM = ddm(title = "relation test", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <ddm:references
+            scheme="id-type:DOI"
+            href="https://doi.org/10.17026/dans-zwe-6qtu">
+            Plangebied Harinxmaland, gemeente Sneek. Archeologisch vooronderzoek: een inventariserend veldonderzoek (waarderend onderzoek)
+          </ddm:references>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+        </ddm:dcmiMetadata>
+    )
+    val datasetId = "easy-dataset:123"
+    ddmTransformer.transform(ddmIn, datasetId).map(normalized)
+      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
+
+    assume(schemaIsAvailable)
+    validate(expectedDDM) shouldBe Success(())
+  }
   "languageRewriteRule" should "convert" in {
     val ddmIn = ddm(title = "language test", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>

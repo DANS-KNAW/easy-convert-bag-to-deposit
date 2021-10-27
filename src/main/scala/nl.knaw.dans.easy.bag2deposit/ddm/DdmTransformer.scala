@@ -30,6 +30,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty
   trace(())
   val reportRewriteRule: ReportRewriteRule = ReportRewriteRule(cfgDir)
   private val acquisitionRewriteRule = AcquisitionRewriteRule(cfgDir)
+  private val relationRewriteRule = RelationRewriteRule(cfgDir)
   private val languageRewriteRule = LanguageRewriteRule(cfgDir / "languages.csv")
   private val profileTitleRuleTransformer = new RuleTransformer(
     acquisitionRewriteRule,
@@ -43,6 +44,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty
     AbrRewriteRule.subjectRewriteRule(cfgDir),
     DropEmptyRewriteRule,
     languageRewriteRule,
+    relationRewriteRule,
   )
 
   private def standardRuleTransformer(newDcmiNodes: NodeSeq, profileTitle: String) = new RuleTransformer(
