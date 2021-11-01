@@ -57,7 +57,7 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
     else {
       val easyHref = n.attribute("href").get.head.text
       val easyDataset = easyHref.split('/').last
-      val doiHref = datasetDoiMap.get(easyDataset).getOrElse(easyHref) //TODO warning
+      val doiHref = datasetDoiMap.getOrElse(easyDataset, easyHref) //TODO warning
       n.asInstanceOf[Elem] % Attribute(null, "href", doiHref, Attribute(null, "scheme", "id-type:DOI", Null))
     }
   }
