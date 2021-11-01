@@ -147,7 +147,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       Failure(InvalidBagException("temporal rabarbera not found; subject barbapappa not found"))
   }
 
-  "relationRewriteRule" should "convert"  in {
+  "relationRewriteRule" should "convert fedora-id to DOI"  in {
     //
     val ddmIn = ddm(title="relation test", audience="D37000", dcmi =
       <ddm:dcmiMetadata>
