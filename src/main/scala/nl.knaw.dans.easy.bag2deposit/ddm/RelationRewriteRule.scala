@@ -25,8 +25,8 @@ import scala.xml.transform.RewriteRule
 
 case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhancedLogging {
 
-  val easyRef = "https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:"
-  val relations = List(
+  private val easyRef = "https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:"
+  private val relations = List(
     "relation",
     "conformsTo",
     "hasFormat",
