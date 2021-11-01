@@ -43,7 +43,7 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
     "requires"
   )
 
-  def isEasyDatasetReference(node: Node) = {
+  def isEasyDatasetReference(node: Node): Boolean = {
     val attr = node.attributes
     node.prefix ==  "ddm" && relations.contains(node.label) &&
       (
