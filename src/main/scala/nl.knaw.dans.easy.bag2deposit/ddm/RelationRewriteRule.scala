@@ -62,8 +62,8 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
     }
   }
 
-  val nrOfHeaderLines = 1
-  val csvFormat = CSVFormat.RFC4180
+  private val nrOfHeaderLines = 1
+  private val csvFormat = CSVFormat.RFC4180
       .withHeader("dataset", "doi")
       .withDelimiter(',')
       .withRecordSeparator('\n')
