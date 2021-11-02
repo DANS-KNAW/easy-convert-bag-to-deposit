@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ DdmSupport, SchemaSupport, XmlSupport }
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
-import nl.knaw.dans.easy.bag2deposit.{ UserTransformer, BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, parseCsv }
+import nl.knaw.dans.easy.bag2deposit.{ BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, UserTransformer, parseCsv }
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -147,9 +147,9 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       Failure(InvalidBagException("temporal rabarbera not found; subject barbapappa not found"))
   }
 
-  "relationRewriteRule" should "convert fedora-id to DOI"  in {
+  "relationRewriteRule" should "convert fedora-id to DOI" in {
     //
-    val ddmIn = ddm(title="relation test", audience="D37000", dcmi =
+    val ddmIn = ddm(title = "relation test", audience = "D37000", dcmi =
       <ddm:dcmiMetadata>
         <ddm:references
           href="https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:48786">
@@ -193,6 +193,29 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())
   }
+  it should "drop empty relation" in {
+    val ddmIn = ddm(title = "blabla", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <dct:isFormatOf scheme="blabla"></dct:isFormatOf>
+          <ddm:isRequiredBy href="http://does.not.exist.dans.knaw.nl"></ddm:isRequiredBy>
+        </ddm:dcmiMetadata>
+    )
+    val transformer = new DdmTransformer(
+      cfgDir,
+      Map.empty,
+    )
+
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+      Success(normalized(ddm(
+        title = "blabla",
+        audience = "D37000",
+        dcmi = <ddm:dcmiMetadata>
+                 <ddm:isRequiredBy href="http://does.not.exist.dans.knaw.nl">http://does.not.exist.dans.knaw.nl</ddm:isRequiredBy>
+                 <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+               </ddm:dcmiMetadata>,
+      )))
+  }
+
   "languageRewriteRule" should "convert" in {
     val ddmIn = ddm(title = "language test", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
@@ -566,27 +589,5 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     val strings = (ddmOut \\ "identifier").map(_.text)
     archisIds.size shouldNot be(strings.size)
     strings.filter(_.matches(".*[^0-9].*")) shouldBe Seq("10HZ-18 (Objectcode Archis)", "36141 (ARCHIS rapportnummer)", " 405800 (Archis nummers)", "http://livelink.archis.nl/Livelink/livelink.exe?func=ll&objId=4835986&objAction=browse (URI)", "66510 (Archisnummer)", "ARCHIS2: 63389", "Onderzoeksnaam Archis: 4042 Den Haag", "Objectnummer Archis: 1121031", "Archis2 nummer 65495", "3736 (RAAP) (Archis art. 41)", "6663 (ADC) (Archis art. 41)", "2866 (RAAP) (Archis art. 41)", "7104 (ADC) (Archis art. 41)", "16065 (BeVdG) (Archis art. 41)", "Archis2: CIS-code: 25499 (Tjeppenboer) en 25500 (Hilaard)")
-  }
-  it should "drop empty relation" in {
-    val ddmIn = ddm(title = "blabla", audience = "D37000", dcmi =
-        <ddm:dcmiMetadata>
-          <dct:isFormatOf scheme="blabla"></dct:isFormatOf>
-          <ddm:isRequiredBy href="http://does.not.exist.dans.knaw.nl"></ddm:isRequiredBy>
-        </ddm:dcmiMetadata>
-    )
-    val transformer = new DdmTransformer(
-      cfgDir,
-      Map.empty,
-    )
-
-    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
-      Success(normalized(ddm(
-        title = "blabla",
-        audience = "D37000",
-        dcmi = <ddm:dcmiMetadata>
-                 <ddm:isRequiredBy href="http://does.not.exist.dans.knaw.nl">http://does.not.exist.dans.knaw.nl</ddm:isRequiredBy>
-                 <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
-               </ddm:dcmiMetadata>,
-      )))
   }
 }
