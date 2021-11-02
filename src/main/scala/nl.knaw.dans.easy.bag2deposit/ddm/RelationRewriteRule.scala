@@ -50,23 +50,30 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
       val txt = node.text.trim
       val href = node.attribute("href").toSeq.flatten.text.trim
       lazy val otherAttributes = node.attributes.remove("href").remove("scheme")
+
+      def doiAttributes(easyRef: String) = {
+        Attribute(null, "scheme", "id-type:DOI",
+          Attribute(null, "href", toDoi(easyRef), otherAttributes)
+        )
+      }
+
       (node, href.startsWith(easyRef), href.isEmpty, txt.startsWith(easyRef), txt.isEmpty) match {
         case (_, _, true, _, true) =>
           Seq.empty
         case (elem, false, false, false, false) =>
           elem
         case (elem: Elem, _, true, false, false) if txt.matches("https?://.*") =>
-          elem.copy(attributes = Attribute(null, "href", toDoi(txt), otherAttributes))
+          elem.copy(attributes = Attribute(null, "href", txt, otherAttributes))
         case (elem: Elem, true, _, false, false) =>
-          elem.copy(attributes = doiAttributes(href, otherAttributes))
+          elem.copy(attributes = doiAttributes(href))
         case (elem: Elem, _, true, true, _) =>
           elem.copy(
-            attributes = doiAttributes(txt, otherAttributes),
+            attributes = doiAttributes(txt),
             child = Text(toDoi(txt))
           )
         case (elem: Elem, true,_, _, true) =>
           elem.copy(
-            attributes = doiAttributes(href, otherAttributes),
+            attributes = doiAttributes(href),
             child = Text(toDoi(href))
           )
         case (elem: Elem, false, false, _, true) =>
@@ -74,12 +81,6 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
         case _ => node
       }
     }
-  }
-
-  private def doiAttributes(href: String, next: MetaData) = {
-    Attribute(null, "scheme", "id-type:DOI",
-      Attribute(null, "href", toDoi(href), next)
-    )
   }
 
   private def toDoi(value: String) = {
