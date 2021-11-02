@@ -155,11 +155,11 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           href="https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:48786">
           Plangebied Harinxmaland, gemeente Sneek. Archeologisch vooronderzoek: een inventariserend veldonderzoek (waarderend onderzoek)
         </ddm:references>
-        <ddm:references
+        <ddm:isReferencedBy
           href="https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:56023">
-        </ddm:references>
+        </ddm:isReferencedBy>
         <ddm:references>https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:48515</ddm:references>
-        <ddm:references>https://blablabla</ddm:references>
+        <ddm:relation>https://blablabla</ddm:relation>
       </ddm:dcmiMetadata>
     )
     val expectedDDM = ddm(title = "relation test", audience = "D37000", dcmi =
@@ -169,20 +169,20 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
             href="https://doi.org/10.17026/dans-zwe-6qtu">
             Plangebied Harinxmaland, gemeente Sneek. Archeologisch vooronderzoek: een inventariserend veldonderzoek (waarderend onderzoek)
           </ddm:references>
-          <ddm:references
+          <ddm:isReferencedBy
             scheme="id-type:DOI"
             href="https://doi.org/10.17026/dans-267-2y8q">
             https://doi.org/10.17026/dans-267-2y8q
-          </ddm:references>
+          </ddm:isReferencedBy>
           <ddm:references
             scheme="id-type:DOI"
             href="https://doi.org/10.17026/dans-xc4-vj4h">
             https://doi.org/10.17026/dans-xc4-vj4h
           </ddm:references>
-          <ddm:references
+          <ddm:relation
             href="https://blablabla">
             https://blablabla
-          </ddm:references>
+          </ddm:relation>
           <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
     )
