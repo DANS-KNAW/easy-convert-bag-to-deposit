@@ -57,26 +57,28 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
         )
       }
 
-      (node, href.startsWith(easyRef), href.isEmpty, txt.startsWith(easyRef), txt.isEmpty) match {
-        case (_, _, true, _, true) =>
+      (node, node.prefix, href.startsWith(easyRef), href.isEmpty, txt.startsWith(easyRef), txt.isEmpty) match {
+        case (_, _, _, true, _, true) =>
           Seq.empty
-        case (elem, false, false, false, false) =>
+        case (elem, _, false, false, false, false) =>
           elem
-        case (elem: Elem, _, true, false, false) if txt.matches("https?://.*") =>
+        case (elem: Elem, "ddm", _, true, false, false) if txt.matches("https?://.*") =>
           elem.copy(attributes = Attribute(null, "href", txt, otherAttributes))
-        case (elem: Elem, true, _, false, false) =>
+        case (elem: Elem, "ddm", true, _, false, false) =>
           elem.copy(attributes = doiAttributes(href))
-        case (elem: Elem, _, true, true, _) =>
+        case (elem: Elem, "ddm", _, true, true, _) =>
           elem.copy(
             attributes = doiAttributes(txt),
             child = Text(toDoi(txt))
           )
-        case (elem: Elem, true,_, _, true) =>
+        case (elem: Elem, _, _, _, true, _) =>
+          elem.copy(child = Text(toDoi(txt)))
+        case (elem: Elem, "ddm", true,_, _, true) =>
           elem.copy(
             attributes = doiAttributes(href),
             child = Text(toDoi(href))
           )
-        case (elem: Elem, false, false, _, true) =>
+        case (elem: Elem, _, false, false, _, true) =>
           elem.copy(child = Text(href))
         case _ => node
       }

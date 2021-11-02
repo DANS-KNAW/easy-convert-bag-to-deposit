@@ -159,6 +159,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           href="https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:56023">
         </ddm:isReferencedBy>
         <ddm:references>https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:48515</ddm:references>
+        <dcterms:references>https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:56024</dcterms:references>
       </ddm:dcmiMetadata>
     )
     val expectedDDM = ddm(title = "relation test", audience = "D37000", dcmi =
@@ -178,6 +179,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
             href="https://doi.org/10.17026/dans-xc4-vj4h">
             https://doi.org/10.17026/dans-xc4-vj4h
           </ddm:references>
+          <dcterms:references>https://doi.org/10.17026/dans-xpg-j2f6</dcterms:references>
           <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
     )
@@ -195,6 +197,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           <ddm:references scheme="blabla"></ddm:references>
           <ddm:isRequiredBy href="http://does.not.exist.dans.knaw.nl"></ddm:isRequiredBy>
           <ddm:relation>https://blablabla</ddm:relation>
+          <dcterms:relation>https://rabarbera</dcterms:relation>
         </ddm:dcmiMetadata>
     )
     val transformer = new DdmTransformer(
@@ -209,6 +212,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         dcmi = <ddm:dcmiMetadata>
                  <ddm:isRequiredBy href="http://does.not.exist.dans.knaw.nl">http://does.not.exist.dans.knaw.nl</ddm:isRequiredBy>
                  <ddm:relation href="https://blablabla">https://blablabla</ddm:relation>
+                 <dcterms:relation>https://rabarbera</dcterms:relation>
                  <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
                </ddm:dcmiMetadata>,
       )))
