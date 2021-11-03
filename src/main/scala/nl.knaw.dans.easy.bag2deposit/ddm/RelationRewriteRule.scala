@@ -20,7 +20,7 @@ import nl.knaw.dans.easy.bag2deposit.parseCsv
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.csv.CSVFormat
 
-import scala.xml.{ Attribute, Elem, Node, Null }
+import scala.xml._
 import scala.xml.transform.RewriteRule
 
 case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhancedLogging {
@@ -43,34 +43,63 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
     "requires"
   )
 
-  def isEasyDatasetReference(node: Node): Boolean = {
-    val attr = node.attributes
-    node.prefix ==  "ddm" && relations.contains(node.label) &&
-      (
-        attr.get("href").mkString("").startsWith(easyRef) ||
-          node.text.startsWith(easyRef)
-        )
-  }
-
-  override def transform(n: Node): Seq[Node] =  {
-    if (!isEasyDatasetReference(n) ) n
+  override def transform(node: Node): Seq[Node] = {
+    if (!relations.contains(node.label))
+      node
     else {
-      val easyHref = n.attribute("href").get.head.text
-      val easyDataset = easyHref.split('/').last
-      val doiHref = datasetDoiMap.getOrElse(easyDataset, easyHref) //TODO warning
-      n.asInstanceOf[Elem] % Attribute(null, "href", doiHref, Attribute(null, "scheme", "id-type:DOI", Null))
+      val txt = node.text.trim
+      val href = node.attribute("href").toSeq.flatten.text.trim
+      lazy val otherAttributes = node.attributes.remove("href").remove("scheme")
+
+      def doiAttributes(easyRef: String) = {
+        Attribute(null, "scheme", "id-type:DOI",
+          Attribute(null, "href", toDoi(easyRef), otherAttributes)
+        )
+      }
+
+      (node, node.prefix, href.startsWith(easyRef), href.isEmpty, txt.startsWith(easyRef), txt.isEmpty) match {
+        case (_, _, _, true, _, true) =>
+          Seq.empty
+        case (elem, _, false, false, false, false) =>
+          elem
+        case (elem: Elem, "ddm", _, true, false, false) if txt.matches("https?://.*") =>
+          elem.copy(attributes = Attribute(null, "href", txt, otherAttributes))
+        case (elem: Elem, "ddm", true, _, false, false) =>
+          elem.copy(attributes = doiAttributes(href))
+        case (elem: Elem, "ddm", _, true, true, _) =>
+          elem.copy(
+            attributes = doiAttributes(txt),
+            child = Text(toDoi(txt))
+          )
+        case (elem: Elem, _, _, _, true, _) =>
+          elem.copy(child = Text(toDoi(txt)))
+        case (elem: Elem, "ddm", true,_, _, true) =>
+          elem.copy(
+            attributes = doiAttributes(href),
+            child = Text(toDoi(href))
+          )
+        case (elem: Elem, _, false, false, _, true) =>
+          elem.copy(child = Text(href))
+        case _ => node
+      }
     }
   }
 
-  private val nrOfHeaderLines = 1
-  private val csvFormat = CSVFormat.RFC4180
-      .withHeader("dataset", "doi")
-      .withDelimiter(',')
-      .withRecordSeparator('\n')
+  private def toDoi(value: String) = {
+    val easyDataset = value.split('/').last
+    datasetDoiMap.get(easyDataset).map { doi =>
+      logger.warn(s"$value replaced with DOI")
+      doi
+    }.getOrElse(value)
+  }
 
+  private val csvFormat = CSVFormat.RFC4180
+    .withHeader("dataset", "doi")
+    .withDelimiter(',')
+    .withRecordSeparator('\n')
 
   val datasetDoiMap: Map[String, String] = {
-    parseCsv(cfgDir / "dataset-doi.csv", nrOfHeaderLines, csvFormat)
+    parseCsv(cfgDir / "dataset-doi.csv", nrOfHeaderLines = 1, csvFormat)
       .map(record => record.get("dataset") -> ("https://doi.org/" + record.get("doi"))).toMap
   }
 }

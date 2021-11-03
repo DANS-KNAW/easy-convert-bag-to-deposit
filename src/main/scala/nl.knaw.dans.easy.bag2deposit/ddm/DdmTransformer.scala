@@ -35,6 +35,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty
   private val profileTitleRuleTransformer = new RuleTransformer(
     acquisitionRewriteRule,
     reportRewriteRule,
+    relationRewriteRule,
   )
   private val archaeologyRuleTransformer = new RuleTransformer(
     SplitNrRewriteRule,
@@ -42,7 +43,6 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty
     reportRewriteRule,
     AbrRewriteRule.temporalRewriteRule(cfgDir),
     AbrRewriteRule.subjectRewriteRule(cfgDir),
-    DropEmptyRewriteRule,
     languageRewriteRule,
     relationRewriteRule,
   )
@@ -50,7 +50,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty
   private def standardRuleTransformer(newDcmiNodes: NodeSeq, profileTitle: String) = new RuleTransformer(
     NewDcmiNodesRewriteRule(newDcmiNodes),
     DistinctTitlesRewriteRule(profileTitle),
-    DropEmptyRewriteRule,
+    relationRewriteRule,
     languageRewriteRule,
   )
 
