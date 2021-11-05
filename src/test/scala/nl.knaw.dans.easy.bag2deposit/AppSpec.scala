@@ -175,7 +175,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
           |  {
           |    "label": "stringABC",
           |    "directoryLabel": "data",
-          |    "versionSequenceNumber": "1",
+          |    "versionSequenceNumber": 1,
           |    "prestagedFile": {
           |      "storageIdentifier": "123",
           |      "fileName": "foo.txt",
