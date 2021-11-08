@@ -44,10 +44,13 @@ object BagFacade {
 
   private val bagReader = new BagReader()
 
-  def getBag(bagDir: File): Try[Bag] = Try {
-    bagReader.read(bagDir.path)
-  }.recoverWith {
-    case cause: Exception => Failure(InvalidBagException(s"$bagDir, $cause"))
+  def getBag(bagDir: File): Try[Bag] = {
+    val triedBag = Try {
+      bagReader.read(bagDir.path)
+    }
+    triedBag.recoverWith {
+      case cause: Exception => Failure(InvalidBagException(s"$bagDir, $cause"))
+    }
   }
 
   def updateMetadata(bag: Bag): Try[Unit] = {
