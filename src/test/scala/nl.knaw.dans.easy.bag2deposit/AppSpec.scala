@@ -281,12 +281,18 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
         </file>
         <file filepath="data/easy-migration/provenance.xml">
           <dcterms:format>text/xml</dcterms:format>
+          <accessibleToRights>ANONYMOUS</accessibleToRights>
+          <visibleToRights>ANONYMOUS</visibleToRights>
         </file>
         <file filepath="data/easy-migration/dataset.xml">
           <dcterms:format>text/xml</dcterms:format>
+          <accessibleToRights>ANONYMOUS</accessibleToRights>
+          <visibleToRights>ANONYMOUS</visibleToRights>
         </file>
         <file filepath="data/easy-migration/files.xml">
           <dcterms:format>text/xml</dcterms:format>
+          <accessibleToRights>ANONYMOUS</accessibleToRights>
+          <visibleToRights>ANONYMOUS</visibleToRights>
         </file>
         <file filepath="data/easy-migration/emd.xml">
           <dcterms:format>text/xml</dcterms:format>
