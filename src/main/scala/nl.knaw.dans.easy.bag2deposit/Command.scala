@@ -17,15 +17,16 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import better.files.File.root
+import cats.implicits.{ catsStdInstancesForTry, catsSyntaxApplicativeError }
 import nl.knaw.dans.easy.bag2deposit.collections.Collection.getCollectionsMap
 import nl.knaw.dans.easy.bag2deposit.collections.FedoraProvider
 import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer
+import nl.knaw.dans.lib.error.TryExtensions
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration
 
 import java.net.URI
 import scala.language.reflectiveCalls
-import scala.xml.Elem
 
 object Command extends App with DebugEnhancedLogging {
   type FeedBackMessage = String
@@ -54,7 +55,6 @@ object Command extends App with DebugEnhancedLogging {
       .getOrElse(Iterator.empty))
   val fedoraProvider = FedoraProvider(properties)
 
-
   private val collectionMap = fedoraProvider
     .map(getCollectionsMap(cfgPath))
     .getOrElse(Map.empty)
@@ -66,7 +66,11 @@ object Command extends App with DebugEnhancedLogging {
     ddmTransformer = new DdmTransformer(cfgPath, collectionMap),
     userTransformer = new UserTransformer(cfgPath),
     fedoraProvider = fedoraProvider,
+    maybePreStagedProvider = if (commandLine.preStaged())
+                               Some(PreStagedProvider(new URI(properties.getString("migration-info.url"))))
+                             else None
   )
+  trace(configuration.maybePreStagedProvider)
   private val propertiesFactory = DepositPropertiesFactory(
     configuration,
     commandLine.idType(),
@@ -78,4 +82,7 @@ object Command extends App with DebugEnhancedLogging {
       commandLine.outputDir.toOption,
       propertiesFactory
     ).map(msg => println(s"$msg, for details see logging"))
+    .doIfFailure { case e =>
+      println(s"$e; for details see logging")
+    }
 }

@@ -15,13 +15,12 @@
  */
 package nl.knaw.dans.easy.bag2deposit
 
-import java.io.IOException
-import java.net.URI
-import java.util.UUID
-
 import better.files.StringExtensions
 import scalaj.http.{ Http, HttpResponse }
 
+import java.io.IOException
+import java.net.URI
+import java.util.UUID
 import scala.util.{ Failure, Try }
 import scala.xml.XML
 
@@ -61,6 +60,7 @@ case class BagIndex(bagIndexUri: URI) {
   }
 
   def execute(q: String): HttpResponse[String] = {
+    trace(bagIndexUri, q)
     Http(bagIndexUri.resolve(q).toString)
       .header("Accept", "text/xml")
       .asString
