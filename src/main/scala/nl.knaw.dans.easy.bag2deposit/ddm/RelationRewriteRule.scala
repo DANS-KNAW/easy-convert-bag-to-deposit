@@ -26,6 +26,7 @@ import scala.xml.transform.RewriteRule
 case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhancedLogging {
 
   private val easyRef = "https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:"
+  private val urnRef = "urn:nbn:nl:ui:13"
   private val relations = List(
     "relation",
     "conformsTo",
@@ -49,43 +50,39 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
     else {
       val txt = node.text.trim
       val href = node.attribute("href").toSeq.flatten.text.trim
+      val doi = if (href.startsWith(easyRef)) easyRefToDoi(href)
+                else if (txt.startsWith(easyRef)) easyRefToDoi(txt)
+                     else if (href.contains(urnRef)) urnRefToDoi(href)
+                          else if (txt.contains(urnRef)) urnRefToDoi(href)
+                               else ""
       lazy val otherAttributes = node.attributes.remove("href").remove("scheme")
-
-      def doiAttributes(easyRef: String) = {
+      lazy val doiAttributes = {
         Attribute(null, "scheme", "id-type:DOI",
-          Attribute(null, "href", toDoi(easyRef), otherAttributes)
+          Attribute(null, "href", doi, otherAttributes)
         )
       }
 
-      (node, node.prefix, href.startsWith(easyRef), href.isEmpty, txt.startsWith(easyRef), txt.isEmpty) match {
-        case (_, _, _, true, _, true) =>
-          Seq.empty
-        case (elem, _, false, false, false, false) =>
-          elem
-        case (elem: Elem, "ddm", _, true, false, false) if txt.matches("https?://.*") =>
+      if (href.isEmpty && txt.isEmpty) Seq.empty
+      else (node, doi, node.prefix) match {
+        case (elem: Elem, "", "ddm") if href.isEmpty && txt.matches("https?://.*") =>
           elem.copy(attributes = Attribute(null, "href", txt, otherAttributes))
-        case (elem: Elem, "ddm", true, _, false, false) =>
-          elem.copy(attributes = doiAttributes(href))
-        case (elem: Elem, "ddm", _, true, true, _) =>
-          elem.copy(
-            attributes = doiAttributes(txt),
-            child = Text(toDoi(txt))
-          )
-        case (elem: Elem, _, _, _, true, _) =>
-          elem.copy(child = Text(toDoi(txt)))
-        case (elem: Elem, "ddm", true,_, _, true) =>
-          elem.copy(
-            attributes = doiAttributes(href),
-            child = Text(toDoi(href))
-          )
-        case (elem: Elem, _, false, false, _, true) =>
+        case (elem: Elem, "", _) if txt.isEmpty =>
           elem.copy(child = Text(href))
-        case _ => node
+        case (elem: Elem, "", _) =>
+          elem
+        case (elem: Elem, _, "ddm") if txt.startsWith(easyRef) || txt.contains(urnRef) || txt.isEmpty =>
+          elem.copy(attributes = doiAttributes, child = Text(doi))
+        case (elem: Elem, _, "ddm") =>
+          elem.copy(attributes = doiAttributes)
+        case (elem: Elem, _, _) =>
+          elem.copy(child = Text(doi))
       }
     }
   }
 
-  private def toDoi(value: String) = {
+  private def urnRefToDoi(value: String) = ???
+
+  private def easyRefToDoi(value: String) = {
     val easyDataset = value.split('/').last
     datasetDoiMap.get(easyDataset).map { doi =>
       logger.warn(s"$value replaced with DOI")
