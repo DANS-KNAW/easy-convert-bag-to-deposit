@@ -37,6 +37,8 @@ object FilesXml extends DebugEnhancedLogging {
     val newFileElements = addedFiles.map(newFile =>
       <file filepath={s"$destination/$newFile"} >
         { format }
+        <accessibleToRights>ANONYMOUS</accessibleToRights>
+        <visibleToRights>ANONYMOUS</visibleToRights>
       </file>
     )
 

@@ -45,6 +45,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty
     AbrRewriteRule.subjectRewriteRule(cfgDir),
     languageRewriteRule,
     relationRewriteRule,
+    DateCreatedRewriteRule,
   )
 
   private def standardRuleTransformer(newDcmiNodes: NodeSeq, profileTitle: String) = new RuleTransformer(
@@ -52,6 +53,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty
     DistinctTitlesRewriteRule(profileTitle),
     relationRewriteRule,
     languageRewriteRule,
+    DateCreatedRewriteRule,
   )
 
   private case class ArchaeologyRewriteRule(profileTitle: String, additionalDcmiNodes: NodeSeq) extends RewriteRule {

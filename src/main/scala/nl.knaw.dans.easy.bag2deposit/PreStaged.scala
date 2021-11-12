@@ -21,6 +21,7 @@ import org.json4s.native.JsonMethods.parse
 import org.json4s.{ DefaultFormats, Formats }
 import scalaj.http.{ Http, HttpResponse }
 
+import java.io.IOException
 import java.net.URI
 import java.nio.file.{ Path, Paths }
 import scala.util.{ Failure, Success, Try }
@@ -82,11 +83,11 @@ case class PreStagedProvider(migrationInfoUri: URI) {
   private def find(q: String): Try[String] = Try {
     execute(q)
   }.recoverWith {
-    case t: Throwable => Failure(new Exception(s"$q ${ t.getMessage }", t))
+    case t: Throwable => Failure(new IOException(s"dd-migration-info failure with $q CAUSE: $t", t))
   }.map {
     case response if response.code == 404 => "[]" // an empty list
     case response if response.code == 200 => response.body
-    case response => throw new Exception(
+    case response => throw new IOException(
       s"Not expected response code from dd-migration-info. $q, response: ${ response.code } - ${ response.body }",
       null,
     )
