@@ -30,10 +30,12 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty
   trace(())
   val reportRewriteRule: ReportRewriteRule = ReportRewriteRule(cfgDir)
   private val acquisitionRewriteRule = AcquisitionRewriteRule(cfgDir)
+  private val relationRewriteRule = RelationRewriteRule(cfgDir)
   private val languageRewriteRule = LanguageRewriteRule(cfgDir / "languages.csv")
   private val profileTitleRuleTransformer = new RuleTransformer(
     acquisitionRewriteRule,
     reportRewriteRule,
+    relationRewriteRule,
   )
   private val archaeologyRuleTransformer = new RuleTransformer(
     SplitNrRewriteRule,
@@ -41,15 +43,17 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty
     reportRewriteRule,
     AbrRewriteRule.temporalRewriteRule(cfgDir),
     AbrRewriteRule.subjectRewriteRule(cfgDir),
-    DropEmptyRewriteRule,
     languageRewriteRule,
+    relationRewriteRule,
+    DateCreatedRewriteRule,
   )
 
   private def standardRuleTransformer(newDcmiNodes: NodeSeq, profileTitle: String) = new RuleTransformer(
     NewDcmiNodesRewriteRule(newDcmiNodes),
     DistinctTitlesRewriteRule(profileTitle),
-    DropEmptyRewriteRule,
+    relationRewriteRule,
     languageRewriteRule,
+    DateCreatedRewriteRule,
   )
 
   private case class ArchaeologyRewriteRule(profileTitle: String, additionalDcmiNodes: NodeSeq) extends RewriteRule {
