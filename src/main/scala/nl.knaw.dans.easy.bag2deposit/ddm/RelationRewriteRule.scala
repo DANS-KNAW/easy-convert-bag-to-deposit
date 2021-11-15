@@ -50,10 +50,10 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
     else {
       val txt = node.text.trim
       val href = node.attribute("href").toSeq.flatten.text.trim
-      val doi = if (href.startsWith(easyRef)) easyRefToDoi(href)
-                else if (txt.startsWith(easyRef)) easyRefToDoi(txt)
-                     else if (href.contains(urnRef)) urnRefToDoi(href)
-                          else if (txt.contains(urnRef)) urnRefToDoi(href)
+      val doi = if (href.startsWith(easyRef)) replaceEasyRefWithDoi(href)
+                else if (txt.startsWith(easyRef)) replaceEasyRefWithDoi(txt)
+                     else if (href.contains(urnRef)) replaceUrnNbnRefWithDoi(href)
+                          else if (txt.contains(urnRef)) replaceUrnNbnRefWithDoi(href)
                                else ""
       lazy val otherAttributes = node.attributes.remove("href").remove("scheme")
       lazy val doiAttributes = {
@@ -79,25 +79,40 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
       }
     }
   }
-
-  private def urnRefToDoi(value: String) = ???
-
-  private def easyRefToDoi(value: String) = {
+  private def replaceEasyRefWithDoi(value: String) = {
     val easyDataset = value.split('/').last
-    datasetDoiMap.get(easyDataset).map { doi =>
+    easyRefToDoi.get(easyDataset).map { doi =>
       logger.warn(s"$value replaced with DOI")
       doi
     }.getOrElse(value)
   }
 
-  private val csvFormat = CSVFormat.RFC4180
-    .withHeader("dataset", "doi")
-    .withDelimiter(',')
-    .withRecordSeparator('\n')
+  val easyRefToDoi: Map[String, String] = {
 
-  val datasetDoiMap: Map[String, String] = {
+    val csvFormat = CSVFormat.RFC4180
+      .withHeader("dataset", "doi")
+      .withDelimiter(',')
+      .withRecordSeparator('\n')
     parseCsv(cfgDir / "dataset-doi.csv", nrOfHeaderLines = 1, csvFormat)
       .map(record => record.get("dataset") -> ("https://doi.org/" + record.get("doi"))).toMap
+  }
+
+  private def replaceUrnNbnRefWithDoi(value: String) = {
+    val easyDataset = value.replace(s"^.*$urnRef",urnRef)
+    urnRefToDoi.get(easyDataset).map { doi =>
+      logger.warn(s"$value replaced with DOI")
+      doi
+    }.getOrElse(value)
+  }
+
+  val urnRefToDoi: Map[String, String] = {
+
+    val csvFormat = CSVFormat.RFC4180
+      .withHeader("urn-nbn", "doi")
+      .withDelimiter(',')
+      .withRecordSeparator('\n')
+    parseCsv(cfgDir / "urn-nbn-doi.csv", nrOfHeaderLines = 1, csvFormat)
+      .map(record => record.get("urn-nbn") -> ("https://doi.org/" + record.get("doi"))).toMap
   }
 }
 
