@@ -53,7 +53,7 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
       val doi = if (href.startsWith(easyRef)) replaceEasyRefWithDoi(href)
                 else if (txt.startsWith(easyRef)) replaceEasyRefWithDoi(txt)
                      else if (href.contains(urnRef)) replaceUrnNbnRefWithDoi(href)
-                          else if (txt.contains(urnRef)) replaceUrnNbnRefWithDoi(href)
+                          else if (txt.contains(urnRef)) replaceUrnNbnRefWithDoi(txt)
                                else ""
       lazy val otherAttributes = node.attributes.remove("href").remove("scheme")
       lazy val doiAttributes = {
@@ -98,8 +98,9 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
   }
 
   private def replaceUrnNbnRefWithDoi(value: String) = {
-    val easyDataset = value.replace(s"^.*$urnRef",urnRef)
-    urnRefToDoi.get(easyDataset).map { doi =>
+    val search = s"^.*$urnRef"
+    val urnNbn = value.replaceAll(search,urnRef)
+    urnRefToDoi.get(urnNbn).map { doi =>
       logger.warn(s"$value replaced with DOI")
       doi
     }.getOrElse(value)
