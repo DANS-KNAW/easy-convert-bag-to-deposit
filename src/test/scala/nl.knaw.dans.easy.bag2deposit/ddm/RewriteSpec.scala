@@ -160,6 +160,8 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:isReferencedBy>
         <ddm:references>https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:48515</ddm:references>
         <dcterms:references>https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:56024</dcterms:references>
+        <dcterms:references>persistent-identifier.nl/?identifier=urn:nbn:nl:ui:13-08dh-73</dcterms:references>
+        <ddm:references href="urn:nbn:nl:ui:13-04r-39p">rabarbera</ddm:references>
       </ddm:dcmiMetadata>
     )
     val expectedDDM = ddm(title = "relation test", audience = "D37000", dcmi =
@@ -180,6 +182,12 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
             https://doi.org/10.17026/dans-xc4-vj4h
           </ddm:references>
           <dcterms:references>https://doi.org/10.17026/dans-xpg-j2f6</dcterms:references>
+          <dcterms:references>https://doi.org/10.17026/dans-z2s-vnu8</dcterms:references>
+          <ddm:references
+            scheme="id-type:DOI"
+            href="https://doi.org/10.17026/dans-x7e-9m6k">
+            rabarbera
+          </ddm:references>
           <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
     )
