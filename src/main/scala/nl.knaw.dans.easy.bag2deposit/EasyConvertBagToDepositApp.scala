@@ -107,6 +107,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       amdFile = metadata / "amd.xml"
       amdIn <- getAmdXml(datasetId, amdFile)
+      fromVault = depositProps.getString("deposit.origin") == "VAULT"
       amdOut <- configuration.userTransformer.transform(amdIn)
       maybeProvenance = provenance.collectChangesInXmls(Map(
         "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
@@ -126,7 +127,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
       _ = trace("updating payload manifest")
-      _ = copyMigrationFiles(metadata, migration)
+      _ = copyMigrationFiles(metadata, migration, fromVault)
       _ <- BagFacade.updatePayloadManifests(bag, Paths.get("data/easy-migration"), preStaged)
       _ = trace("writing payload manifests")
       _ <- BagFacade.writePayloadManifests(bag)
@@ -179,10 +180,10 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     }
   }
 
-  private def copyMigrationFiles(metadata: File, migration: File): Try[Unit] = Try {
+  private def copyMigrationFiles(metadata: File, migration: File, fromVault: Boolean): Try[Unit] = Try {
     trace(metadata, migration)
     val filesXmlFile = (metadata / "files.xml").toString()
-    val migrationFiles = Seq("provenance.xml", "dataset.xml", "files.xml", "emd.xml")
+    val migrationFiles = {if (fromVault) Seq("provenance.xml", "dataset.xml", "files.xml") else Seq("provenance.xml", "dataset.xml", "files.xml", "emd.xml")}
     val migrationDir = migration.createDirectories()
     migrationFiles.foreach(name => (metadata / name).copyTo(migrationDir / name))
     addToXmlFile(filesXmlFile, migrationFiles)

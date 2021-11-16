@@ -18,32 +18,14 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 import scala.xml.transform.RewriteRule
 import scala.xml.{ Elem, Node, Text }
 
-object DropEmptyRewriteRule extends RewriteRule {
-  private val labels = Seq(
-    "linkedRelation",
-    "conformsTo",
-    "hasFormat",
-    "hasPart",
-    "hasVersion",
-    "isFormatOf",
-    "isPartOf",
-    "isReferencedBy",
-    "isReplacedBy",
-    "isRequiredBy",
-    "isVersionOf",
-    "references",
-    "replaces",
-    "requires",
-  )
-
-  override def transform(node: Node): Seq[Node] = {
-    if (node.text.trim.nonEmpty) node
-    else if (!labels.contains(node.label)) node
-         else {
-           val href = node.attribute("href").toSeq.flatten.text
-           if (href.isEmpty) Seq.empty
-           else node.asInstanceOf[Elem].copy(child = new Text(href))
-         }
+object DateCreatedRewriteRule extends RewriteRule {
+  override def transform(node: Node): Seq[Node] = node match {
+    case e: Elem if e.label == "created" =>
+      if (e.text.trim.length == 7)
+        e.copy(child = Text(e.text.trim + "-01"))
+      else if (e.text.trim.length == 4)
+             e.copy(child = Text(e.text.trim + "-01-01"))
+           else e
+    case other => other
   }
 }
-

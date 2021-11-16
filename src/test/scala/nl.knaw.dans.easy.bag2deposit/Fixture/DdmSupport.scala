@@ -24,7 +24,7 @@ trait DdmSupport {
                               <dcx-dai:name>DANS</dcx-dai:name>
                             </dcx-dai:organization>
                           </dcx-dai:creatorDetails>
-  val created: Elem =     <ddm:created>2013-03</ddm:created>
+  val created: Elem =     <ddm:created>2013-03-01</ddm:created>
   val available: Elem =   <ddm:available>2013-04</ddm:available>
   val archaeology: Elem = <ddm:audience>D37000</ddm:audience>
   val openAccess: Elem =  <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
