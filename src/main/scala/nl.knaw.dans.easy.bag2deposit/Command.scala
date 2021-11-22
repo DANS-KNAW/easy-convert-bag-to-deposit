@@ -68,7 +68,8 @@ object Command extends App with DebugEnhancedLogging {
     fedoraProvider = fedoraProvider,
     maybePreStagedProvider = if (commandLine.preStaged())
                                Some(PreStagedProvider(new URI(properties.getString("migration-info.url"))))
-                             else None
+                             else None,
+    agreementsPath = cfgPath / "agreements"
   )
   trace(configuration.maybePreStagedProvider)
   private val propertiesFactory = DepositPropertiesFactory(

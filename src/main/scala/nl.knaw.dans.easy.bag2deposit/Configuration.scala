@@ -33,4 +33,5 @@ case class Configuration(version: String,
                          userTransformer: UserTransformer,
                          fedoraProvider: Option[FedoraProvider],
                          maybePreStagedProvider: Option[PreStagedProvider],
+                         agreementsPath: File
                         )

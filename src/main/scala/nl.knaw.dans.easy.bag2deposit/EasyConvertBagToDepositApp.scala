@@ -95,6 +95,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       bagInfo <- BagInfo(bagDir, mutableBagMetadata)
       _ = logger.info(s"$bagInfo")
       metadata = bagDir / "metadata"
+      depositorInfo = metadata / "depositor-info"
       migration = bagDir / "data" / "easy-migration"
       ddmFile = metadata / "dataset.xml"
       ddmIn <- loadXml(ddmFile)
@@ -108,6 +109,8 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       amdIn <- getAmdXml(datasetId, amdFile)
       fromVault = depositProps.getString("deposit.origin") == "VAULT"
       amdOut <- configuration.userTransformer.transform(amdIn)
+      agreementsFile = depositorInfo / "agreements.xml"
+      _ = checkAgreementsXml((amdOut \ "depositorId").text, agreementsFile)
       maybeProvenance = provenance.collectChangesInXmls(Map(
         "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
         "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
@@ -177,6 +180,21 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       }.getOrElse(Failure(new IllegalStateException(s"no AMD for $datasetId and no fedora configured")))
     }
   }
+
+  private def checkAgreementsXml(depositorId: String, agreementsFile: File) = {
+    if( ! agreementsFile.exists ) {
+      val templateFile: File =  configuration.agreementsPath / (depositorId+"-agreements.xml")
+      if ( ! templateFile.exists ) {
+        Failure(new FileNotFoundException(templateFile + " not found"))
+      } else {
+        agreementsFile.parent.createIfNotExists(true)
+        templateFile.copyTo(agreementsFile)
+      }
+    } else {
+      Success
+    }
+  }
+
 
   private def copyMigrationFiles(metadata: File, migration: File, fromVault: Boolean): Try[Unit] = Try {
     trace(metadata, migration)

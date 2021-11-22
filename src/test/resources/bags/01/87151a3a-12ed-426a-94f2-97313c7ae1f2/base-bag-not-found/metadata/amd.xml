@@ -3,7 +3,7 @@
     <datasetState>PUBLISHED</datasetState>
     <previousState>DRAFT</previousState>
     <lastStateChange>2020-02-02T20:02:00.000+01:00</lastStateChange>
-    <depositorId>user001</depositorId>
+    <depositorId>TESTUSER</depositorId>
     <stateChangeDates>
         <damd:stateChangeDate>
             <fromState>DRAFT</fromState>

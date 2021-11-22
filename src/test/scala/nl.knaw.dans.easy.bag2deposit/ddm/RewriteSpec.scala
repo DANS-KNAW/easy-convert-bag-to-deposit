@@ -122,6 +122,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       userTransformer = new UserTransformer(cfgDir),
       fedoraProvider = None,
       maybePreStagedProvider = None,
+      agreementsPath = cfgDir / "agreements"
     ))
 
     // a few steps of EasyConvertBagToDepositApp.addPropsToBags
