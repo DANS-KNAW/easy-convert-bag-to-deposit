@@ -86,7 +86,7 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
           addProperty("dataverse.sword-token", bagInfo.versionOf.getOrElse(bagInfo.uuid))
           addProperty("dataverse.nbn", basePids.urn)
           formatOfPanId.foreach(node =>
-            addProperty("dataverse.other-id", node.text)
+            addProperty("dataverse.other-id", node.text.replace("-",":"))
           )
         case FEDORA =>
           addProperty("dataverse.nbn", basePids.urn)
