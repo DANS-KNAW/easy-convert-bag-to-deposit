@@ -31,12 +31,10 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging {
    *                the values are an empty list or the content for <prov:migration>
    * @return
    */
-  def collectChangesInXmls(changes: Map[String, Seq[Node]]): Option[Elem] = {
+  def collectChangesInXmls(changes: Map[String, Seq[Node]]): Elem = {
     trace(this.getClass)
     val filtered = changes.filter(_._2.nonEmpty)
-    if (filtered.isEmpty) None
-    else Some(
-      <prov:provenance xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
+     <prov:provenance xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
         xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:dc="http://purl.org/dc/elements/1.1/"
@@ -52,7 +50,7 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging {
         }}
         </prov:migration>
       </prov:provenance>
-    )
+
   }
 }
 object Provenance {

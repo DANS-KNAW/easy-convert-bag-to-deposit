@@ -109,7 +109,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       amdIn <- getAmdXml(datasetId, amdFile)
       fromVault = depositProps.getString("deposit.origin") == "VAULT"
       amdOut <- configuration.userTransformer.transform(amdIn)
-      maybeProvenance = provenance.collectChangesInXmls(Map(
+      provenanceXml = provenance.collectChangesInXmls(Map(
         "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
         "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
       ))
@@ -123,11 +123,11 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = amdFile.writeText(amdOut.serialize)
       _ = if (preStaged.nonEmpty) PreStaged.write(preStaged, metadata)
-      _ = maybeProvenance.foreach(xml => (metadata / "provenance.xml").writeText(xml.serialize))
+      _ = (metadata / "provenance.xml").writeText(provenanceXml.serialize)
       _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
       _ = trace("updating payload manifest")
-      _ = copyMigrationFiles(metadata, migration, fromVault)
+      _ <- copyMigrationFiles(metadata, migration, fromVault)
       _ <- BagFacade.updatePayloadManifests(bag, Paths.get("data/easy-migration"), preStaged)
       _ = trace("writing payload manifests")
       _ <- BagFacade.writePayloadManifests(bag)
