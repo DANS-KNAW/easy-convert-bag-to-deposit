@@ -99,7 +99,7 @@ case class PreStagedProvider(migrationInfoUri: URI) {
   def execute(q: String): HttpResponse[String] = {
     trace(migrationInfoUri, q)
     Http(migrationInfoUri.resolve(q).toString)
-      .header("Accept", "text/json")
+      .header("Accept", "application/json")
       .asString
   }
 }
