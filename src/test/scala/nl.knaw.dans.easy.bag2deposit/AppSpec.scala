@@ -175,7 +175,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
           |  {
           |    "label": "stringABC",
           |    "directoryLabel": "data",
-          |    "versionSequenceNumber": "1",
+          |    "versionSequenceNumber": 1,
           |    "prestagedFile": {
           |      "storageIdentifier": "123",
           |      "fileName": "foo.txt",
@@ -188,7 +188,8 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
           |  }
           |]""".stripMargin
       val delegatePreStagedProvider = mock[PreStagedProvider]
-      (delegatePreStagedProvider.execute(_: String)) expects * returning
+      (delegatePreStagedProvider.execute(_: String)
+        ) expects "/datasets/:persistentId/seq/1/basic-file-metas?persistentId=doi:10.5072/dans-2xg-umq8" returning
         HttpResponse(sampleJson, 200, Map.empty)
       delegatingPreStagedProvider(delegatePreStagedProvider)
     }
@@ -201,6 +202,58 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     val appConfig = testConfig(bagIndex, null, preStagedProvider)
 
     (resourceBags / validUUID).copyTo(testDir / "exports" / validUUID)
+
+    new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
+      (testDir / "exports").children,
+      maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
+      DepositPropertiesFactory(appConfig, DOI, VAULT)
+    ) shouldBe Success("No fatal errors")
+
+    val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
+    (movedBag / "data").list.toSeq.map(_.name) shouldBe Seq("easy-migration") // and no real payload
+    (movedBag / "manifest-sha1.txt").contentAsString shouldNot include("foo.txt")
+  }
+
+  it should "search migration-info with seq nr 2" in {
+
+    val preStagedProvider = {
+      val sampleJson: String =
+        """[
+          |  {
+          |    "label": "stringABC",
+          |    "directoryLabel": "data",
+          |    "versionSequenceNumber": 2,
+          |    "prestagedFile": {
+          |      "storageIdentifier": "123",
+          |      "fileName": "foo.txt",
+          |      "mimeType": "text/plain",
+          |      "checksum": {
+          |        "@type": "sha1",
+          |        "@value": "62cdb7020ff920e5aa642c3d4066950dd1f01f4d"
+          |      },
+          |    }
+          |  }
+          |]""".stripMargin
+      val delegatePreStagedProvider = mock[PreStagedProvider]
+      (delegatePreStagedProvider.execute(_: String)
+        ) expects "/datasets/:persistentId/seq/2/basic-file-metas?persistentId=doi:10.5072/dans-2xg-umq8" returning
+        HttpResponse(sampleJson, 200, Map.empty)
+      delegatingPreStagedProvider(delegatePreStagedProvider)
+    }
+    val bagIndex = {
+      val delegateBagIndex = mock[MockBagIndex]
+      (delegateBagIndex.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
+        new HttpResponse[String]("123", 200, Map.empty)
+      delegatingBagIndex(delegateBagIndex)
+    }
+    val appConfig = testConfig(bagIndex, null, preStagedProvider)
+
+    val depositDir = testDir / "exports" / validUUID
+    (resourceBags / validUUID).copyTo(depositDir)
+    val bagInfoFile = depositDir / "bag-revision-1" / "bag-info.txt"
+
+    // note that the number 2 reappears in sampleJson, the mocked result of the migration-info service
+    bagInfoFile.write(bagInfoFile.contentAsString + "Bag-Sequence-Number: 2\n")
 
     new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
       (testDir / "exports").children,

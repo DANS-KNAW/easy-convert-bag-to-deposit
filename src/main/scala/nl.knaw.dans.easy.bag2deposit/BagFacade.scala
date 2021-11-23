@@ -37,14 +37,20 @@ object BagFacade {
   val IS_VERSION_OF_KEY = "Is-Version-Of"
   val EASY_USER_ACCOUNT_KEY = "EASY-User-Account"
 
+  // duplicate of https://github.com/DANS-KNAW/easy-fedora-to-bag/blob/1cf9c03209/src/main/scala/nl/knaw/dans/easy/fedoratobag/BagVersion.scala#L30
+  val BAG_SEQUENCE_NUMBER = "Bag-Sequence-Number"
+
   // TODO variant of https://github.com/DANS-KNAW/easy-ingest-flow/blob/78ea3bec23923adf10c1c0650b019ea51c251ce6/src/main/scala/nl.knaw.dans.easy.ingestflow/BagitFacadeComponent.scala#L133
 
   private val bagReader = new BagReader()
 
-  def getBag(bagDir: File): Try[Bag] = Try {
-    bagReader.read(bagDir.path)
-  }.recoverWith {
-    case cause: Exception => Failure(InvalidBagException(s"$bagDir, $cause"))
+  def getBag(bagDir: File): Try[Bag] = {
+    val triedBag = Try {
+      bagReader.read(bagDir.path)
+    }
+    triedBag.recoverWith {
+      case cause: Exception => Failure(InvalidBagException(s"$bagDir, $cause"))
+    }
   }
 
   def updateMetadata(bag: Bag): Try[Unit] = {

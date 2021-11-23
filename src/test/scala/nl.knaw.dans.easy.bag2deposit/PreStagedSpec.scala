@@ -73,33 +73,15 @@ class PreStagedSpec extends AnyFlatSpec with Matchers with FileSystemSupport wit
     val mockedProvider = mock[PreStagedProvider]
     (mockedProvider.execute(_: String)) expects "/datasets/:persistentId/seq/1/basic-file-metas?persistentId=doi:some-doi" returning
       HttpResponse(sampleJson, 200, Map.empty)
-    val preStaged = Seq(
-      new PreStaged(
-        path = Paths.get("gf/diagrams/brick-to-overlap-choices.png"),
-        mimeType = "image/png",
-        checksumType = "SHA-1",
-        checksumValue = "393432fcc68b5cd8b4b3bf15c5244c2631577694",
-        storageId = "file://17b2f042ee9-ed12da9cbf50",
-      ),
-      new PreStaged(
-        path = Paths.get("3-of-4.jpg"),
-        mimeType = "image/jpeg",
-        checksumType = "SHA-1",
-        checksumValue = "1776070b9338352a5be96847187c96b30987dfd5",
-        storageId = "file://17b2f03c4c8-c08fbd7eee88",
-      ),
+    val expectedPreStaged = Seq(
+      new PreStaged(path = Paths.get("gf/diagrams/brick-to-overlap-choices.png"), checksumValue = "393432fcc68b5cd8b4b3bf15c5244c2631577694", storageId = "file://17b2f042ee9-ed12da9cbf50"),
+      new PreStaged(path = Paths.get("3-of-4.jpg"), checksumValue = "1776070b9338352a5be96847187c96b30987dfd5", storageId = "file://17b2f03c4c8-c08fbd7eee88"),
     )
-    delegatingPreStagedProvider(mockedProvider).get("some-doi") shouldBe Success(preStaged)
+    delegatingPreStagedProvider(mockedProvider).get("some-doi") shouldBe Success(expectedPreStaged)
   }
 
   "write" should "create csv" in {
-    val preStaged = new PreStaged(
-      path = Paths.get("some/path/to/something.txt"),
-      mimeType = "text/plain",
-      checksumType = "sha1",
-      checksumValue = "blabla",
-      storageId = "123",
-    )
+    val preStaged = new PreStaged(path = Paths.get("some/path/to/something.txt"), checksumValue = "blabla", storageId = "123")
     PreStaged.write(Seq(preStaged), testDir) shouldBe Success(())
     (testDir / "pre-staged.csv").contentAsString shouldBe expectedCsv
   }

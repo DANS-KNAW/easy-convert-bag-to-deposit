@@ -24,7 +24,14 @@ import java.util.UUID
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
 
-case class BagInfo(userId: String, created: String, uuid: UUID, bagName: String, versionOf: Option[UUID], basePids: Option[BasePids] = None)
+case class BagInfo(userId: String,
+                   created: String,
+                   uuid: UUID,
+                   bagName: String,
+                   versionOf: Option[UUID],
+                   bagSeqNr: Int  = 1,
+                   basePids: Option[BasePids] = None,
+                  )
 
 object BagInfo {
   // these values should match easy-fedora-to-bag
@@ -53,6 +60,7 @@ object BagInfo {
       bagName = bagDir.name,
       versionOf = maybeVersionOf,
       basePids = basePids,
+      bagSeqNr = Option(bagInfo.get(BagFacade.BAG_SEQUENCE_NUMBER)).flatMap(_.asScala.headOption).getOrElse("1").toInt,
     )
   }.recoverWith { case e: ConfigurationException =>
     Failure(InvalidBagException(e.getMessage))

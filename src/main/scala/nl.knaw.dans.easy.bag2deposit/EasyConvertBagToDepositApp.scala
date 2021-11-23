@@ -28,7 +28,7 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import java.io.{ FileNotFoundException, IOException }
 import java.nio.charset.Charset
 import java.nio.file.Paths
-import scala.collection.JavaConverters.mapAsScalaMapConverter
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import scala.util.{ Failure, Success, Try }
 import scala.xml._
@@ -85,6 +85,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     logger.debug(s"creating application.properties for $bagParentDir")
     val bagInfoKeysToRemove = Seq(
       BagFacade.EASY_USER_ACCOUNT_KEY,
+      BagFacade.BAG_SEQUENCE_NUMBER,
       BagInfo.baseUrnKey,
       BagInfo.baseDoiKey,
     )
@@ -113,7 +114,8 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
         "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
       ))
       _ = trace(bagInfo)
-      preStaged <- getPreStaged(bag, bagDir, depositProps.getString("identifier.doi"))
+      doi = depositProps.getString("identifier.doi")
+      preStaged <- getPreStaged(bag, bagDir, doi, bagInfo.bagSeqNr)
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = depositProps.setProperty("depositor.userId", (amdOut \ "depositorId").text)
       // so far collecting changes
@@ -148,13 +150,13 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       Failure(e)
   }
 
-  private def getPreStaged(bag: Bag, bagDir: File, doi: String): Try[Seq[PreStaged]] = {
+  private def getPreStaged(bag: Bag, bagDir: File, doi: String, version: Int = 1): Try[Seq[PreStaged]] = {
     configuration.maybePreStagedProvider.map { provider =>
       val shaToPath = sha1Manifest(bag.getPayLoadManifests).asScala
         .map { case (path, sha) => sha -> bagDir.relativize(File(path)) }.toMap
       trace(doi)
       for {
-        migratedFiles <- provider.get(doi) // paths from migration info
+        migratedFiles <- provider.get(doi, version) // paths from migration info
         migratedPayloadFiles = migratedFiles.filterNot(_.path.toString.startsWith("easy-migration/")) // exclude metadata migrated as data for provenance
         existingMigratedFiles = migratedPayloadFiles.filter(p => shaToPath.keySet.contains(p.checksumValue))
         _ = debug(s"ignored for pre-staged.csv: ${ migratedFiles.diff(migratedPayloadFiles) }")
