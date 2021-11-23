@@ -112,7 +112,7 @@ class DepositPropertiesFactorySpec extends AnyFlatSpec with Matchers with AppCon
          |bag-store.bag-id = $bagUUID
          |dataverse.sword-token = $baseUUID
          |dataverse.nbn = urn:nbn:nl:ui:13-z4-f8cm
-         |dataverse.other-id = PAN-00019180
+         |dataverse.other-id = PAN:00019180
          |dataverse.bag-id = urn:uuid:$bagUUID
          |dataverse.id-protocol = urn
          |dataverse.id-identifier = z4-f8cm
