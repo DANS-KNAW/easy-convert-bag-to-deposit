@@ -27,7 +27,7 @@
 
     <groupId>nl.knaw.dans.easy</groupId>
     <artifactId>easy-convert-bag-to-deposit</artifactId>
-    <version>1.1.1-SNAPSHOT</version>
+    <version>1.2.0</version>
 
     <name>EASY Vault convert bag to deposit</name>
     <url>https://github.com/DANS-KNAW/easy-convert-bag-to-deposit</url>
@@ -40,7 +40,7 @@
 
     <scm>
         <developerConnection>scm:git:https://github.com/DANS-KNAW/easy-convert-bag-to-deposit</developerConnection>
-        <tag>v1.1.0</tag>
+        <tag>v1.2.0</tag>
     </scm>
 
     <dependencies>
