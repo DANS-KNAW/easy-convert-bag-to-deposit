@@ -19,8 +19,10 @@ import scala.xml.transform.RewriteRule
 import scala.xml.{ Elem, Node, Text }
 
 object ProfileDateRewriteRule extends RewriteRule {
+  val DDM_NAMESPACE = "http://easy.dans.knaw.nl/schemas/md/ddm/"
+
   override def transform(node: Node): Seq[Node] = node match {
-    case e: Elem if e.label == "created" || e.label == "available" =>
+    case e: Elem if (e.label == "created" || e.label == "available") && e.namespace == DDM_NAMESPACE =>
       if (e.text.trim.length == 7)
         e.copy(child = Text(e.text.trim + "-01"))
       else if (e.text.trim.length == 4)

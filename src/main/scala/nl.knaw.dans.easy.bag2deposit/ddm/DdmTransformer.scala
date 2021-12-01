@@ -48,21 +48,31 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty
     relationRewriteRule,
   )
 
-  private def dcmiMetadataStandardRuleTransformer(newDcmiNodes: NodeSeq, profileTitle: String) = new RuleTransformer(
+  private def standardRuleTransformer(newDcmiNodes: NodeSeq, profileTitle: String) = new RuleTransformer(
     NewDcmiNodesRewriteRule(newDcmiNodes),
     DistinctTitlesRewriteRule(profileTitle),
     relationRewriteRule,
     languageRewriteRule,
+    ProfileDateRewriteRule,
   )
 
   private case class ArchaeologyRewriteRule(profileTitle: String, additionalDcmiNodes: NodeSeq) extends RewriteRule {
     override def transform(node: Node): Seq[Node] = {
       // TODO apply NewDcmiNodesRewriteRule/DistinctTitlesRewriteRule instead
-      if (node.label != "dcmiMetadata") node
-      else <dcmiMetadata>
-             { distinctTitles(profileTitle, dcmiMetadataArchaeologyRuleTransformer(node).nonEmptyChildren) }
-             { additionalDcmiNodes }
-           </dcmiMetadata>.copy(prefix = node.prefix, attributes = node.attributes, scope = node.scope)
+      if (node.label == "profile") {
+        <profile>
+          { node.nonEmptyChildren.flatMap(ProfileDateRewriteRule) }
+        </profile>.copy(prefix = node.prefix, attributes = node.attributes, scope = node.scope)
+      }
+      else if (node.label == "dcmiMetadata") {
+        <dcmiMetadata>
+          { distinctTitles(profileTitle, dcmiMetadataArchaeologyRuleTransformer(node).nonEmptyChildren) }
+          { additionalDcmiNodes }
+        </dcmiMetadata>.copy(prefix = node.prefix, attributes = node.attributes, scope = node.scope)
+      }
+           else {
+             node
+           }
     }
   }
 
@@ -83,7 +93,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty
 
     if (!(profile \ "audience").text.contains("D37000")) {
       // not archaeological
-      val transformer = dcmiMetadataStandardRuleTransformer(newDcmiNodes, (profile \ "title").text)
+      val transformer = standardRuleTransformer(newDcmiNodes, (profile \ "title").text)
       Success(transformer(ddmIn))
     }
     else {
