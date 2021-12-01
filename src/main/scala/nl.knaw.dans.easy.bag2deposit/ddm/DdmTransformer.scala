@@ -88,8 +88,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty
     val newDcmiNodes = collectionsMap.get(datasetId)
       .toSeq ++ unknownRightsHolder(ddmIn)
 
-    val profileIn = ddmIn \ "profile"
-    val profile = profileIn.flatMap(ProfileDateRewriteRule)
+    val profile = ddmIn \ "profile"
 
     if (!(profile \ "audience").text.contains("D37000")) {
       // not archaeological
