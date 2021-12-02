@@ -58,21 +58,18 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty
 
   private case class ArchaeologyRewriteRule(profileTitle: String, additionalDcmiNodes: NodeSeq) extends RewriteRule {
     override def transform(node: Node): Seq[Node] = {
-      // TODO apply NewDcmiNodesRewriteRule/DistinctTitlesRewriteRule instead
-      if (node.label == "profile") {
-        <profile>
-          { node.nonEmptyChildren.flatMap(ProfileDateRewriteRule) }
-        </profile>.copy(prefix = node.prefix, attributes = node.attributes, scope = node.scope)
+      node.label match {
+        case "profile" =>
+          <profile>
+              { node.nonEmptyChildren.flatMap(ProfileDateRewriteRule) }
+          </profile>.copy(prefix = node.prefix, attributes = node.attributes, scope = node.scope)
+        case "dcmiMetadata" =>
+          <dcmiMetadata>
+              { distinctTitles(profileTitle, dcmiMetadataArchaeologyRuleTransformer(node).nonEmptyChildren) }
+              { additionalDcmiNodes }
+          </dcmiMetadata>.copy(prefix = node.prefix, attributes = node.attributes, scope = node.scope)
+        case _ => node
       }
-      else if (node.label == "dcmiMetadata") {
-        <dcmiMetadata>
-          { distinctTitles(profileTitle, dcmiMetadataArchaeologyRuleTransformer(node).nonEmptyChildren) }
-          { additionalDcmiNodes }
-        </dcmiMetadata>.copy(prefix = node.prefix, attributes = node.attributes, scope = node.scope)
-      }
-           else {
-             node
-           }
     }
   }
 
