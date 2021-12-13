@@ -24,18 +24,14 @@ import scalaj.http.{ Http, HttpResponse }
 import java.io.IOException
 import java.net.URI
 import java.nio.file.{ Path, Paths }
-import scala.util.{ Failure, Success, Try }
+import scala.util.{ Failure, Try }
 
 /**
- * @param path      as in the manifest file
- * @param storageId as returned from the migration-info-service
+ * @param path          as in the manifest file, assembled from migration-info-service
+ * @param checksumValue as returned from the migration-info-service
+ * @param storageId     as returned from the migration-info-service
  */
-case class PreStaged(path: Path,
-                     mimeType: String,
-                     checksumType: String,
-                     checksumValue: String,
-                     storageId: String,
-                    )
+case class PreStaged(path: Path, checksumValue: String, storageId: String)
 object PreStaged {
   private val csvFormat = RFC4180
     .withHeader("path", "checksum", "storageId")
@@ -53,9 +49,18 @@ object PreStaged {
       )
   }
 
+  /** copy of nl.knaw.dans.lib.dataverse/model/file/prestaged/Checksum.scala */
   private case class CheckSum(`@type`: String, `@value`: String)
-  private case class PrestagedFile(storageIdentifier: String, fileName: String, mimeType: String, checksum: CheckSum)
-  private case class MigrationInfo(label: String, directoryLabel: Option[String], versionSequenceNumber: String, prestagedFile: PrestagedFile)
+
+  /** subset of nl.knaw.dans.lib.dataverse/model/file/prestaged/PrestagedFile.scala */
+  private case class PrestagedFile(storageIdentifier: String, fileName: String, checksum: CheckSum)
+
+  /** copy of nl.knaw.dans.dd.migrationinfo/BasicFileMeta.scala
+   * and nl.knaw.dans.easy.dd2d/migrationinfo/BasicFileMeta.scala
+   * returned from the migration-info-service
+   */
+  private case class MigrationInfo(label: String, directoryLabel: Option[String], versionSequenceNumber: Int, prestagedFile: PrestagedFile)
+
   private implicit val jsonFormats: Formats = new DefaultFormats {}
 
   def apply(json: String): Try[List[PreStaged]] = Try {
@@ -64,8 +69,6 @@ object PreStaged {
     val preStagedFiles = migrationInfoes
       .map(mi => new PreStaged(
         Paths.get(s"${ mi.directoryLabel.map(l => s"$l/").getOrElse("") }${ mi.prestagedFile.fileName }"),
-        mi.prestagedFile.mimeType,
-        mi.prestagedFile.checksum.`@type`,
         mi.prestagedFile.checksum.`@value`,
         mi.prestagedFile.storageIdentifier,
       ))
@@ -96,7 +99,7 @@ case class PreStagedProvider(migrationInfoUri: URI) {
   def execute(q: String): HttpResponse[String] = {
     trace(migrationInfoUri, q)
     Http(migrationInfoUri.resolve(q).toString)
-      .header("Accept", "text/json")
+      .header("Accept", "application/json")
       .asString
   }
 }

@@ -99,7 +99,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
         "http://easy.dans.knaw.nl/schemas/md/ddm/" ->
           Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head),
       ))
-      .map(normalized) shouldBe Some(normalized(
+      .map(normalized) shouldBe List(normalized(
       <prov:provenance xsi:schemaLocation="
         http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
         http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
@@ -146,7 +146,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     val amdOut = transformer.transform(amdIn).getOrElse(fail("could not transform"))
     new Provenance("EasyConvertBagToDepositApp", "1.0.5").collectChangesInXmls(Map(
       "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
-    )).map(normalized) shouldBe Some(normalized(
+    )).map(normalized) shouldBe List(normalized(
       <prov:provenance xsi:schemaLocation="
         http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
         http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
