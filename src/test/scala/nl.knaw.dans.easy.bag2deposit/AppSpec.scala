@@ -30,6 +30,7 @@ import scala.xml.XML
 class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSupport with FileSystemSupport {
   private val resourceBags: File = File("src/test/resources/bags/01")
   private val validUUID = "04e638eb-3af1-44fb-985d-36af12fccb2d"
+  private val vaultUUID = "87151a3a-12ed-426a-94f2-97313c7ae1f2"
 
   "addPropsToBags" should "move valid exports" in {
     val delegate = mock[MockBagIndex]
@@ -366,6 +367,30 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
     val filesXml = movedBag / "metadata" / "files.xml"
     normalized(XML.loadFile(filesXml.toJava)) shouldBe normalized(expectedFilesXml)
+  }
+
+  it should "add agreements.xml file to VAULT datasets" in {
+    val delegate = mock[MockBagIndex]
+    (delegate.execute(_: String)) expects s"bag-sequence?contains=$vaultUUID" returning
+      new HttpResponse[String]("123", 200, Map.empty)
+    (delegate.execute(_: String)) expects s"bags/4722d09d-e431-4899-904c-0733cd773034" returning
+      new HttpResponse[String]("<result><bag-info><urn>urn:nbn:nl:ui:13-z4-f8cm</urn><doi>10.5072/dans-2xg-umq8</doi></bag-info></result>", 200, Map.empty)
+    val appConfig = testConfig(delegatingBagIndex(delegate), null)
+    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty)
+
+
+    (resourceBags / vaultUUID).copyTo(testDir / "exports" / vaultUUID)
+
+    new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
+      (testDir / "exports").children,
+      maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
+      DepositPropertiesFactory(appConfig, DOI, VAULT)
+    ) shouldBe Success("No fatal errors")
+
+    val movedBag = testDir / "ingest-dir" / vaultUUID / "base-bag-not-found"
+    (resourceBags / vaultUUID / "base-bag-not-found" / "metadata").list.toSeq.map(_.name) shouldNot contain("agreements.xml")
+    (movedBag / "metadata" ).list.toSeq.map(_.name) should contain("depositor-info")
+    (movedBag / "metadata" / "depositor-info").list.toSeq.map(_.name) shouldBe Seq("agreements.xml")
   }
 
   it should "produce proper prefix in new files.xml elements AND apply preferred user ID" in {
