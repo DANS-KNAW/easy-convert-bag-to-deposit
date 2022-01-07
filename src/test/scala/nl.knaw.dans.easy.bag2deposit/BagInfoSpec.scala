@@ -85,7 +85,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |Is-Version-Of: $versionOfUuid
          |EASY-User-Account: user001
          |""".stripMargin)
-    BagInfo(bagDir, mockBag(bagDir).getMetadata) shouldBe Success(new BagInfo("user001", dateTime, bagUuid, "bag-name", Some(versionOfUuid), 1, None))
+    BagInfo(bagDir, mockBag(bagDir).getMetadata) shouldBe Success(new BagInfo("user001", dateTime, bagUuid, "bag-name", Some(versionOfUuid), 2, None))
   }
   it should "have a base-urn" in {
     val bagUuid = UUID.randomUUID()
@@ -99,6 +99,6 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
          |${ BagInfo.baseDoiKey }: lalala
          |EASY-User-Account: user001
          |""".stripMargin)
-    BagInfo(bagDir, mockBag(bagDir).getMetadata) shouldBe Success(new BagInfo("user001", dateTime, bagUuid, "bag-name", Some(versionOfUuid), 1, Some(BasePids("rabarbera", "lalala"))))
+    BagInfo(bagDir, mockBag(bagDir).getMetadata) shouldBe Success(new BagInfo("user001", dateTime, bagUuid, "bag-name", Some(versionOfUuid), 2, Some(BasePids("rabarbera", "lalala"))))
   }
 }

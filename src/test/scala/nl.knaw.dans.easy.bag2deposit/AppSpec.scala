@@ -42,7 +42,8 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     (delegate.execute(_: String)) expects s"bags/4722d09d-e431-4899-904c-0733cd773034" returning
       new HttpResponse[String]("<result><bag-info><urn>urn:nbn:nl:ui:13-z4-f8cm</urn><doi>10.5072/dans-2xg-umq8</doi></bag-info></result>", 200, Map.empty)
     val appConfig = testConfig(delegatingBagIndex(delegate), None)
-    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty) twice
+    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty)
+    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 2) returning Success(Seq.empty)
 
     resourceBags.copyTo(testDir / "exports")
 
@@ -376,7 +377,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     (delegate.execute(_: String)) expects s"bags/4722d09d-e431-4899-904c-0733cd773034" returning
       new HttpResponse[String]("<result><bag-info><urn>urn:nbn:nl:ui:13-z4-f8cm</urn><doi>10.5072/dans-2xg-umq8</doi></bag-info></result>", 200, Map.empty)
     val appConfig = testConfig(delegatingBagIndex(delegate), null)
-    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty)
+    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 2) returning Success(Seq.empty)
 
 
     (resourceBags / vaultUUID).copyTo(testDir / "exports" / vaultUUID)

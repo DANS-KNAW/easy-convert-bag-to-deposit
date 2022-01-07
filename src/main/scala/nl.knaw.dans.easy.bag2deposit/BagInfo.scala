@@ -53,6 +53,9 @@ object BagInfo {
       case _ => throw new Exception("")
     }
 
+    // workaround when no seqNr was provided by easy-fedora-to-bag (works if a dataset produced at most two bags)
+    val defaultSeqNr = maybeVersionOf.map(_ => "2").getOrElse("1")
+    val maybeSeqNr = Option(bagInfo.get(BagFacade.BAG_SEQUENCE_NUMBER)).flatMap(_.asScala.headOption)
     new BagInfo(
       userId = getMandatory(BagFacade.EASY_USER_ACCOUNT_KEY),
       created = getMandatory("Bagging-Date"),
@@ -60,7 +63,7 @@ object BagInfo {
       bagName = bagDir.name,
       versionOf = maybeVersionOf,
       basePids = basePids,
-      bagSeqNr = Option(bagInfo.get(BagFacade.BAG_SEQUENCE_NUMBER)).flatMap(_.asScala.headOption).getOrElse("1").toInt,
+      bagSeqNr = maybeSeqNr.getOrElse(defaultSeqNr).toInt,
     )
   }.recoverWith { case e: ConfigurationException =>
     Failure(InvalidBagException(e.getMessage))
