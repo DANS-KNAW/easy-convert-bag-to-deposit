@@ -26,7 +26,7 @@ import scala.util.{ Failure, Success, Try }
 import scala.xml.transform.{ RewriteRule, RuleTransformer }
 import scala.xml.{ Elem, Node, NodeSeq }
 
-class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.empty) extends DebugEnhancedLogging {
+class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Elem] = Map.empty) extends DebugEnhancedLogging {
   trace(())
   val reportRewriteRule: ReportRewriteRule = ReportRewriteRule(cfgDir)
   private val acquisitionRewriteRule = AcquisitionRewriteRule(cfgDir)
@@ -83,7 +83,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
   def transform(ddmIn: Node, datasetId: String): Try[Node] = {
     trace(datasetId)
     val newDcmiNodes = collectionsMap.get(datasetId)
-      .toSeq.flatten ++ unknownRightsHolder(ddmIn)
+      .toSeq ++ unknownRightsHolder(ddmIn)
 
     val profile = ddmIn \ "profile"
 
