@@ -426,7 +426,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     )
     val transformer = new DdmTransformer(
       cfgDir,
-      Map("easy-dataset:123" -> <inCollection>mocked</inCollection>)
+      Map("easy-dataset:123" -> Seq(<inCollection>mocked</inCollection>))
     )
 
     transformer.transform(ddmIn, "easy-dataset:456").map(normalized) shouldBe Success(normalized(ddm(
@@ -454,7 +454,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     )
     val transformer = new DdmTransformer(
       cfgDir,
-      Map("easy-dataset:123" -> <inCollection>mocked</inCollection>)
+      Map("easy-dataset:123" -> Seq(<inCollection>mocked</inCollection>))
     )
 
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
@@ -481,7 +481,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     )
     val transformer = new DdmTransformer(
       cfgDir,
-      Map("easy-dataset:123" -> <inCollection>mocked</inCollection>)
+      Map("easy-dataset:123" -> Seq(<inCollection>mocked1</inCollection>, <inCollection>mocked2</inCollection>))
     )
 
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
@@ -490,7 +490,8 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         <ddm:dcmiMetadata>
           <dc:title>asterix en obelix</dc:title>
           <dct:alternative>blabla rabarbera ratjetoe</dct:alternative>
-          <inCollection>mocked</inCollection>
+          <inCollection>mocked1</inCollection>
+          <inCollection>mocked2</inCollection>
           <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
       )))

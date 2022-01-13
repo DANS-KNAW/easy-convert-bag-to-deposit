@@ -95,7 +95,7 @@ object Collection extends DebugEnhancedLogging {
   }
 
   /** @return collection-member-dataset-id -> <ddm:inCollection> */
-  def getCollectionsMap(cfgDir: File)(fedoraProvider: FedoraProvider): Map[String, Elem] = {
+  def getCollectionsMap(cfgDir: File)(fedoraProvider: FedoraProvider): Map[String, Seq[Elem]] = {
     val skosFile = cfgDir / "excel2skos-collecties.csv"
     val collectionsFile = cfgDir / "ThemathischeCollecties.csv"
 
@@ -124,13 +124,20 @@ object Collection extends DebugEnhancedLogging {
       skosMap = skosRecords.map(parseSkosRecord).toMap
       updatedCollections <- updateCollections(originalCollections)
     } yield updatedCollections.flatMap { collection =>
-      val name = collection.name
-      lazy val default = <notImplemented>{ s"$name not found in collections skos" }</notImplemented>
-      val elem = skosMap.getOrElse(name, default)
-      collection.members.map(id => id -> elem)
+      memberToCollections(skosMap, collection)
     }.toMap
   }.doIfFailure { case e => logger.error(s"could not build CollectionsMap: $cfgDir $e", e) }
     .getOrElse(Map.empty)
+
+  private def memberToCollections(skosMap: Map[String, Elem], collection: Collection): Map[String, Seq[Elem]] = {
+    val name = collection.name
+    lazy val default = <notImplemented>
+      {s"$name not found in collections skos"}
+    </notImplemented>
+    val elem = skosMap.getOrElse(name, default)
+    val tuples = collection.members.map(id => id -> elem)
+    tuples.toMap.keySet.map(key => key -> tuples.filter(_._1 == key).map(_._2)).toMap
+  }
 
   private def membersOf(fedoraProvider: FedoraProvider)(datasetId: String): Seq[String] = {
     trace(datasetId)
