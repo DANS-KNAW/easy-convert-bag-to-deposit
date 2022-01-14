@@ -158,10 +158,8 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
         .map { case (path, sha) => sha -> bagDir.relativize(File(path)) }.toMap
       trace(doi)
       for {
-        migratedFiles <- provider.get(doi, version) // paths from migration info
-        migratedPayloadFiles = migratedFiles.filterNot(_.path.toString.startsWith("easy-migration/")) // exclude metadata migrated as data for provenance
+        migratedPayloadFiles <- provider.get(doi, version) // paths from migration info
         existingMigratedFiles = migratedPayloadFiles.filter(p => shaToPath.keySet.contains(p.checksumValue))
-        _ = debug(s"ignored for pre-staged.csv: ${ migratedFiles.diff(migratedPayloadFiles) }")
         _ = if (migratedPayloadFiles.size != existingMigratedFiles.size)
               logger.warn(s"no longer found previously migrated files: ${ migratedPayloadFiles.diff(existingMigratedFiles) }")
         _ = trace(shaToPath)
