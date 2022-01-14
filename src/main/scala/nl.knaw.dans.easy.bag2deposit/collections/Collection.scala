@@ -88,7 +88,7 @@ object Collection extends DebugEnhancedLogging {
   private def parseSkosRecord(r: CSVRecord) = {
     r.get("definition") ->
         <ddm:inCollection
-           schemeURI="http://easy.dans.knaw.nl/vocabularies/collecties"
+           schemeURI="https://vocabularies.dans.knaw.nl/collections"
            valueURI={ r.get("URI") }
            subjectScheme="DANS Collection"
         >{ r.get("prefLabel") }</ddm:inCollection>
