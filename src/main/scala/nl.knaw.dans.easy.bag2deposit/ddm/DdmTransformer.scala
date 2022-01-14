@@ -82,6 +82,8 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
 
   def transform(ddmIn: Node, datasetId: String): Try[Node] = {
     trace(datasetId)
+    val tmp = collectionsMap.mapValues(_.size).filter(_._2>1).keys.toList.sortBy(identity)
+    trace(tmp.mkString(","))
     val newDcmiNodes = collectionsMap.get(datasetId)
       .toSeq.flatten ++ unknownRightsHolder(ddmIn)
 
