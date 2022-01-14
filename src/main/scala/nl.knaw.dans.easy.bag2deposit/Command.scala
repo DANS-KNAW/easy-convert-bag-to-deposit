@@ -64,7 +64,7 @@ object Command extends App with DebugEnhancedLogging {
     dataverseIdAuthority = properties.getString("dataverse.id-authority"),
     bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
     ddmTransformer = new DdmTransformer(cfgPath, collectionMap),
-    userTransformer = new UserTransformer(cfgPath),
+    amdTransformer = new AmdTransformer(cfgPath),
     fedoraProvider = fedoraProvider,
     maybePreStagedProvider = if (commandLine.preStaged())
                                Some(PreStagedProvider(new URI(properties.getString("migration-info.url"))))

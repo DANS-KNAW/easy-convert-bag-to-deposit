@@ -108,7 +108,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       amdFile = metadata / "amd.xml"
       amdIn <- getAmdXml(datasetId, amdFile)
       fromVault = depositProps.getString("deposit.origin") == "VAULT"
-      amdOut <- configuration.userTransformer.transform(amdIn)
+      amdOut <- configuration.amdTransformer.transform(amdIn, ddmOut \ "ddm:created")
       agreementsFile = metadata / "depositor-info" / "agreements.xml"
       _ = checkAgreementsXml((amdOut \ "depositorId").text, agreementsFile)
       provenanceXml = provenance.collectChangesInXmls(Map(

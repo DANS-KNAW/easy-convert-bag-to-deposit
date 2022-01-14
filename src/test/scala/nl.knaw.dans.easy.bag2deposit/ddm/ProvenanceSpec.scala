@@ -16,7 +16,7 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.{ UserTransformer, loadXml }
+import nl.knaw.dans.easy.bag2deposit.{ AmdTransformer, loadXml }
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ FileSystemSupport, FixedCurrentDateTimeSupport, XmlSupport }
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.compare
 import org.scalatest.flatspec.AnyFlatSpec
@@ -131,19 +131,31 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
             <lastStateChange>2020-02-02T20:02:00.000+01:00</lastStateChange>
             <depositorId>user001</depositorId>
             <stateChangeDates>
-                <damd:stateChangeDate>
-                    <fromState>DRAFT</fromState>
-                    <toState>PUBLISHED</toState>
-                    <changeDate>2020-02-02T20:02:00.000+01:00</changeDate>
-                </damd:stateChangeDate>
+              <damd:stateChangeDate>
+                <fromState>SUBMITTED</fromState>
+                <toState>PUBLISHED</toState>
+                <changeDate>2017-05-02T13:01:26.752+02:00</changeDate>
+              </damd:stateChangeDate>
+              <damd:stateChangeDate>
+                <fromState>PUBLISHED</fromState>
+                <toState>MAINTENANCE</toState>
+                <changeDate>2017-10-13T09:31:55.215+02:00</changeDate>
+              </damd:stateChangeDate>
+              <damd:stateChangeDate>
+                <fromState>MAINTENANCE</fromState>
+                <toState>PUBLISHED</toState>
+                <changeDate>2017-10-13T09:35:01.605+02:00</changeDate>
+              </damd:stateChangeDate>
             </stateChangeDates>
           </damd:administrative-md>
         ).toString()
     )
 
-    val transformer = new UserTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
+    val transformer = new AmdTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
     val amdIn = loadXml(testDir / "amd.xml").getOrElse(fail("could not load AMD"))
-    val amdOut = transformer.transform(amdIn).getOrElse(fail("could not transform"))
+    val created = <ddm:created>2016-31-12</ddm:created>
+    val amdOut = transformer.transform(amdIn, created).getOrElse(fail("could not transform"))
+    amdOut.text should include("2016-10-13T09:35:01.605+02:00")
     new Provenance("EasyConvertBagToDepositApp", "1.0.5").collectChangesInXmls(Map(
       "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
     )).map(normalized) shouldBe List(normalized(
