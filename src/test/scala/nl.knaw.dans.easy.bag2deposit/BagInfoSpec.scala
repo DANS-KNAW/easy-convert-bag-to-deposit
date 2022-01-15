@@ -42,7 +42,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
     val bagDir = (testDir / s"0$uuid" / "bag-name").createDirectories()
     val file = (bagDir / "bag-info.txt").write("EASY-User-Account: user001")
     BagInfo(bagDir, mockBag(bagDir).getMetadata) shouldBe Failure(InvalidBagException(
-      s"No Bagging-Date in $file"
+      s"No Created in $file"
     ))
   }
   it should "complain about missing user account" in {
@@ -58,7 +58,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
     val bagDir = (testDir / uuid.toString / "bag-name").createDirectories()
     (bagDir / "bag-info.txt").write(
       s"""EASY-User-Account: user001
-         |Bagging-Date: 2017-01-16T14:35:00.888+01:00
+         |Created: 2017-01-16T14:35:00.888+01:00
          |Is-Version-Of: urn:uuid:123456789$uuid
          |""".stripMargin)
     BagInfo(bagDir, mockBag(bagDir).getMetadata) shouldBe Failure(InvalidBagException(
@@ -70,7 +70,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
     val bagDir = (testDir / s"$uuid" / "bag-name").createDirectories()
     val dateTime = """2017-01-16T14:35:00.888+01:00"""
     (bagDir / "bag-info.txt").write(
-      s"""Bagging-Date: $dateTime
+      s"""Created: $dateTime
          |EASY-User-Account: user001
          |""".stripMargin)
     BagInfo(bagDir, mockBag(bagDir).getMetadata) shouldBe Success(new BagInfo("user001", dateTime, uuid, "bag-name", None, 1, None))
@@ -81,7 +81,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
     val bagDir = (testDir / s"$bagUuid" / "bag-name").createDirectories()
     val dateTime = """2017-01-16T14:35:00.888+01:00"""
     (bagDir / "bag-info.txt").write(
-      s"""Bagging-Date: $dateTime
+      s"""Created: $dateTime
          |Is-Version-Of: $versionOfUuid
          |EASY-User-Account: user001
          |""".stripMargin)
@@ -93,7 +93,7 @@ class BagInfoSpec extends AnyFlatSpec with Matchers with AppConfigSupport with B
     val bagDir = (testDir / s"$bagUuid" / "bag-name").createDirectories()
     val dateTime = """2017-01-16T14:35:00.888+01:00"""
     (bagDir / "bag-info.txt").write(
-      s"""Bagging-Date: $dateTime
+      s"""Created: $dateTime
          |Is-Version-Of: $versionOfUuid
          |${ BagInfo.baseUrnKey }: rabarbera
          |${ BagInfo.baseDoiKey }: lalala

@@ -58,7 +58,7 @@ object BagInfo {
     val maybeSeqNr = Option(bagInfo.get(BagFacade.BAG_SEQUENCE_NUMBER)).flatMap(_.asScala.headOption)
     new BagInfo(
       userId = getMandatory(BagFacade.EASY_USER_ACCOUNT_KEY),
-      created = getMandatory("Bagging-Date"),
+      created = getMandatory("Created"),
       uuid = uuidFromFile(bagDir.parent),
       bagName = bagDir.name,
       versionOf = maybeVersionOf,
