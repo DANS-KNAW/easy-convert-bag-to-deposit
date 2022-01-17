@@ -19,11 +19,11 @@ import better.files.File
 import org.apache.commons.csv.CSVFormat.RFC4180
 
 import java.nio.charset.Charset
-import scala.util.{ Failure, Success, Try }
-import scala.xml.Node
-import scala.xml.transform.{ RewriteRule, RuleTransformer }
+import scala.util.{Failure, Success, Try}
+import scala.xml.transform.{RewriteRule, RuleTransformer}
+import scala.xml.{Elem, Node, NodeSeq, Text}
 
-class UserTransformer(cfgDir: File) {
+class AmdTransformer(cfgDir: File) {
   private val csvFile: File = cfgDir / "account-substitutes.csv"
   private val userMap = if (!csvFile.exists || csvFile.isEmpty)
                           Map[String, String]()
@@ -41,14 +41,37 @@ class UserTransformer(cfgDir: File) {
         .getOrElse(node)
     }
   }
-  private val transformer = new RuleTransformer(userRewriteRule)
+
+  /** replace oldest publication date to get the same citation date on dataverse as in easy */
+  private def citationDateRewriteRule(dateCreated: String, oldest: String) = new RewriteRule() {
+    override def transform(node: Node): Seq[Node] = node match {
+      case e: Elem if node.label == "changeDate" && node.text.trim == oldest =>
+        e.copy(child = new Text(dateCreated))
+      case other => other
+    }
+  }
 
   // The default charset is determined during virtual-machine startup and typically
   // depends upon the locale and charset of the underlying operating system.
   implicit val charset: Charset = Charset.forName("UTF-8")
 
-  def transform(xmlIn: Node): Try[Node] = {
-    transformer.transform(xmlIn).headOption.map(Success(_))
+  def transform(xmlIn: Node, ddmCreated: NodeSeq): Try[Node] = {
+    val yearCreated = ddmCreated.text.substring(0, 4)
+    val changedToPublished = (xmlIn \\ "stateChangeDate")
+      .filter(n => (n \ "toState").text.trim == "PUBLISHED")
+    val oldestPublished = if (changedToPublished.isEmpty) NodeSeq.Empty
+    else changedToPublished.minBy(n => (n \ "changeDate").text.trim.substring(0, 4))
+    val oldestDate = (oldestPublished \ "changeDate").text.trim
+    val transformer =
+      if (oldestDate.length >= 4 && oldestDate.substring(0, 4) == yearCreated)
+        new RuleTransformer(userRewriteRule)
+      else
+        new RuleTransformer(
+          userRewriteRule,
+          citationDateRewriteRule(ddmCreated.text, oldestDate),
+        )
+    transformer
+      .transform(xmlIn).headOption.map(Success(_))
       .getOrElse(Failure(new Exception("transformer did not return an AMD")))
   }
 }
