@@ -17,8 +17,8 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import com.yourmediashelf.fedora.client.FedoraClientException
-import nl.knaw.dans.easy.bag2deposit.Fixture.{ DdmSupport, FileSystemSupport, SchemaSupport }
-import nl.knaw.dans.easy.bag2deposit.collections.{ Collection, FedoraProvider }
+import nl.knaw.dans.easy.bag2deposit.Fixture.{DdmSupport, FileSystemSupport, SchemaSupport}
+import nl.knaw.dans.easy.bag2deposit.collections.{Collection, FedoraProvider}
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
@@ -26,6 +26,7 @@ import org.scalatest.matchers.should.Matchers
 import resource.managed
 
 import java.io.InputStream
+import scala.collection.mutable.ArrayBuffer
 import scala.util.Success
 
 class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with Matchers with FileSystemSupport with MockFactory {
@@ -49,7 +50,7 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     csvFile.writeText(originalCsv)
 
     // just sampling one of the expected tuples, the keys of all tuples are written to the updated CSV
-    val sampleTuple = "easy-dataset:64188" ->
+    val sampleElem =
         <ddm:inCollection
           schemeURI="https://vocabularies.dans.knaw.nl/collections"
           valueURI="https://vocabularies.dans.knaw.nl/collections/archaeology#Diachronbv"
@@ -60,8 +61,8 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     csvBackUpFiles(cfgDir) should have size 0
 
     // the mocked jump offs are read and parsed just once (by the first call)
-    Collection.getCollectionsMap(cfgDir)(mockedProvider) should contain(sampleTuple)
-    Collection.getCollectionsMap(cfgDir)(mockedProvider) should contain(sampleTuple)
+    (Collection.getCollectionsMap(cfgDir)(mockedProvider)).get("easy-dataset:64188").head.head shouldBe sampleElem
+    (Collection.getCollectionsMap(cfgDir)(mockedProvider)).get("easy-dataset:64188").head.head shouldBe sampleElem
 
     // post conditions
     val files = csvBackUpFiles(cfgDir)
@@ -106,9 +107,8 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     csvFile.writeText(originalCsv)
 
     val collectionMap = Collection.getCollectionsMap(cfgDir)(mockedProvider)
-    collectionMap.values.toList.distinct shouldBe List(
-      <notImplemented>Verzamelpagina Archeologie not found in collections skos</notImplemented>
-    )
+    collectionMap.values.toList.distinct.head.head.text.trim shouldBe
+      "Verzamelpagina Archeologie not found in collections skos"
     csvFile.contentAsString shouldBe expectedCsv
   }
 
