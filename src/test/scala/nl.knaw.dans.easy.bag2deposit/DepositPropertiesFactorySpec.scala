@@ -49,7 +49,7 @@ class DepositPropertiesFactorySpec extends AnyFlatSpec with Matchers with AppCon
       s"""state.label = SUBMITTED
          |state.description = This deposit was extracted from the vault and is ready for processing
          |deposit.origin = VAULT
-         |creation.timestamp = 2016-06-07
+         |creation.timestamp = 2017-01-16T14:35:00.888+01:00
          |depositor.userId = user001
          |identifier.doi = 10.5072/dans-2xg-umq8
          |identifier.urn = urn:nbn:nl:ui:13-00-3haq

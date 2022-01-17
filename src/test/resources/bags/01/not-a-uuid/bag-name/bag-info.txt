@@ -1,2 +1,2 @@
 EASY-User-Account: user001
-Bagging-Date: 2016-06-07
+Created: 2016-06-07T11:45:06.371Z
