@@ -43,10 +43,10 @@ class AmdTransformer(cfgDir: File) {
   }
 
   /** replace oldest publication date to get the same citation date on dataverse as in easy */
-  private def citationDateRewriteRule(yearCreated: String, oldest: String) = new RewriteRule() {
+  private def citationDateRewriteRule(dateCreated: String, oldest: String) = new RewriteRule() {
     override def transform(node: Node): Seq[Node] = node match {
       case e: Elem if node.label == "changeDate" && node.text.trim == oldest =>
-        e.copy(child = new Text(yearCreated + oldest.substring(4, oldest.length)))
+        e.copy(child = new Text(dateCreated))
       case other => other
     }
   }
@@ -68,7 +68,7 @@ class AmdTransformer(cfgDir: File) {
       else
         new RuleTransformer(
           userRewriteRule,
-          citationDateRewriteRule(ddmCreated.text.substring(0, 4), oldestDate),
+          citationDateRewriteRule(ddmCreated.text, oldestDate),
         )
     transformer
       .transform(xmlIn).headOption.map(Success(_))

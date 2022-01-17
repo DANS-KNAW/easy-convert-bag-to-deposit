@@ -155,7 +155,8 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     val amdIn = loadXml(testDir / "amd.xml").getOrElse(fail("could not load AMD"))
     val created = <ddm:created>2016-31-12</ddm:created>
     val amdOut = transformer.transform(amdIn, created).getOrElse(fail("could not transform"))
-    amdOut.text should include("2016-10-13T09:35:01.605+02:00")
+    amdOut.text shouldNot include("2017-05-02T13:01:26.752+02:00")
+    amdOut.text should include("2016-31-12")
     new Provenance("EasyConvertBagToDepositApp", "1.0.5").collectChangesInXmls(Map(
       "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
     )).map(normalized) shouldBe List(normalized(
