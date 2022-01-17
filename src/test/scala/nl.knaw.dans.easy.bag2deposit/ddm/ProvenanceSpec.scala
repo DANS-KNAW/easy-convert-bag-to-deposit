@@ -169,9 +169,19 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
           <prov:file scheme="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
             <prov:old>
               <depositorId>user001</depositorId>
+              <damd:stateChangeDate>
+                <fromState>SUBMITTED</fromState>
+                <toState>PUBLISHED</toState>
+                <changeDate>2017-05-02T13:01:26.752+02:00</changeDate>
+              </damd:stateChangeDate>
             </prov:old>
             <prov:new>
               <depositorId>USer</depositorId>
+              <damd:stateChangeDate>
+                <fromState>SUBMITTED</fromState>
+                <toState>PUBLISHED</toState>
+                <changeDate>2016-31-12</changeDate>
+              </damd:stateChangeDate>
             </prov:new>
           </prov:file>
         </prov:migration>
