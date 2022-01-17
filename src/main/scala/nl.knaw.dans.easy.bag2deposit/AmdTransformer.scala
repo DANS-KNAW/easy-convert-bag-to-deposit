@@ -56,14 +56,14 @@ class AmdTransformer(cfgDir: File) {
   implicit val charset: Charset = Charset.forName("UTF-8")
 
   def transform(xmlIn: Node, ddmCreated: NodeSeq): Try[Node] = {
-    val yearCreated = ddmCreated.text.substring(0, 4)
+    val yearCreated = yearOf(ddmCreated.text)
     val changedToPublished = (xmlIn \\ "stateChangeDate")
       .filter(n => (n \ "toState").text.trim == "PUBLISHED")
     val oldestPublished = if (changedToPublished.isEmpty) NodeSeq.Empty
-    else changedToPublished.minBy(n => (n \ "changeDate").text.trim.substring(0, 4))
+    else changedToPublished.minBy(n => (n \ "changeDate").text.trim)
     val oldestDate = (oldestPublished \ "changeDate").text.trim
     val transformer =
-      if (oldestDate.length >= 4 && oldestDate.substring(0, 4) == yearCreated)
+      if (yearCreated.length >= 4 && yearOf(oldestDate) == yearCreated)
         new RuleTransformer(userRewriteRule)
       else
         new RuleTransformer(
@@ -73,5 +73,11 @@ class AmdTransformer(cfgDir: File) {
     transformer
       .transform(xmlIn).headOption.map(Success(_))
       .getOrElse(Failure(new Exception("transformer did not return an AMD")))
+  }
+
+  private def yearOf(text: String) = {
+    if (text.length>=4)
+      text.substring(0, 4)
+    else ""
   }
 }

@@ -67,8 +67,8 @@ object Provenance extends DebugEnhancedLogging {
     // TODO poor mans solution to call with ddm/dcmiMetadata respective root of amd
     val oldRootNodes = oldXml.flatMap(_.nonEmptyChildren)
     val newRootNodes = newXml.flatMap(_.nonEmptyChildren)
-    val oldStateNodes = oldRootNodes.filter(_.label == "stateChangeDates").head.flatMap(_.nonEmptyChildren)
-    val newStateNodes = newRootNodes.filter(_.label == "stateChangeDates").head.flatMap(_.nonEmptyChildren)
+    val oldStateNodes = oldRootNodes.find(_.label == "stateChangeDates").toSeq.flatten.flatMap(_.nonEmptyChildren)
+    val newStateNodes = newRootNodes.find(_.label == "stateChangeDates").toSeq.flatten.flatMap(_.nonEmptyChildren)
     val newSimpleNodes = newRootNodes.filterNot(_.label == "stateChangeDates")
     val oldSimpleNodes = oldRootNodes.filterNot(_.label == "stateChangeDates")
     val newNodes = newSimpleNodes.theSeq ++ newStateNodes.theSeq
