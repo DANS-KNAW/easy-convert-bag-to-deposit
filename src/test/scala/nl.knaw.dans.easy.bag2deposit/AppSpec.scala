@@ -17,14 +17,14 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.BagSource._
-import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, FileSystemSupport, XmlSupport }
+import nl.knaw.dans.easy.bag2deposit.Fixture.{AppConfigSupport, FileSystemSupport, XmlSupport}
 import nl.knaw.dans.easy.bag2deposit.IdType._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import scalaj.http.HttpResponse
 
 import scala.language.postfixOps
-import scala.util.{ Success, Try }
+import scala.util.{Failure, Success, Try}
 import scala.xml.XML
 
 class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSupport with FileSystemSupport {
@@ -167,6 +167,27 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
 
     val amdXml = testDir / "ingest-dir" / validUUID / "bag-revision-1/metadata/amd.xml"
     normalized(XML.loadFile(amdXml.toJava)) shouldBe normalized(getAmdResult)
+  }
+
+  it should "complain about hidden file without state deleted" in {
+    val delegate = mock[MockBagIndex]
+    (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
+      new HttpResponse[String]("123", 200, Map.empty)
+
+    val appConfig = testConfig(delegatingBagIndex(delegate), Some(mock[MockFedoraProvider]))
+
+    val bagDir = (resourceBags / validUUID).copyTo(testDir / "exports" / validUUID)
+      .children.toList.head
+    val hiddenBag = testDir / "exports" / validUUID / s".${bagDir.name}"
+    bagDir.moveTo(hiddenBag)
+
+    val outputDir = (testDir / "ingest-dir").createDirectories()
+    new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
+      bagParentDirs = (testDir / "exports").children,
+      maybeOutputDir = Some(outputDir),
+      properties = DepositPropertiesFactory(appConfig, DOI, VAULT)
+    ) shouldBe Success("No fatal errors")
+    outputDir.list shouldBe empty
   }
 
   it should "remove pre-staged files" in {
@@ -436,10 +457,6 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     val testBag = testDir / "exports" / validUUID / "bag-revision-1"
     (testBag / "metadata" / "files.xml")
       .writeText(originalFilesXml.serialize)
-
-    // pre-condition: another user than in account-substitutes.csv
-    (testBag / "metadata" / "amd.xml").contentAsString should
-      include("<depositorId>user001</depositorId>")
 
     new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
       (testDir / "exports").children,
