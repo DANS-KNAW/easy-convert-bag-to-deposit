@@ -16,9 +16,9 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.Fixture.{ DdmSupport, SchemaSupport, XmlSupport }
+import nl.knaw.dans.easy.bag2deposit.Fixture.{DdmSupport, SchemaSupport, XmlSupport}
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
-import nl.knaw.dans.easy.bag2deposit.{ BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, AmdTransformer, parseCsv }
+import nl.knaw.dans.easy.bag2deposit.{AmdTransformer, BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, parseCsv}
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -26,7 +26,7 @@ import org.scalatest.matchers.should.Matchers
 import java.net.URI
 import java.nio.charset.Charset
 import java.util.UUID
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Matchers with DdmSupport {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
@@ -601,5 +601,33 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     val strings = (ddmOut \\ "identifier").map(_.text)
     archisIds.size shouldNot be(strings.size)
     strings.filter(_.matches(".*[^0-9].*")) shouldBe Seq("10HZ-18 (Objectcode Archis)", "36141 (ARCHIS rapportnummer)", " 405800 (Archis nummers)", "http://livelink.archis.nl/Livelink/livelink.exe?func=ll&objId=4835986&objAction=browse (URI)", "66510 (Archisnummer)", "ARCHIS2: 63389", "Onderzoeksnaam Archis: 4042 Den Haag", "Objectnummer Archis: 1121031", "Archis2 nummer 65495", "3736 (RAAP) (Archis art. 41)", "6663 (ADC) (Archis art. 41)", "2866 (RAAP) (Archis art. 41)", "7104 (ADC) (Archis art. 41)", "16065 (BeVdG) (Archis art. 41)", "Archis2: CIS-code: 25499 (Tjeppenboer) en 25500 (Hilaard)")
+  }
+  it should "add dans license" in {
+    val transformer = new DdmTransformer(cfgDir, Map.empty)
+    val ddmIn = ddm(
+      <ddm:profile><ddm:accessRights>REQUEST_PERMISSION</ddm:accessRights></ddm:profile>
+          <ddm:dcmiMetadata/>
+    )
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddm(
+      <ddm:profile><ddm:accessRights>REQUEST_PERMISSION</ddm:accessRights></ddm:profile>
+          <ddm:dcmiMetadata>
+            <dcterms:license xsi:type="dcterms:URI">http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSLicence.pdf</dcterms:license>
+            <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+          </ddm:dcmiMetadata>
+    )))
+  }
+  it should "keep the original license" in {
+    val transformer = new DdmTransformer(cfgDir, Map.empty)
+    val ddmIn = ddm(
+      <ddm:profile><ddm:accessRights>OPEN_ACCESS_FOR_REGISTERED_USERS</ddm:accessRights></ddm:profile>
+          <ddm:dcmiMetadata><dcterms:license xsi:type="dcterms:URI">http://does.not.exist.dans.knaw.nl</dcterms:license></ddm:dcmiMetadata>
+    )
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddm(
+      <ddm:profile><ddm:accessRights>OPEN_ACCESS_FOR_REGISTERED_USERS</ddm:accessRights></ddm:profile>
+          <ddm:dcmiMetadata>
+            <dcterms:license xsi:type="dcterms:URI">http://does.not.exist.dans.knaw.nl</dcterms:license>
+            <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+          </ddm:dcmiMetadata>
+    )))
   }
 }

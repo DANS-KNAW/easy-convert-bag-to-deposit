@@ -22,9 +22,9 @@ import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguag
 import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.logBriefRapportTitles
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
-import scala.util.{ Failure, Success, Try }
-import scala.xml.transform.{ RewriteRule, RuleTransformer }
-import scala.xml.{ Elem, Node, NodeSeq }
+import scala.util.{Failure, Success, Try}
+import scala.xml.transform.{RewriteRule, RuleTransformer}
+import scala.xml.{Elem, Node, NodeSeq, Text}
 
 class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.empty) extends DebugEnhancedLogging {
   trace(())
@@ -84,8 +84,9 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
     trace(datasetId)
     val tmp = collectionsMap.mapValues(_.size).filter(_._2>1).keys.toList.sortBy(identity)
     trace(tmp.mkString(","))
-    val newDcmiNodes = collectionsMap.get(datasetId)
-      .toSeq.flatten ++ unknownRightsHolder(ddmIn)
+    val newDcmiNodes = missingLicense(ddmIn) ++
+      collectionsMap.get(datasetId).toSeq.flatten ++
+      unknownRightsHolder(ddmIn)
 
     val profile = ddmIn \ "profile"
 
@@ -118,6 +119,18 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
   }.map { ddm =>
     logNotMappedLanguages(ddm, datasetId)
     ddm
+  }
+
+  private def missingLicense(ddm: Node): Seq[Node] = {
+    val value = (ddm \\ "license").nonEmpty
+    if (value) Seq.empty
+    else {
+      (ddm \\ "accessRights").headOption.map(_.text match {
+        case "OPEN_ACCESS_FOR_REGISTERED_USERS" | "REQUEST_PERMISSION" =>
+          <dcterms:license xsi:type="dcterms:URI">http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSLicence.pdf</dcterms:license>
+        case _ => Text("")
+      }).getOrElse(Seq.empty)
+    }
   }
 }
 
