@@ -169,7 +169,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     normalized(XML.loadFile(amdXml.toJava)) shouldBe normalized(getAmdResult)
   }
 
-  it should "complain about hidden file without state deleted" in {
+  it should "complain about inactive bag without state deleted" in {
     val delegate = mock[MockBagIndex]
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
       new HttpResponse[String]("123", 200, Map.empty)
