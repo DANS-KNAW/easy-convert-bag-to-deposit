@@ -122,7 +122,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
   }
 
   private def missingLicense(ddm: Node): Seq[Node] = {
-    val value = (ddm \ "license").nonEmpty
+    val value = (ddm \\ "license").nonEmpty
     if (value) Seq.empty
     else {
       (ddm \\ "accessRights").headOption.map(_.text match {

@@ -616,4 +616,18 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           </ddm:dcmiMetadata>
     )))
   }
+  it should "keep the original license" in {
+    val transformer = new DdmTransformer(cfgDir, Map.empty)
+    val ddmIn = ddm(
+      <ddm:profile><ddm:accessRights>OPEN_ACCESS_FOR_REGISTERED_USERS</ddm:accessRights></ddm:profile>
+          <ddm:dcmiMetadata><dcterms:license xsi:type="dcterms:URI">http://does.not.exist.dans.knaw.nl</dcterms:license></ddm:dcmiMetadata>
+    )
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddm(
+      <ddm:profile><ddm:accessRights>OPEN_ACCESS_FOR_REGISTERED_USERS</ddm:accessRights></ddm:profile>
+          <ddm:dcmiMetadata>
+            <dcterms:license xsi:type="dcterms:URI">http://does.not.exist.dans.knaw.nl</dcterms:license>
+            <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+          </ddm:dcmiMetadata>
+    )))
+  }
 }
