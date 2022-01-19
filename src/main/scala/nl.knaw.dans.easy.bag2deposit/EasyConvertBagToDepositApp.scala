@@ -107,6 +107,8 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       amdFile = metadata / "amd.xml"
       amdIn <- getAmdXml(datasetId, amdFile)
+      _ = if (bagDir.name.startsWith(".") && (amdIn \\ "datasetState").text != "DELETED")
+        throw InvalidBagException(s"Inactive bag does not have state DELETED: $amdFile")
       fromVault = depositProps.getString("deposit.origin") == "VAULT"
       amdOut <- configuration.amdTransformer.transform(amdIn, ddmOut \ "ddm:created")
       agreementsFile = metadata / "depositor-info" / "agreements.xml"
@@ -226,7 +228,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
 
   private def getBagDir(bagParentDir: File): Try[File] = Try {
     trace(bagParentDir)
-    val children = bagParentDir.children.toList
+    val children = bagParentDir.list.toList
     if (children.size > 1)
       throw InvalidBagException(s"more than just one item in $bagParentDir")
     children.find(_.isDirectory).getOrElse(
