@@ -27,6 +27,7 @@ import java.net.URI
 import java.nio.charset.Charset
 import java.util.UUID
 import scala.util.{Failure, Success, Try}
+import scala.xml.XML
 
 class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Matchers with DdmSupport {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
@@ -615,6 +616,14 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
             <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
           </ddm:dcmiMetadata>
     )))
+  }
+  it should "replace funder role" in {
+    val ddmIn = XML.loadFile("src/test/resources/funder/ddm-in.xml")
+    val expectedDDM = XML.loadFile("src/test/resources/funder/ddm-out.xml")
+    validate(ddmIn) shouldBe a[Success[_]]
+    validate(expectedDDM) shouldBe a[Success[_]]
+    val triedDdm = new DdmTransformer(File("src/main/assembly/dist/cfg"), Map.empty).transform(ddmIn, "easy-dataset:123")
+    triedDdm.map(normalized) shouldBe Success(normalized(expectedDDM))
   }
   it should "keep the original license" in {
     val transformer = new DdmTransformer(cfgDir, Map.empty)

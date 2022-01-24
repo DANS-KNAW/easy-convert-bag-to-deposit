@@ -1,0 +1,84 @@
+<ddm:DDM xsi:schemaLocation="http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"
+         xmlns:id-type="http://easy.dans.knaw.nl/schemas/vocab/identifier-type/"
+         xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
+         xmlns:dcx-dai="http://easy.dans.knaw.nl/schemas/dcx/dai/" xmlns:dct="http://purl.org/dc/terms/"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<ddm:profile>
+        <dc:title>Placing the first islanders on the world map</dc:title>
+        <dct:description>
+            There are many world maps showing how our ancestors spread across the world following the emergence of our species in Africa around 300.000 years ago. However, islands are missing from these maps. The 'Islands on the Map' database brings together data from historical, paleoecological and archaeological sources into a global and spatially-explicit database on human settlement of islands.
+        </dct:description>
+        <dcx-dai:creatorDetails>
+            <dcx-dai:author>
+                <dcx-dai:titles>Dr.</dcx-dai:titles>
+                <dcx-dai:initials>S.J.</dcx-dai:initials>
+                <dcx-dai:surname>Norder</dcx-dai:surname>
+                <dcx-dai:ORCID>https://orcid.org/0000-0003-4692-4543</dcx-dai:ORCID>
+                <dcx-dai:organization>
+                    <dcx-dai:name>Universiteit Leiden</dcx-dai:name>
+                </dcx-dai:organization>
+            </dcx-dai:author>
+        </dcx-dai:creatorDetails>
+        <ddm:created>2020-10-31</ddm:created>
+        <ddm:available>2020-10-31</ddm:available>
+        <ddm:audience>D35400</ddm:audience>
+        <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
+    </ddm:profile>
+    <ddm:dcmiMetadata>
+        <dct:identifier xsi:type="id-type:URN">urn:nbn:nl:ui:13-ho-6qm0</dct:identifier>
+        <dct:identifier xsi:type="id-type:DOI">10.17026/dans-ze3-zu36</dct:identifier>
+        <dct:identifier>Klein Data Project - KDP 2020</dct:identifier>
+        <dct:identifier xsi:type="id-type:EASY2">easy-dataset:191019</dct:identifier>
+        <dct:alternative>Islands on the Map</dct:alternative>
+        <dcx-dai:contributorDetails>
+            <dcx-dai:author>
+                <dcx-dai:titles>Dr.</dcx-dai:titles>
+                <dcx-dai:initials>E.E.</dcx-dai:initials>
+                <dcx-dai:insertions>van</dcx-dai:insertions>
+                <dcx-dai:surname>Loon</dcx-dai:surname>
+                <dcx-dai:ORCID>https://orcid.org/0000-0002-8895-0427</dcx-dai:ORCID>
+                <dcx-dai:role>ProjectMember</dcx-dai:role>
+                <dcx-dai:organization>
+                    <dcx-dai:name>Universiteit van Amsterdam</dcx-dai:name>
+                </dcx-dai:organization>
+            </dcx-dai:author>
+        </dcx-dai:contributorDetails>
+        <dcx-dai:contributorDetails>
+            <dcx-dai:author>
+                <dcx-dai:titles>Dr.</dcx-dai:titles>
+                <dcx-dai:initials>J</dcx-dai:initials>
+                <dcx-dai:insertions>de</dcx-dai:insertions>
+                <dcx-dai:surname>Groeve</dcx-dai:surname>
+                <dcx-dai:ORCID>https://orcid.org/0000-0002-1274-3237</dcx-dai:ORCID>
+                <dcx-dai:role>ProjectMember</dcx-dai:role>
+                <dcx-dai:organization>
+                    <dcx-dai:name>Universiteit van Amsterdam</dcx-dai:name>
+                </dcx-dai:organization>
+            </dcx-dai:author>
+        </dcx-dai:contributorDetails>
+        <dcx-dai:contributorDetails>
+            <dcx-dai:organization>
+                <dcx-dai:name>Universiteit Leiden</dcx-dai:name>
+                <dcx-dai:role>RightsHolder</dcx-dai:role>
+            </dcx-dai:organization>
+        </dcx-dai:contributorDetails>
+        <dcx-dai:contributorDetails>
+            <dcx-dai:organization>
+                <dcx-dai:name>Data Archiving and Networked Services - DANS</dcx-dai:name>
+                <dcx-dai:role>Funder</dcx-dai:role>
+            </dcx-dai:organization>
+        </dcx-dai:contributorDetails>
+        <dct:rightsHolder>Universiteit Leiden</dct:rightsHolder>
+        <dct:type xsi:type="dct:DCMIType">Dataset</dct:type>
+        <dct:format>text/plain</dct:format>
+        <dct:format>application/pdf</dct:format>
+        <dct:subject>islands</dct:subject>
+        <dct:subject>human-environment interactions</dct:subject>
+        <dct:subject>human biogeography</dct:subject>
+        <dct:spatial>Global</dct:spatial>
+        <dct:temporal>Holocene</dct:temporal>
+        <dct:dateSubmitted xsi:type="dct:W3CDTF">2020-10-31</dct:dateSubmitted>
+        <dct:license xsi:type="dct:URI">http://creativecommons.org/publicdomain/zero/1.0</dct:license>
+        <dct:language>eng</dct:language>
+    </ddm:dcmiMetadata>
+</ddm:DDM>
