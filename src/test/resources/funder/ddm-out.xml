@@ -43,7 +43,6 @@
         <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
     </ddm:profile>
 
-    <!-- DDM instances MAY have one ddm:dcmiMetadata element -->
     <ddm:dcmiMetadata>
         <dcx-dai:contributorDetails>
             <dcx-dai:author>
