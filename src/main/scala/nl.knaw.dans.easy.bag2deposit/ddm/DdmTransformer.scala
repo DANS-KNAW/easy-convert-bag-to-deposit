@@ -45,6 +45,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
     AbrRewriteRule.temporalRewriteRule(cfgDir),
     AbrRewriteRule.subjectRewriteRule(cfgDir),
     languageRewriteRule,
+    DropFunderRoleRewriteRule,
     relationRewriteRule,
   )
 
@@ -53,6 +54,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
     DistinctTitlesRewriteRule(profileTitle),
     relationRewriteRule,
     languageRewriteRule,
+    DropFunderRoleRewriteRule,
     ProfileDateRewriteRule,
   )
 
@@ -73,6 +75,32 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
     }
   }
 
+  private def funders(ddm: Node) = {
+    (ddm \\ "contributorDetails")
+      .filter(n => (n \\ "role").text == "Funder")
+      .map ( node =>
+        <ddm:funding>
+          <ddm:funderName>{ toContributorName(node) }</ddm:funderName>
+        </ddm:funding>
+      )
+  }
+
+  private def toContributorName(node: Node) = {
+
+    val org = node \\ "organization"
+    if (org.nonEmpty)
+      (org \ "name").text
+    else {
+      // duplicate of https://github.com/DANS-KNAW/easy-update-solr-index/blob/46c3ad673ddfc38f3166cded9be5b58e124be624/lib/src/main/scala/nl.knaw.dans.easy.solr/SolrDocumentGenerator.scala#L68-L73
+      val nameStart = (node \\ "surname").text
+      val nameEnd = List("title", "initials", "prefix")
+        .map(tag => (node \\ tag).text)
+        .filter(_.nonEmpty)
+        .mkString(" ")
+      List(nameStart, nameEnd).filter(_.nonEmpty).mkString(", ")
+    }
+  }
+
   private def unknownRightsHolder(ddm: Node) = {
     val inRole = (ddm \\ "role").text.toLowerCase.contains("rightsholder")
     if (inRole || (ddm \ "dcmiMetadata" \ "rightsHolder").nonEmpty) Seq.empty
@@ -86,7 +114,8 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
     trace(tmp.mkString(","))
     val newDcmiNodes = missingLicense(ddmIn) ++
       collectionsMap.get(datasetId).toSeq.flatten ++
-      unknownRightsHolder(ddmIn)
+      unknownRightsHolder(ddmIn) ++
+      funders(ddmIn)
 
     val profile = ddmIn \ "profile"
 

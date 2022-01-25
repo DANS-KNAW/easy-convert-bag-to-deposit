@@ -35,8 +35,8 @@
                 <dcx-dai:name xml:lang="en">Utrecht University</dcx-dai:name>
             </dcx-dai:organization>
         </dcx-dai:creatorDetails>
-        <ddm:created>2012-12</ddm:created>
-        <ddm:available>2013-05</ddm:available>
+        <ddm:created>2012-12-01</ddm:created>
+        <ddm:available>2013-05-01</ddm:available>
         <ddm:audience>D20000</ddm:audience>
         <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
     </ddm:profile>
@@ -68,12 +68,12 @@
                 <dcx-dai:name>Data Archiving and Networked Services - DANS</dcx-dai:name>
             </dcx-dai:organization>
         </dcx-dai:contributorDetails>
-
+        <dct:rightsHolder>Unknown</dct:rightsHolder>
         <ddm:funding>
             <ddm:funderName>Universiteit van Amsterdam</ddm:funderName>
         </ddm:funding>
         <ddm:funding>
-            <ddm:funderName>Dr. J de Groeve</ddm:funderName>
+            <ddm:funderName>Groeve, J</ddm:funderName>
         </ddm:funding>
         <ddm:funding>
             <ddm:funderName>Data Archiving and Networked Services - DANS</ddm:funderName>
