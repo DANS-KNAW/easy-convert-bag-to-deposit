@@ -35,13 +35,12 @@
                 <dcx-dai:name xml:lang="en">Utrecht University</dcx-dai:name>
             </dcx-dai:organization>
         </dcx-dai:creatorDetails>
-        <ddm:created>2012-12</ddm:created>
-        <ddm:available>2013-05</ddm:available>
+        <ddm:created>2012-12-01</ddm:created>
+        <ddm:available>2013-05-01</ddm:available>
         <ddm:audience>D20000</ddm:audience>
         <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
     </ddm:profile>
 
-    <!-- DDM instances MAY have one ddm:dcmiMetadata element -->
     <ddm:dcmiMetadata>
         <dcx-dai:contributorDetails>
             <dcx-dai:author>
@@ -72,5 +71,6 @@
                 <dcx-dai:role>Funder</dcx-dai:role>
             </dcx-dai:organization>
         </dcx-dai:contributorDetails>
+        <dct:rightsHolder>Some Body</dct:rightsHolder>
     </ddm:dcmiMetadata>
 </ddm:DDM>
