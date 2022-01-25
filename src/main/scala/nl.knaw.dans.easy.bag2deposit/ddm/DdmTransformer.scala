@@ -21,6 +21,7 @@ import nl.knaw.dans.easy.bag2deposit.ddm.DistinctTitlesRewriteRule.distinctTitle
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
 import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.logBriefRapportTitles
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import org.apache.commons.lang.StringUtils.{isBlank, isNotBlank}
 
 import scala.util.{Failure, Success, Try}
 import scala.xml.transform.{RewriteRule, RuleTransformer}
@@ -87,18 +88,22 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
 
   private def toContributorName(node: Node) = {
 
-    val org = node \\ "organization"
-    if (org.nonEmpty)
-      (org \ "name").text
-    else {
-      // duplicate of https://github.com/DANS-KNAW/easy-update-solr-index/blob/46c3ad673ddfc38f3166cded9be5b58e124be624/lib/src/main/scala/nl.knaw.dans.easy.solr/SolrDocumentGenerator.scala#L68-L73
-      val nameStart = (node \\ "surname").text
-      val nameEnd = List("title", "initials", "prefix")
-        .map(tag => (node \\ tag).text)
-        .filter(_.nonEmpty)
-        .mkString(" ")
-      List(nameStart, nameEnd).filter(_.nonEmpty).mkString(", ")
-    }
+    val title = (node \\ "title").text.trim
+    val initials = (node \\ "initials").text.trim
+    val prefix = (node \\ "prefix").text.trim
+    val surname = (node \\ "surname").text.trim
+    val organization = (node \\ "organization" \ "name").text.trim
+
+    // copy of https://github.com/DANS-KNAW/easy-app/blob/455417523183a511f1d82cab27aaea87438e0257/lib/easy-business/src/main/java/nl/knaw/dans/easy/domain/dataset/CreatorFormatter.java#L44-L57
+    val hasPersonalEntries = isNotBlank(title) || isNotBlank(prefix) || isNotBlank(initials) || isNotBlank(surname)
+
+    (if (isNotBlank(surname)) surname + ", "
+    else "") + (if (isNotBlank(title)) title + " "
+    else "") + (if (isNotBlank(initials)) initials
+    else "") + (if (isNotBlank(prefix)) " " + prefix
+    else "") + (if (isBlank(organization)) ""
+    else if (hasPersonalEntries) " (" + organization + ")"
+    else organization)
   }
 
   private def unknownRightsHolder(ddm: Node) = {
