@@ -620,7 +620,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
   it should "accept <..><..><..>" in {
     (testDir / "ddm-encoding.xml").writeText(
       printer.format(Utility.trim(
-        ddm(title = "Title <E2><80><93> of the dataset", audience = "D37000", dcmi = <ddm:dcmiMetadata/>)
+        ddm(title = "Title <E2><80><93> of the <e2><80><98>dataset<e2><80><99>", audience = "D37000", dcmi = <ddm:dcmiMetadata/>)
       )).replaceAll("&lt;", "<").replaceAll("&gt;", ">")
     )
     val triedDdmIn = loadXml(testDir / "ddm-encoding.xml")
@@ -629,7 +629,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     val triedDdmOut = new DdmTransformer(File("src/main/assembly/dist/cfg"), Map.empty)
       .transform(triedDdmIn.get, "easy-dataset:123")
     triedDdmOut shouldBe a[Success[_]]
-    (triedDdmOut.get \\ "title").text shouldBe "Title – of the dataset"
+    (triedDdmOut.get \\ "title").text shouldBe "Title – of the ‘dataset’"
 
     // mimic easy-validate-dans-bag rule "3.1.1"
     validate(triedDdmOut.get) shouldBe Success(())
