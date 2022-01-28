@@ -16,9 +16,9 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.Fixture.{DdmSupport, SchemaSupport, XmlSupport}
+import nl.knaw.dans.easy.bag2deposit.Fixture.{DdmSupport, FileSystemSupport, SchemaSupport, XmlSupport}
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
-import nl.knaw.dans.easy.bag2deposit.{AmdTransformer, BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, parseCsv}
+import nl.knaw.dans.easy.bag2deposit.{AmdTransformer, BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, loadXml, parseCsv}
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -27,8 +27,9 @@ import java.net.URI
 import java.nio.charset.Charset
 import java.util.UUID
 import scala.util.{Failure, Success, Try}
+import scala.xml.Utility
 
-class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Matchers with DdmSupport {
+class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Matchers with DdmSupport with FileSystemSupport {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
   private val ddmTransformer: DdmTransformer = new DdmTransformer(cfgDir, Map.empty)
 
@@ -615,6 +616,23 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
             <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
           </ddm:dcmiMetadata>
     )))
+  }
+  it should "accept <..><..><..>" in {
+    (testDir / "ddm-encoding.xml").writeText(
+      printer.format(Utility.trim(
+        ddm(title = "Title <E2><80><93> of the dataset", audience = "D37000", dcmi = <ddm:dcmiMetadata/>)
+      )).replaceAll("&lt;", "<").replaceAll("&gt;", ">")
+    )
+    val triedDdmIn = loadXml(testDir / "ddm-encoding.xml")
+    triedDdmIn shouldBe a[Success[_]]
+
+    val triedDdmOut = new DdmTransformer(File("src/main/assembly/dist/cfg"), Map.empty)
+      .transform(triedDdmIn.get, "easy-dataset:123")
+    triedDdmOut shouldBe a[Success[_]]
+    (triedDdmOut.get \\ "title").text shouldBe "Title – of the dataset"
+
+    // mimic easy-validate-dans-bag rule "3.1.1"
+    validate(triedDdmOut.get) shouldBe Success(())
   }
   it should "keep the original license" in {
     val transformer = new DdmTransformer(cfgDir, Map.empty)
