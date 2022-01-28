@@ -620,7 +620,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
   it should "accept <..><..><..>" in {
     (testDir / "ddm-encoding.xml").writeText(
       printer.format(Utility.trim(
-        ddm(title = "Title <E2><80><93> of the <e2><80><98>dataset<e2><80><99>", audience = "D37000", dcmi = <ddm:dcmiMetadata/>)
+        ddm(title = "Title <E2><80><93> of the <E2><80><98>dataset<e2><80><99>", audience = "D37000", dcmi = <ddm:dcmiMetadata/>)
       )).replaceAll("&lt;", "<").replaceAll("&gt;", ">")
     )
     val triedDdmIn = loadXml(testDir / "ddm-encoding.xml")
