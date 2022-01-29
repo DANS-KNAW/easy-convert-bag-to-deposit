@@ -634,6 +634,17 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     // mimic easy-validate-dans-bag rule "3.1.1"
     validate(triedDdmOut.get) shouldBe Success(())
   }
+  it should "reject <AA><..><..>" in {
+    (testDir / "ddm-encoding.xml").writeText(
+      printer.format(Utility.trim(
+        ddm(title = "Title <AA><80><93> of the <E2><80><98>dataset<e2><80><99>", audience = "D37000", dcmi = <ddm:dcmiMetadata/>)
+      )).replaceAll("&lt;", "<").replaceAll("&gt;", ">")
+    )
+    val triedDdmIn = loadXml(testDir / "ddm-encoding.xml")
+    triedDdmIn should matchPattern { case Failure(e: InvalidBagException)
+      if e.getMessage == "DDM contains invalid encoding with the style <..><..>" =>
+    }
+  }
   it should "keep the original license" in {
     val transformer = new DdmTransformer(cfgDir, Map.empty)
     val ddmIn = ddm(

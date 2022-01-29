@@ -252,6 +252,10 @@ package object bag2deposit extends DebugEnhancedLogging {
           |""".stripMargin + encodingMap.foldLeft(withoutPrologue)((acc, kv) =>
           acc.replaceAll(kv._1, kv._2)
         )
+      if (string.matches("(?s).*<..><..>.*"))
+        throw new InvalidBagException("DDM contains invalid encoding with the style <..><..>")
+      // without this extra scan of the document we would get
+      // InvalidBagException: Could not load: PATH-TO/dataset.xml - The content of elements must consist of well-formed character data or markup.
       XML.loadString(string)
     }.recoverWith {
       case _: FileNotFoundException => Failure(InvalidBagException(s"Could not find: $file"))
