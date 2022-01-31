@@ -151,17 +151,14 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
     val dates = (ddm \\ "date").filter(DatesOfCollectionRewriteRule.participatingDate)
     dates.size match {
       case 0 => Seq.empty
+      case 1 if dates.text.matches(".*start.*") =>
+        Seq(<ddm:datesOfCollection>{s"${extractDate(dates, "-")}/"}</ddm:datesOfCollection>)
       case 1 =>
-        val d = extractDate(dates, "-")
-        Seq(<ddm:datesOfCollection>
-          {s"$d/$d"}
-        </ddm:datesOfCollection>)
+        Seq(<ddm:datesOfCollection>{s"/${extractDate(dates, "-")}"}</ddm:datesOfCollection>)
       case 2 =>
         val start = extractDate(dates, "start")
         val end = extractDate(dates, "eind")
-        Seq(<ddm:datesOfCollection>
-          {s"$start/$end"}
-        </ddm:datesOfCollection>)
+        Seq(<ddm:datesOfCollection>{s"$start/$end"}</ddm:datesOfCollection>)
       case _ =>
         logger.warn(s"Assembling datesOfCollection not implemented for ${dates.map(printer.format(_)).mkString("")}")
         Seq.empty
