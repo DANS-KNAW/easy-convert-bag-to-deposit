@@ -21,7 +21,7 @@ import scala.xml.transform.RewriteRule
 import scala.xml.{Node, NodeSeq}
 
 object DatesOfCollectionRewriteRule {
-  def participatingDate(node: Node): Boolean = node.text.toLowerCase.matches(".*((start)|(eind)).*")
+  def participatingDate(node: Node): Boolean = node.text.toLowerCase.matches(".*((startdatum)|(einddatum)).*")
 }
 
 case class DatesOfCollectionRewriteRule(newDcmiNodes: NodeSeq) extends RewriteRule {

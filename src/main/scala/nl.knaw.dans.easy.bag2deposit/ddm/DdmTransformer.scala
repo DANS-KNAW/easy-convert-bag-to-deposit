@@ -144,8 +144,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
   private val printer = new PrettyPrinter(160, 2)
 
   private def extractDate(dates: NodeSeq, containing: String) = {
-    dates.filter(_.text.contains(containing)).text
-      .replaceAll(".*([0-9]{4}-[0-9]{2}-[0-9]{2}).*", "$1")
+    dates.filter(_.text.contains(containing)).text.trim.replaceAll(" .*", "")
   }
 
   private def datesOfCollection(ddm: Node): Seq[Node] = {
