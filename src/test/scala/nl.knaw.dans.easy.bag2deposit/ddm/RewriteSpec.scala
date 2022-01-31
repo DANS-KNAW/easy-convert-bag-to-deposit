@@ -113,7 +113,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:dcmiMetadata>
     )
 
-    val app = new EasyConvertBagToDepositApp(new Configuration(
+    val app = new EasyConvertBagToDepositApp(Configuration(
       "test version",
       dansDoiPrefixes = "10.17026/,10.5072/".split(","),
       dataverseIdAuthority = "10.80270",
@@ -264,6 +264,27 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
 
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())
+  }
+
+  "datesOfCollection" should "convert" in {
+    val ddmIn = ddm(title = "datesOfCollection  test", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <dc:date>2019-10-20 (startdatum)</dc:date>
+          <dc:date>2019-10-24 (einddatum)</dc:date>
+        </ddm:dcmiMetadata>
+    )
+    val expectedDDM = ddm(title = "language test", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <ddm:datesOfCollection>2019-10-20/2019-10-24</ddm:datesOfCollection>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+        </ddm:dcmiMetadata>
+    )
+
+    assume(schemaIsAvailable)
+    validate(expectedDDM) shouldBe Success(())
+
+    ddmTransformer.transform(ddmIn, "eas-dataset:123").map(normalized)
+      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
   }
 
   "reportRewriteRule" should "leave briefrapport untouched" in {
@@ -497,7 +518,6 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       )))
   }
   it should "add rightsHolder with proper prefix" in {
-    val profile = <dc:title>blabla rabarbera</dc:title><dct:description/> +: creator +: created +: available +: <ddm:audience>Z99000</ddm:audience> +: openAccess
     // note that ddm in other tests have both dct as dcterms as namespace prefix for the same URI
     val ddmIn = {
       <ddm:DDM xmlns:dct="http://purl.org/dc/terms/">

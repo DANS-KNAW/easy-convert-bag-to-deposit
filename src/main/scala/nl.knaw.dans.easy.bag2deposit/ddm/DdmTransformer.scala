@@ -24,7 +24,7 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.util.{Failure, Success, Try}
 import scala.xml.transform.{RewriteRule, RuleTransformer}
-import scala.xml.{Elem, Node, NodeSeq, Text}
+import scala.xml._
 
 class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.empty) extends DebugEnhancedLogging {
   trace(())
@@ -85,6 +85,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
     val tmp = collectionsMap.mapValues(_.size).filter(_._2>1).keys.toList.sortBy(identity)
     trace(tmp.mkString(","))
     val newDcmiNodes = missingLicense(ddmIn) ++
+      datesOfCollection(ddmIn) ++
       collectionsMap.get(datasetId).toSeq.flatten ++
       unknownRightsHolder(ddmIn)
 
@@ -130,6 +131,35 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
           <dcterms:license xsi:type="dcterms:URI">http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSLicence.pdf</dcterms:license>
         case _ => Text("")
       }).getOrElse(Seq.empty)
+    }
+  }
+
+  // doesn't preserve white space so don't use for serialization
+  private val printer = new PrettyPrinter(160, 2)
+
+  private def extractDate(dates: NodeSeq, containing: String) = {
+    dates.filter(_.text.contains(containing)).text
+      .replaceAll(".*([0-9]{4}-[0-9]{2}-[0-9]{2}).*", "$1")
+  }
+
+  private def datesOfCollection(ddm: Node): Seq[Node] = {
+    val dates = (ddm \\ "date").filter(_.text.toLowerCase.matches(".*((start)|(eind)).*"))
+    dates.size match {
+      case 0 => Seq.empty
+      case 1 =>
+        val d = extractDate(dates, "-")
+        Seq(<ddm:datesOfCollection>
+          {s"$d/$d"}
+        </ddm:datesOfCollection>)
+      case 2 =>
+        val start = extractDate(dates, "start")
+        val end = extractDate(dates, "eind")
+        Seq(<ddm:datesOfCollection>
+          {s"$start/$end"}
+        </ddm:datesOfCollection>)
+      case _ =>
+        logger.warn(s"Assembling datesOfCollection not implemented for ${dates.map(printer.format(_)).mkString("")}")
+        Seq.empty
     }
   }
 }
