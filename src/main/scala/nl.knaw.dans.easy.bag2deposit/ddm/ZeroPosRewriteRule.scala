@@ -21,7 +21,8 @@ import scala.xml.{Node, Text}
 object ZeroPosRewriteRule extends RewriteRule {
 
   override def transform(node: Node): Seq[Node] = {
-    if (node.label == "spatial" && node.text.trim == "0 0" && (node \\ "Point").nonEmpty)
+    if (node.label != "spatial") node
+    else if (node.text.trim == "0 0" && (node \\ "Point").nonEmpty)
       node
     else Text("")
   }
