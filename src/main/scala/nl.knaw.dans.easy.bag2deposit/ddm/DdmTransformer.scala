@@ -44,6 +44,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
     reportRewriteRule,
     AbrRewriteRule.temporalRewriteRule(cfgDir),
     AbrRewriteRule.subjectRewriteRule(cfgDir),
+    ZeroPosRewriteRule,
     languageRewriteRule,
     relationRewriteRule,
   )
@@ -52,6 +53,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
     NewDcmiNodesRewriteRule(newDcmiNodes),
     DistinctTitlesRewriteRule(profileTitle),
     relationRewriteRule,
+    ZeroPosRewriteRule,
     languageRewriteRule,
     ProfileDateRewriteRule,
   )
