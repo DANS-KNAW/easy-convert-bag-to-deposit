@@ -33,12 +33,14 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
   private val relationRewriteRule = RelationRewriteRule(cfgDir)
   private val languageRewriteRule = LanguageRewriteRule(cfgDir / "languages.csv")
   private val profileArchaeologicalTitleRuleTransformer = new RuleTransformer(
+    UnicodeRewriteRule,
     acquisitionRewriteRule,
     reportRewriteRule,
     relationRewriteRule,
   )
 
   private val dcmiMetadataArchaeologyRuleTransformer = new RuleTransformer(
+    UnicodeRewriteRule,
     SplitNrRewriteRule,
     acquisitionRewriteRule,
     reportRewriteRule,
@@ -49,6 +51,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
   )
 
   private def standardRuleTransformer(newDcmiNodes: NodeSeq, profileTitle: String) = new RuleTransformer(
+    UnicodeRewriteRule,
     NewDcmiNodesRewriteRule(newDcmiNodes),
     DistinctTitlesRewriteRule(profileTitle),
     relationRewriteRule,
