@@ -24,7 +24,7 @@ object ZeroPosRewriteRule extends RewriteRule {
     if (node.label != "spatial") node
     else if (node.text.trim == "0 0" && (node \\ "Point").nonEmpty)
       node
-    else Text("")
+    else Seq.empty
   }
 }
 
