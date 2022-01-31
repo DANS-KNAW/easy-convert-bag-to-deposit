@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (C) 2019 DANS - Data Archiving and Networked Services (info@dans.knaw.nl)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ddm:DDM xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:dct="http://purl.org/dc/terms/"
+         xmlns:dcx-dai="http://easy.dans.knaw.nl/schemas/dcx/dai/"
+         xmlns:id-type="http://easy.dans.knaw.nl/schemas/vocab/identifier-type/"
+         xsi:schemaLocation="
+    http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
+        http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
+        http://easy.dans.knaw.nl/schemas/vocab/identifier-type/ https://easy.dans.knaw.nl/schemas/vocab/identifier-type.xsd
+    ">
+    <ddm:profile>
+        <dc:title xml:lang="en">Title of the dataset</dc:title>
+        <dc:description xml:lang="la">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</dc:description>
+        <dcx-dai:creatorDetails>
+            <dcx-dai:organization>
+                <dcx-dai:name xml:lang="en">Utrecht University</dcx-dai:name>
+            </dcx-dai:organization>
+        </dcx-dai:creatorDetails>
+        <ddm:created>2012-12-01</ddm:created>
+        <ddm:available>2013-05-01</ddm:available>
+        <ddm:audience>D20000</ddm:audience>
+        <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
+    </ddm:profile>
+
+    <ddm:dcmiMetadata>
+        <dcx-dai:contributorDetails>
+            <dcx-dai:author>
+                <dcx-dai:titles>Dr.</dcx-dai:titles>
+                <dcx-dai:initials>E.E.</dcx-dai:initials>
+                <dcx-dai:insertions>van</dcx-dai:insertions>
+                <dcx-dai:surname>Loon</dcx-dai:surname>
+                <dcx-dai:ORCID>https://orcid.org/0000-0002-8895-0427</dcx-dai:ORCID>
+                <dcx-dai:role>Funder</dcx-dai:role>
+                <dcx-dai:organization>
+                    <dcx-dai:name>Universiteit van Amsterdam</dcx-dai:name>
+                </dcx-dai:organization>
+            </dcx-dai:author>
+        </dcx-dai:contributorDetails>
+        <dcx-dai:contributorDetails>
+            <dcx-dai:author>
+                <dcx-dai:titles>Dr.</dcx-dai:titles>
+                <dcx-dai:initials>J</dcx-dai:initials>
+                <dcx-dai:insertions>de</dcx-dai:insertions>
+                <dcx-dai:surname>Groeve</dcx-dai:surname>
+                <dcx-dai:ORCID>https://orcid.org/0000-0002-1274-3237</dcx-dai:ORCID>
+                <dcx-dai:role>Funder</dcx-dai:role>
+            </dcx-dai:author>
+        </dcx-dai:contributorDetails>
+        <dcx-dai:contributorDetails>
+            <dcx-dai:organization>
+                <dcx-dai:name>Data Archiving and Networked Services - DANS</dcx-dai:name>
+                <dcx-dai:role>Funder</dcx-dai:role>
+            </dcx-dai:organization>
+        </dcx-dai:contributorDetails>
+        <dct:rightsHolder>Some Body</dct:rightsHolder>
+    </ddm:dcmiMetadata>
+</ddm:DDM>

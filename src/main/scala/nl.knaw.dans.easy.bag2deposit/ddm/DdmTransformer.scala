@@ -21,6 +21,7 @@ import nl.knaw.dans.easy.bag2deposit.ddm.DistinctTitlesRewriteRule.distinctTitle
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
 import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.logBriefRapportTitles
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import org.apache.commons.lang.StringUtils.{isBlank, isNotBlank}
 
 import scala.util.{Failure, Success, Try}
 import scala.xml._
@@ -46,17 +47,21 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
     reportRewriteRule,
     AbrRewriteRule.temporalRewriteRule(cfgDir),
     AbrRewriteRule.subjectRewriteRule(cfgDir),
+    ZeroPosRewriteRule,
     DatesOfCollectionRewriteRule(newDcmiNodes),
     languageRewriteRule,
+    DropFunderRoleRewriteRule,
     relationRewriteRule,
   )
 
   private def standardRuleTransformer(newDcmiNodes: NodeSeq, profileTitle: String) = new RuleTransformer(
     NewDcmiNodesRewriteRule(newDcmiNodes),
     DistinctTitlesRewriteRule(profileTitle),
-    DatesOfCollectionRewriteRule(newDcmiNodes),
     relationRewriteRule,
+    ZeroPosRewriteRule,
+    DatesOfCollectionRewriteRule(newDcmiNodes),
     languageRewriteRule,
+    DropFunderRoleRewriteRule,
     ProfileDateRewriteRule,
   )
 
@@ -78,6 +83,36 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
     }
   }
 
+  private def funders(ddm: Node) = {
+    (ddm \\ "contributorDetails")
+      .filter(n => (n \\ "role").text == "Funder")
+      .map ( node =>
+        <ddm:funding>
+          <ddm:funderName>{ toContributorName(node) }</ddm:funderName>
+        </ddm:funding>
+      )
+  }
+
+  private def toContributorName(node: Node) = {
+
+    val title = (node \\ "title").text.trim
+    val initials = (node \\ "initials").text.trim
+    val prefix = (node \\ "prefix").text.trim
+    val surname = (node \\ "surname").text.trim
+    val organization = (node \\ "organization" \ "name").text.trim
+
+    // copy of https://github.com/DANS-KNAW/easy-app/blob/455417523183a511f1d82cab27aaea87438e0257/lib/easy-business/src/main/java/nl/knaw/dans/easy/domain/dataset/CreatorFormatter.java#L44-L57
+    val hasPersonalEntries = isNotBlank(title) || isNotBlank(prefix) || isNotBlank(initials) || isNotBlank(surname)
+
+    (if (isNotBlank(surname)) surname + ", "
+    else "") + (if (isNotBlank(title)) title + " "
+    else "") + (if (isNotBlank(initials)) initials
+    else "") + (if (isNotBlank(prefix)) " " + prefix
+    else "") + (if (isBlank(organization)) ""
+    else if (hasPersonalEntries) " (" + organization + ")"
+    else organization)
+  }
+
   private def unknownRightsHolder(ddm: Node) = {
     val inRole = (ddm \\ "role").text.toLowerCase.contains("rightsholder")
     if (inRole || (ddm \ "dcmiMetadata" \ "rightsHolder").nonEmpty) Seq.empty
@@ -93,7 +128,8 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
     val newDcmiNodes = missingLicense(ddmIn) ++
       collectionDates ++
       collectionsMap.get(datasetId).toSeq.flatten ++
-      unknownRightsHolder(ddmIn)
+      unknownRightsHolder(ddmIn) ++
+      funders(ddmIn)
 
     val profile = ddmIn \ "profile"
 
