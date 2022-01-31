@@ -266,14 +266,14 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     validate(expectedDDM) shouldBe Success(())
   }
 
-  "datesOfCollection" should "convert" in {
+  "datesOfCollection" should "convert a proper dates pair" in {
     val ddmIn = ddm(title = "datesOfCollection  test", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
           <dc:date>2019-10-20 (startdatum)</dc:date>
           <dc:date>2019-10-24 (einddatum)</dc:date>
         </ddm:dcmiMetadata>
     )
-    val expectedDDM = ddm(title = "language test", audience = "D37000", dcmi =
+    val expectedDDM = ddm(title = "datesOfCollection test", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
           <ddm:datesOfCollection>2019-10-20/2019-10-24</ddm:datesOfCollection>
           <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
@@ -283,6 +283,42 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())
 
+    ddmTransformer.transform(ddmIn, "eas-dataset:123").map(normalized)
+      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
+  }
+
+  it should "not convert one-and-a-half dates pair" in {
+    val ddmIn = ddm(title = "datesOfCollection  test", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <dc:date>2019-10-20 (startdatum)</dc:date>
+          <dc:date>2019-10-24 (einddatum)</dc:date>
+          <dc:date>2019-10-24 (einddatum)</dc:date>
+        </ddm:dcmiMetadata>
+    )
+    val expectedDDM = ddm(title = "datesOfCollection test", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <dc:date>2019-10-20 (startdatum)</dc:date>
+          <dc:date>2019-10-24 (einddatum)</dc:date>
+          <dc:date>2019-10-24 (einddatum)</dc:date>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+        </ddm:dcmiMetadata>
+    )
+    ddmTransformer.transform(ddmIn, "eas-dataset:123").map(normalized)
+      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
+  }
+
+  it should "convert a half dates pair" in {
+    val ddmIn = ddm(title = "datesOfCollection  test", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <dc:date>2019-10-20 (startdatum)</dc:date>
+        </ddm:dcmiMetadata>
+    )
+    val expectedDDM = ddm(title = "datesOfCollection test", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <ddm:datesOfCollection>2019-10-20/2019-10-20</ddm:datesOfCollection>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+        </ddm:dcmiMetadata>
+    )
     ddmTransformer.transform(ddmIn, "eas-dataset:123").map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
   }
