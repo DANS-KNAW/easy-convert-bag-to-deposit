@@ -692,13 +692,14 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
   it should "replace funder role" in {
     val ddmIn = XML.loadFile("src/test/resources/funder/ddm-in.xml")
     val expectedDDM = XML.loadFile("src/test/resources/funder/ddm-out.xml")
+    val triedDdm = new DdmTransformer(File("src/main/assembly/dist/cfg"), Map.empty)
+      .transform(ddmIn, "easy-dataset:123")
+    triedDdm.map(normalized) shouldBe Success(normalized(expectedDDM))
+    assume(schemaIsAvailable)
     validate(ddmIn) should matchPattern {
       case Failure(e) if e.getMessage.contains("Funder") =>
     }
     validate(expectedDDM) shouldBe a[Success[_]]
-    val triedDdm = new DdmTransformer(File("src/main/assembly/dist/cfg"), Map.empty)
-      .transform(ddmIn, "easy-dataset:123")
-    triedDdm.map(normalized) shouldBe Success(normalized(expectedDDM))
   }
   it should "keep the original license" in {
     val transformer = new DdmTransformer(cfgDir, Map.empty)
