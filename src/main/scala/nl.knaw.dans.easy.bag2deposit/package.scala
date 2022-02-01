@@ -59,17 +59,14 @@ package object bag2deposit extends DebugEnhancedLogging {
 
   def loadXml(file: File): Try[Elem] = {
     trace(file)
-    val dd = "<([0-9a-fA-F]{2})>"
-    val b2 = s"(?s)<([cCdD][0-9a-fA-F])>$dd"
-    val b3 = s"(?s)<([eE][0-9a-fA-F])>$dd$dd"
-    val b4 = s"(?s)<([fF][0-9a-fA-F])>$dd$dd$dd"
-    // Reuse within brackets is a problem.
-    // Expanding would make the expression error prone and unreadable.
-    // Otherwise we could try a single parse with s"(?s)(($b2)|($b3)|($b4))"
+    val dd = "<[0-9a-fA-F]{2}>"
+    val b2 = s"<[cCdD][0-9a-fA-F]>$dd"
+    val b3 = s"<[eE][0-9a-fA-F]>$dd$dd"
+    val b4 = s"<[fF][0-9a-fA-F]>$dd$dd$dd"
+    val search = s"(?s)(($b2)|($b3)|($b4))"
     Try {
-      val withoutPrologue = file.contentAsString
-        .replaceAll("<[?].+[?]>", "") // remove an optional prologue
-      val s = convert(convert(convert(withoutPrologue, b2.r), b3.r), b4.r)
+      val withoutPrologue = file.contentAsString.replaceAll("<[?].+[?]>", "")
+      val s = convert(withoutPrologue, search.r)
       XML.loadString(
         """<?xml version="1.0" encoding="UTF-8" ?>
           |""".stripMargin + s
