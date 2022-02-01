@@ -65,10 +65,10 @@ package object bag2deposit extends DebugEnhancedLogging {
       val string = // make sure to have a prologue
         """<?xml version="1.0" encoding="UTF-8" ?>
           |""".stripMargin + withoutPrologue
-          // preparations for UnicodeRewriteRule, X-prefix required for valid XML
-          .replaceAll(s"(?s)<([cCdD][0-9a-fA-F])>$dd","<hack:encoded><X$1/><X$2/></hack:encoded>")
-          .replaceAll(s"(?s)<([eE][0-9a-fA-F])>$dd$dd","<hack:encoded><X$1/><X$2/><X$3/></hack:encoded>")
-          .replaceAll(s"(?s)<([fF][0-9a-fA-F])>$dd$dd$dd","<hack:encoded><X$1/><X$2/><X$3/><X$4/></hack:encoded>")
+          // preparations for UnicodeRewriteRule
+          .replaceAll(s"(?s)<([cCdD][0-9a-fA-F])>$dd","<hack:encoded>$1$2</hack:encoded>")
+          .replaceAll(s"(?s)<([eE][0-9a-fA-F])>$dd$dd","<hack:encoded>$1$2$3</hack:encoded>")
+          .replaceAll(s"(?s)<([fF][0-9a-fA-F])>$dd$dd$dd","<hack:encoded>$1$2$3$4</hack:encoded>")
       XML.loadString(string)
     }.recoverWith {
       case _: FileNotFoundException => Failure(InvalidBagException(s"Could not find: $file"))

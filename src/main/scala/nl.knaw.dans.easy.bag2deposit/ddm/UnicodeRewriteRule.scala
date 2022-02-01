@@ -25,8 +25,8 @@ object UnicodeRewriteRule extends RewriteRule with DebugEnhancedLogging {
   override def transform(node: Node): Seq[Node] = {
     if (!(node.label == "encoded" && node.prefix == "hack")) Seq(node)
     else {
-      val bytes = node.nonEmptyChildren.map(n =>
-        Integer.parseInt(n.label.substring(1), 16).toByte
+      val bytes = node.text.grouped(2).toList.map(s =>
+        Integer.parseInt(s, 16).toByte
       ).toArray
       val str = new String(bytes)
       trace(s"$str ${str.getBytes() sameElements bytes}")
