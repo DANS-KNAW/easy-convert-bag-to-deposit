@@ -120,12 +120,8 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
       .copy(prefix = ddm.scope.getPrefix("http://purl.org/dc/terms/"))
   }
 
-  def transform(nodeIn: Node, datasetId: String): Try[Node] = {
+  def transform(ddmIn: Node, datasetId: String): Try[Node] = {
     trace(datasetId)
-    // avoid interference with other rules
-    val ddmIn = new RuleTransformer(UnicodeRewriteRule).transform(nodeIn)
-      .headOption.getOrElse(throw new IllegalStateException(s"UnicodeRewriteRule did not return a node"))
-
     val tmp = collectionsMap.mapValues(_.size).filter(_._2>1).keys.toList.sortBy(identity)
     trace(tmp.mkString(","))
     val collectionDates = datesOfCollection(ddmIn)

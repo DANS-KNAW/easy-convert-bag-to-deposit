@@ -27,6 +27,7 @@ import java.io.FileNotFoundException
 import java.nio.charset.Charset
 import java.nio.file.NoSuchFileException
 import scala.collection.JavaConverters._
+import scala.util.matching.Regex
 import scala.util.{Failure, Try}
 import scala.xml._
 
@@ -58,23 +59,33 @@ package object bag2deposit extends DebugEnhancedLogging {
 
   def loadXml(file: File): Try[Elem] = {
     trace(file)
+    val dd = "<([0-9a-fA-F]{2})>" // reuse within brackets is a problem
+    val b2 = s"(?s)<([cCdD][0-9a-fA-F])>$dd"
+    val b3 = s"(?s)<([eE][0-9a-fA-F])>$dd$dd"
+    val b4 = s"(?s)<([fF][0-9a-fA-F])>$dd$dd$dd"
     Try {
       val withoutPrologue = file.contentAsString
-        .replaceAll("<[?].+[?]>", "")
-      val dd = "<([0-9a-fA-F]{2})>"// reuse within brackets is a problem
-      val string = // make sure to have a prologue
+        .replaceAll("<[?].+[?]>", "") // remove an optional prologue
+      val s = convert(convert(convert(withoutPrologue, b2.r), b3.r), b4.r)
+      XML.loadString(
         """<?xml version="1.0" encoding="UTF-8" ?>
-          |""".stripMargin + withoutPrologue
-          // preparations for UnicodeRewriteRule
-          .replaceAll(s"(?s)<([cCdD][0-9a-fA-F])>$dd","<hack:encoded>$1$2</hack:encoded>")
-          .replaceAll(s"(?s)<([eE][0-9a-fA-F])>$dd$dd","<hack:encoded>$1$2$3</hack:encoded>")
-          .replaceAll(s"(?s)<([fF][0-9a-fA-F])>$dd$dd$dd","<hack:encoded>$1$2$3$4</hack:encoded>")
-      XML.loadString(string)
+          |""".stripMargin + s
+      )
     }.recoverWith {
       case _: FileNotFoundException => Failure(InvalidBagException(s"Could not find: $file"))
       case _: NoSuchFileException => Failure(InvalidBagException(s"Could not find: $file"))
       case t: SAXParseException => Failure(InvalidBagException(s"Could not load: $file - ${t.getMessage}"))
     }
+  }
+
+  private def convert(s: String, r: Regex) = {
+    r.replaceAllIn(s, value => value match {
+      case _ =>
+        val bytes = value.toString.replaceAll("[<>]", "").grouped(2).toList.map(s =>
+          Integer.parseInt(s, 16).toByte
+        ).toArray
+        new String(bytes)
+    })
   }
 
   implicit class XmlExtensions(val elem: Node) extends AnyVal {
