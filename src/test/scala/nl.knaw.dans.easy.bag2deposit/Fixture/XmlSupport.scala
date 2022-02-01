@@ -26,5 +26,6 @@ trait XmlSupport {
     .replaceAll(nameSpaceRegExp, "") // the random order would cause differences in actual and expected
     .replaceAll(" +\n?", " ")
     .replaceAll("\n +<", "\n<")
+    .replaceAll(" +>", ">")
     .trim
 }

@@ -16,15 +16,21 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.{ AmdTransformer, loadXml }
-import nl.knaw.dans.easy.bag2deposit.Fixture.{ FileSystemSupport, FixedCurrentDateTimeSupport, XmlSupport }
+import nl.knaw.dans.easy.bag2deposit.{AmdTransformer, loadXml}
+import nl.knaw.dans.easy.bag2deposit.Fixture.{FileSystemSupport, FixedCurrentDateTimeSupport, XmlSupport}
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.compare
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.xml.Utility
+import scala.xml.{Utility, XML}
 
 class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport {
+  private val provLocations = """
+                                |        http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
+                                |        http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
+                                |        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
+                                |        """.stripMargin
+
   "Provenance" should "show ddm diff" in {
     val ddmIn = {
       <ddm>
@@ -100,11 +106,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
           Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head),
       ))
       .map(normalized) shouldBe List(normalized(
-      <prov:provenance xsi:schemaLocation="
-        http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
-        http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
-        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
-        " xmlns:dct="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
+      <prov:provenance xsi:schemaLocation={ provLocations } xmlns:dct="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
           <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">
             <prov:old>
@@ -121,6 +123,92 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       </prov:provenance>
     ))
   }
+  it should "show dropped zero point" in {
+    val ddmIn = {
+      <ddm>
+        <ddm:profile>
+          <dc:title>blabla</dc:title>
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+          <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/28992">
+            <gml:Point>
+              <gml:pos>0 0</gml:pos>
+            </gml:Point>
+          </dcx-gml:spatial>
+          <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/28992">
+            <Point xmlns="http://www.opengis.net/gml">
+              <description>Entrance of DANS Building</description>
+              <name>Data Archiving and Networked Services (DANS)</name>
+              <pos>0 0</pos>
+            </Point>
+          </dcx-gml:spatial>
+        </ddm:dcmiMetadata>
+      </ddm>
+    }
+
+    val ddmOut = {
+      <ddm>
+        <ddm:profile>
+          <dc:title>blabla</dc:title>
+        </ddm:profile>
+        <ddm:dcmiMetadata>
+          <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/28992">
+            <Point xmlns="http://www.opengis.net/gml">
+              <description>Entrance of DANS Building</description>
+              <name>Data Archiving and Networked Services (DANS)</name>
+              <pos>0 0</pos>
+            </Point>
+          </dcx-gml:spatial>
+        </ddm:dcmiMetadata>
+      </ddm>
+   }
+
+    new Provenance("EasyConvertBagToDepositApp", "1.0.5")
+      .collectChangesInXmls(Map(
+        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" ->
+          Seq.empty,
+        "http://easy.dans.knaw.nl/schemas/md/ddm/" ->
+          Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head),
+      ))
+      .map(normalized) shouldBe List(normalized(
+      <prov:provenance xsi:schemaLocation={ provLocations } xmlns:dct="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
+        <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
+          <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">
+            <prov:old>
+              <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/28992">
+                <gml:Point>
+                  <gml:pos>0 0</gml:pos>
+                </gml:Point>
+              </dcx-gml:spatial>
+            </prov:old>
+            <prov:new>
+            </prov:new>
+          </prov:file>
+        </prov:migration>
+      </prov:provenance>
+    ))
+  }
+  it should "show funder diff" in {
+    // compare the DDM files manually for finer details than in the provenance
+    val ddmIn = XML.loadFile("src/test/resources/funder/ddm-in.xml")
+    val ddmOut = XML.loadFile("src/test/resources/funder/ddm-out.xml")
+    val expected = XML.loadFile("src/test/resources/funder/provenance.xml")
+
+    new Provenance("EasyConvertBagToDepositApp", "1.0.5")
+      .collectChangesInXmls(Map(
+        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" ->
+          Seq.empty,
+        "http://easy.dans.knaw.nl/schemas/md/ddm/" ->
+          Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head),
+      ))
+      .map(normalized).map(dropAttrs) shouldBe List(normalized(expected)).map(dropAttrs)
+  }
+
+  private def dropAttrs(s: String) = {
+    s.replaceAll("<prov:migration[^>]*", "<prov:migration") // get rid of random order attributes
+      .replaceAll("(?m)<prov:provenance[^>]*>", "") // get rid of random order in xsi:schemaLocation=
+  }
+
   it should "show amd diff" in {
     (testDir / "amd.xml").writeText(
       """<?xml version="1.0" encoding="UTF-8"?>""" +
@@ -160,11 +248,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     new Provenance("EasyConvertBagToDepositApp", "1.0.5").collectChangesInXmls(Map(
       "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
     )).map(normalized) shouldBe List(normalized(
-      <prov:provenance xsi:schemaLocation="
-        http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
-        http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
-        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
-        ">
+      <prov:provenance xsi:schemaLocation={ provLocations }>
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
           <prov:file scheme="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
             <prov:old>

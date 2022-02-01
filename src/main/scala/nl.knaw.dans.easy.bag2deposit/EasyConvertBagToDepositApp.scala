@@ -107,7 +107,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       amdFile = metadata / "amd.xml"
       amdIn <- getAmdXml(datasetId, amdFile)
-      _ = if (bagDir.name.startsWith(".") && (amdIn \\ "datasetState").text != "DELETED")
+      _ = if (bagDir.isHidden && (amdIn \\ "datasetState").text != "DELETED")
         throw InvalidBagException(s"Inactive bag does not have state DELETED: $amdFile")
       fromVault = depositProps.getString("deposit.origin") == "VAULT"
       amdOut <- configuration.amdTransformer.transform(amdIn, ddmOut \ "ddm:created")
