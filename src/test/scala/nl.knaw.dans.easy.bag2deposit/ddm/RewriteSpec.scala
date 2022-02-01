@@ -631,6 +631,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     triedDdmOut shouldBe a[Success[_]]
     (triedDdmOut.get \\ "title").text shouldBe "Title – of the ‘dataset’"
 
+    assume(schemaIsAvailable)
     // mimic easy-validate-dans-bag rule "3.1.1"
     validate(triedDdmOut.get) shouldBe Success(())
   }
