@@ -24,8 +24,8 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.lang.StringUtils.{isBlank, isNotBlank}
 
 import scala.util.{Failure, Success, Try}
+import scala.xml._
 import scala.xml.transform.{RewriteRule, RuleTransformer}
-import scala.xml.{Elem, Node, NodeSeq, Text}
 
 class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.empty) extends DebugEnhancedLogging {
   trace(())
@@ -33,19 +33,22 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
   private val acquisitionRewriteRule = AcquisitionRewriteRule(cfgDir)
   private val relationRewriteRule = RelationRewriteRule(cfgDir)
   private val languageRewriteRule = LanguageRewriteRule(cfgDir / "languages.csv")
-  private val profileArchaeologicalTitleRuleTransformer = new RuleTransformer(
+
+  // produces additional content for DCMI
+  private val archaeologyProfileRuleTransformer = new RuleTransformer(
     acquisitionRewriteRule,
     reportRewriteRule,
     relationRewriteRule,
   )
 
-  private val dcmiMetadataArchaeologyRuleTransformer = new RuleTransformer(
+  private def archaeologyDcmiRuleTransformer(newDcmiNodes: NodeSeq) = new RuleTransformer(
     SplitNrRewriteRule,
     acquisitionRewriteRule,
     reportRewriteRule,
     AbrRewriteRule.temporalRewriteRule(cfgDir),
     AbrRewriteRule.subjectRewriteRule(cfgDir),
     ZeroPosRewriteRule,
+    DatesOfCollectionRewriteRule(newDcmiNodes),
     languageRewriteRule,
     DropFunderRoleRewriteRule,
     relationRewriteRule,
@@ -56,12 +59,14 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
     DistinctTitlesRewriteRule(profileTitle),
     relationRewriteRule,
     ZeroPosRewriteRule,
+    DatesOfCollectionRewriteRule(newDcmiNodes),
     languageRewriteRule,
     DropFunderRoleRewriteRule,
     ProfileDateRewriteRule,
   )
 
   private case class ArchaeologyRewriteRule(profileTitle: String, additionalDcmiNodes: NodeSeq) extends RewriteRule {
+    // defined local to have all creators of RuleTransformer next to one another
     override def transform(node: Node): Seq[Node] = {
       node.label match {
         case "profile" =>
@@ -70,7 +75,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
           </profile>.copy(prefix = node.prefix, attributes = node.attributes, scope = node.scope)
         case "dcmiMetadata" =>
           <dcmiMetadata>
-              { distinctTitles(profileTitle, dcmiMetadataArchaeologyRuleTransformer(node).nonEmptyChildren) }
+              { distinctTitles(profileTitle, archaeologyDcmiRuleTransformer(additionalDcmiNodes)(node).nonEmptyChildren) }
               { additionalDcmiNodes }
           </dcmiMetadata>.copy(prefix = node.prefix, attributes = node.attributes, scope = node.scope)
         case _ => node
@@ -119,7 +124,9 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
     trace(datasetId)
     val tmp = collectionsMap.mapValues(_.size).filter(_._2>1).keys.toList.sortBy(identity)
     trace(tmp.mkString(","))
+    val collectionDates = datesOfCollection(ddmIn)
     val newDcmiNodes = missingLicense(ddmIn) ++
+      collectionDates ++
       collectionsMap.get(datasetId).toSeq.flatten ++
       unknownRightsHolder(ddmIn) ++
       funders(ddmIn)
@@ -133,7 +140,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
     }
     else {
       // a title in the profile will not change but may produce something for dcmiMetadata
-      val transformedProfile = profile.flatMap(profileArchaeologicalTitleRuleTransformer)
+      val transformedProfile = profile.flatMap(archaeologyProfileRuleTransformer)
       val fromFirstTitle = transformedProfile.flatMap(_.nonEmptyChildren)
         .diff(profile.flatMap(_.nonEmptyChildren))
       val notConvertedFirstTitle = transformedProfile \ "title"
@@ -166,6 +173,31 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
           <dcterms:license xsi:type="dcterms:URI">http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSLicence.pdf</dcterms:license>
         case _ => Text("")
       }).getOrElse(Seq.empty)
+    }
+  }
+
+  // doesn't preserve white space so don't use for serialization
+  private val printer = new PrettyPrinter(160, 2)
+
+  private def extractDate(dates: NodeSeq, containing: String) = {
+    dates.filter(_.text.contains(containing)).text.trim.replaceAll(" .*", "")
+  }
+
+  private def datesOfCollection(ddm: Node): Seq[Node] = {
+    val dates = (ddm \\ "date").filter(DatesOfCollectionRewriteRule.participatingDate)
+    dates.size match {
+      case 0 => Seq.empty
+      case 1 if dates.text.matches(".*start.*") =>
+        Seq(<ddm:datesOfCollection>{s"${extractDate(dates, "-")}/"}</ddm:datesOfCollection>)
+      case 1 =>
+        Seq(<ddm:datesOfCollection>{s"/${extractDate(dates, "-")}"}</ddm:datesOfCollection>)
+      case 2 =>
+        val start = extractDate(dates, "start")
+        val end = extractDate(dates, "eind")
+        Seq(<ddm:datesOfCollection>{s"$start/$end"}</ddm:datesOfCollection>)
+      case _ =>
+        logger.warn(s"Assembling datesOfCollection not implemented for ${dates.map(printer.format(_)).mkString("")}")
+        Seq.empty
     }
   }
 }
