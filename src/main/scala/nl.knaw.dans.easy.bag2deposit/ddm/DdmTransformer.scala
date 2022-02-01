@@ -80,8 +80,12 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
       .copy(prefix = ddm.scope.getPrefix("http://purl.org/dc/terms/"))
   }
 
-  def transform(ddmIn: Node, datasetId: String): Try[Node] = {
+  def transform(nodeIn: Node, datasetId: String): Try[Node] = {
     trace(datasetId)
+    // avoid interference with other rules
+    val ddmIn = new RuleTransformer(UnicodeRewriteRule).transform(nodeIn)
+      .headOption.getOrElse(throw new IllegalStateException(s"UnicodeRewriteRule did not return a node"))
+
     val tmp = collectionsMap.mapValues(_.size).filter(_._2>1).keys.toList.sortBy(identity)
     trace(tmp.mkString(","))
     val newDcmiNodes = missingLicense(ddmIn) ++
@@ -107,10 +111,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
         profileTitle = (profile \ "title").text,
         additionalDcmiNodes = fromFirstTitle ++ newDcmiNodes
       ))
-      // avoid interference with other rules
-      val fixed = new RuleTransformer(UnicodeRewriteRule).transform(ddmIn)
-        .headOption.getOrElse(throw new IllegalStateException(s"UnicodeRewriteRule did not return a node"))
-      val ddmOut = ddmRuleTransformer(fixed)
+      val ddmOut = ddmRuleTransformer(ddmIn)
 
       // logging
       val notConvertedTitles = (ddmOut \ "dcmiMetadata" \ "title") ++ notConvertedFirstTitle

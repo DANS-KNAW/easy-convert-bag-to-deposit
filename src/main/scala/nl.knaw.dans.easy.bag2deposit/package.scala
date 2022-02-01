@@ -61,14 +61,14 @@ package object bag2deposit extends DebugEnhancedLogging {
     Try {
       val withoutPrologue = file.contentAsString
         .replaceAll("<[?].+[?]>", "")
+      val dd = "<([0-9a-fA-F]{2})>"// reuse within brackets is a problem
       val string = // make sure to have a prologue
         """<?xml version="1.0" encoding="UTF-8" ?>
           |""".stripMargin + withoutPrologue
-          // preparing for UnicodeRwriteRule
-          .replaceAll("(?s)<([cC][0-9])><([0-9a-fA-F]{2})>","<hack:encoded><X$1/><X$2/></hack:encoded>")
-          .replaceAll("(?s)<([eE][0-9])><([0-9a-fA-F]{2})><([0-9a-fA-F]{2})>","<hack:encoded><X$1/><X$2/><X$3/></hack:encoded>")
-      // missed codes would cause
-      // InvalidBagException: Could not load: PATH-TO/dataset.xml - The content of elements must consist of well-formed character data or markup.
+          // preparations for UnicodeRewriteRule, X-prefix required for valid XML
+          .replaceAll(s"(?s)<([cCdD][0-9a-fA-F])>$dd","<hack:encoded><X$1/><X$2/></hack:encoded>")
+          .replaceAll(s"(?s)<([eE][0-9a-fA-F])>$dd$dd","<hack:encoded><X$1/><X$2/><X$3/></hack:encoded>")
+          .replaceAll(s"(?s)<([fF][0-9a-fA-F])>$dd$dd$dd","<hack:encoded><X$1/><X$2/><X$3/><X$4/></hack:encoded>")
       XML.loadString(string)
     }.recoverWith {
       case _: FileNotFoundException => Failure(InvalidBagException(s"Could not find: $file"))
