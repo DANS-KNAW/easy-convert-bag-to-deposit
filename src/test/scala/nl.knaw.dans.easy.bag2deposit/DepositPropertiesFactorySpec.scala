@@ -56,7 +56,7 @@ class DepositPropertiesFactorySpec extends AnyFlatSpec with Matchers with AppCon
          |identifier.fedora = easy-dataset:162288
          |bag-store.bag-name = bag-revision-1
          |bag-store.bag-id = $uuid
-         |dataverse.sword-token = $uuid
+         |dataverse.sword-token = sword:$uuid
          |dataverse.nbn = urn:nbn:nl:ui:13-00-3haq
          |dataverse.bag-id = urn:uuid:$uuid
          |dataverse.id-protocol = doi
@@ -110,7 +110,7 @@ class DepositPropertiesFactorySpec extends AnyFlatSpec with Matchers with AppCon
          |identifier.fedora = easy-dataset:162288
          |bag-store.bag-name = bag-name
          |bag-store.bag-id = $bagUUID
-         |dataverse.sword-token = $baseUUID
+         |dataverse.sword-token = sword:$baseUUID
          |dataverse.nbn = urn:nbn:nl:ui:13-z4-f8cm
          |dataverse.other-id = PAN:00019180
          |dataverse.bag-id = urn:uuid:$bagUUID
@@ -183,7 +183,7 @@ class DepositPropertiesFactorySpec extends AnyFlatSpec with Matchers with AppCon
          |identifier.fedora = easy-dataset:162288
          |bag-store.bag-name = bag-name
          |bag-store.bag-id = $bagUUID
-         |dataverse.sword-token = $bagUUID
+         |dataverse.sword-token = sword:$bagUUID
          |dataverse.nbn = urn:nbn:nl:ui:13-00-3haq
          |dataverse.bag-id = urn:uuid:$bagUUID
          |dataverse.other-id = https://doi.org/10.12345/foo-bar
