@@ -15,10 +15,12 @@
  */
 package nl.knaw.dans.easy.bag2deposit.ddm
 
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+
 import scala.xml.transform.RewriteRule
 import scala.xml.{Elem, Node, Text}
 
-object UnicodeRewriteRule extends RewriteRule {
+object UnicodeRewriteRule extends RewriteRule with DebugEnhancedLogging  {
 
   override def transform(node: Node): Seq[Node] = {
     if (node.label != "encoded" && node.prefix == "hack") node
@@ -26,7 +28,9 @@ object UnicodeRewriteRule extends RewriteRule {
         val bytes = node.nonEmptyChildren.map(n =>
           Integer.parseInt(n.label.substring(1), 16).toByte
         ).toArray
-        Seq(Text(new String(bytes)))
+      val str = new String(bytes)
+      trace (s"$str ${str.getBytes() sameElements bytes}")
+      Seq(Text(str))
     }
   }
 }
