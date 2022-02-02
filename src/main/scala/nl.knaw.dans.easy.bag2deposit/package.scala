@@ -59,14 +59,19 @@ package object bag2deposit extends DebugEnhancedLogging {
 
   def loadXml(file: File): Try[Elem] = {
     trace(file)
-    val dd = "<[0-9a-fA-F]{2}>"
-    val b2 = s"<[cCdD][0-9a-fA-F]>$dd"
-    val b3 = s"<[eE][0-9a-fA-F]>$dd$dd"
-    val b4 = s"<[fF][0-9a-fA-F]>$dd$dd$dd"
-    val search = s"(?s)(($b2)|($b3)|($b4))"
+    val regexp = {
+      val d = "[0-9a-fA-F]"
+      val dd = "<[0-9a-fA-F]{2}>"
+      val b2 = s"<[cCdD]$d>$dd"
+      val b3 = s"<[eE]$d>$dd$dd"
+      val b4 = s"<[fF]$d>$dd$dd$dd"
+      s"(?s)(($b2)|($b3)|($b4))".r
+    }
     Try {
-      val withoutPrologue = file.contentAsString.replaceAll("<[?].+[?]>", "")
-      val s = convert(withoutPrologue, search.r)
+      val withoutPrologue = file
+        .contentAsString(Charset.forName("UTF-8"))
+        .replaceAll("<[?].+[?]>", "")
+      val s = regexp.replaceAllIn(withoutPrologue, matchValue => convert(matchValue))
       XML.loadString(
         """<?xml version="1.0" encoding="UTF-8" ?>
           |""".stripMargin + s
@@ -78,14 +83,12 @@ package object bag2deposit extends DebugEnhancedLogging {
     }
   }
 
-  private def convert(s: String, r: Regex) = {
-    r.replaceAllIn(s, value => value match {
-      case _ =>
-        val bytes = value.toString.replaceAll("[<>]", "").grouped(2).toList.map(s =>
-          Integer.parseInt(s, 16).toByte
-        ).toArray
-        new String(bytes)
-    })
+  private def convert(matchValue: Regex.Match) = matchValue match {
+    case _ =>
+      val bytes = matchValue.toString.replaceAll("[<>]", "").grouped(2).toList.map(s =>
+        Integer.parseInt(s, 16).toByte
+      ).toArray
+      new String(bytes)
   }
 
   implicit class XmlExtensions(val elem: Node) extends AnyVal {
