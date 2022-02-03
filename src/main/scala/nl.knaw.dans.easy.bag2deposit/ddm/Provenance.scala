@@ -15,7 +15,6 @@
  */
 package nl.knaw.dans.easy.bag2deposit.ddm
 
-import nl.knaw.dans.easy.bag2deposit.logger
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.joda.time.DateTime.now
 import org.joda.time.format.DateTimeFormat
@@ -32,7 +31,7 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging {
    *                the values are an empty list or the content for <prov:migration>
    * @return
    */
-  def collectChangesInXmls(changes: Map[String, Seq[Node]]): Elem = {
+  def collectChangesInXmls(changes: Map[String, Seq[Node]], oldDdmEncoding: String, newDdmEncoding: String): Elem = {
     trace(this.getClass)
     val filtered = changes.filter(_._2.nonEmpty)
      <prov:provenance xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"

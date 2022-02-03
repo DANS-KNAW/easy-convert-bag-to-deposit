@@ -104,7 +104,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
           Seq.empty,
         "http://easy.dans.knaw.nl/schemas/md/ddm/" ->
           Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head),
-      ))
+      ),"","")
       .map(normalized) shouldBe List(normalized(
       <prov:provenance xsi:schemaLocation={ provLocations } xmlns:dct="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
@@ -169,7 +169,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
           Seq.empty,
         "http://easy.dans.knaw.nl/schemas/md/ddm/" ->
           Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head),
-      ))
+      ),"","")
       .map(normalized) shouldBe List(normalized(
       <prov:provenance xsi:schemaLocation={ provLocations } xmlns:dct="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
@@ -200,7 +200,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
           Seq.empty,
         "http://easy.dans.knaw.nl/schemas/md/ddm/" ->
           Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head),
-      ))
+      ),"","")
       .map(normalized).map(dropAttrs) shouldBe List(normalized(expected)).map(dropAttrs)
   }
 
@@ -240,14 +240,14 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     )
 
     val transformer = new AmdTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
-    val amdIn = loadXml(testDir / "amd.xml").getOrElse(fail("could not load AMD"))
+    val amdIn = XML.loadFile((testDir / "amd.xml").toJava)
     val created = <ddm:created>2016-31-12</ddm:created>
     val amdOut = transformer.transform(amdIn, created).getOrElse(fail("could not transform"))
     amdOut.text shouldNot include("2017-05-02T13:01:26.752+02:00")
     amdOut.text should include("2016-31-12")
     new Provenance("EasyConvertBagToDepositApp", "1.0.5").collectChangesInXmls(Map(
       "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
-    )).map(normalized) shouldBe List(normalized(
+    ),"","").map(normalized) shouldBe List(normalized(
       <prov:provenance xsi:schemaLocation={ provLocations }>
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
           <prov:file scheme="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">

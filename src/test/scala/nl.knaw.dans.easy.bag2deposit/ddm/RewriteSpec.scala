@@ -713,7 +713,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     triedDdmIn shouldBe a[Success[_]]
 
     val triedDdmOut = new DdmTransformer(File("src/main/assembly/dist/cfg"), Map.empty)
-      .transform(triedDdmIn.get, "easy-dataset:123")
+      .transform(triedDdmIn.get._1, "easy-dataset:123")
     triedDdmOut shouldBe a[Success[_]]
     (triedDdmOut.get \\ "title").text shouldBe "Title – of the ‘dataset’Ͼ"
 

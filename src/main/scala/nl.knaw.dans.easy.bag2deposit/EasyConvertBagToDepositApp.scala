@@ -25,12 +25,12 @@ import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.compare
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
-import java.io.{ FileNotFoundException, IOException }
+import java.io.{FileNotFoundException, IOException}
 import java.nio.charset.Charset
 import java.nio.file.Paths
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 import scala.xml._
 
 class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnhancedLogging {
@@ -98,7 +98,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       metadata = bagDir / "metadata"
       migration = bagDir / "data" / "easy-migration"
       ddmFile = metadata / "dataset.xml"
-      ddmIn <- loadXml(ddmFile)
+      (ddmIn, oldDdmChars, newDdmChars) <- loadXml(ddmFile)
       depositProps <- depositPropertiesFactory.create(bagInfo, ddmIn)
       datasetId = depositProps.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
@@ -116,7 +116,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       provenanceXml = provenance.collectChangesInXmls(Map(
         "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
         "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
-      ))
+      ), oldDdmChars, newDdmChars)
       _ = trace(bagInfo)
       doi = depositProps.getString("identifier.doi")
       preStaged <- getPreStaged(bag, bagDir, doi, bagInfo.bagSeqNr)
@@ -174,7 +174,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
 
   private def getAmdXml(datasetId: String, amdFile: File): Try[Node] = {
     if (amdFile.exists)
-      loadXml(amdFile)
+      loadXml(amdFile).map(_._1)
     else {
       configuration.fedoraProvider.map { provider =>
         provider.loadFoXml(datasetId).flatMap(getAmd)

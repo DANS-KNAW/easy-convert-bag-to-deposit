@@ -57,7 +57,20 @@ package object bag2deposit extends DebugEnhancedLogging {
     }
   }
 
-  def loadXml(file: File): Try[Elem] = {
+  def loadXml(file: File): Try[(Elem, String, String)] = {
+
+    val oldChars = new StringBuffer()
+    val newChars = new StringBuffer()
+    def convert(matchValue: Regex.Match): String = matchValue match {
+      case _ =>
+        val bytes = matchValue.toString.replaceAll("[<>]", "").grouped(2).toList.map(s =>
+          Integer.parseInt(s, 16).toByte
+        ).toArray
+        val str = new String(bytes, Charset.forName("UTF-8"))
+        oldChars.append(matchValue + " ")
+        newChars.append(str + " ")
+        str
+    }
     trace(file)
     // covering <a0> through <ff> as first unicode byte
     // https://www.unicode.org/charts/PDF/ does not link to existing
@@ -75,23 +88,16 @@ package object bag2deposit extends DebugEnhancedLogging {
         .contentAsString(Charset.forName("UTF-8"))
         .replaceAll("<[?].+[?]>", "")
       val s = regexp.replaceAllIn(withoutPrologue, matchValue => convert(matchValue))
-      XML.loadString(
+      val xml = XML.loadString(
         """<?xml version="1.0" encoding="UTF-8" ?>
           |""".stripMargin + s
       )
+      (xml, oldChars.toString, newChars.toString)
     }.recoverWith {
       case _: FileNotFoundException => Failure(InvalidBagException(s"Could not find: $file"))
       case _: NoSuchFileException => Failure(InvalidBagException(s"Could not find: $file"))
       case t: SAXParseException => Failure(InvalidBagException(s"Could not load: $file - ${t.getMessage}"))
     }
-  }
-
-  private def convert(matchValue: Regex.Match) = matchValue match {
-    case _ =>
-      val bytes = matchValue.toString.replaceAll("[<>]", "").grouped(2).toList.map(s =>
-        Integer.parseInt(s, 16).toByte
-      ).toArray
-      new String(bytes)
   }
 
   implicit class XmlExtensions(val elem: Node) extends AnyVal {
