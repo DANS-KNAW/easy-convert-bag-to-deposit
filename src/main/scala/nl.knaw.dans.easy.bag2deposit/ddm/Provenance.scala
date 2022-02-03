@@ -47,7 +47,7 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging {
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
         { if ((oldDdmEncoding + newDdmEncoding).nonEmpty)
           <oldEncoding>{ oldDdmEncoding }</oldEncoding>
-          <newEncoding>{ oldDdmEncoding }</newEncoding>
+          <newEncoding>{ newDdmEncoding }</newEncoding>
         }
         { filtered.map { case (scheme, diff) =>
           <prov:file scheme={ scheme }>{ diff }</prov:file>
