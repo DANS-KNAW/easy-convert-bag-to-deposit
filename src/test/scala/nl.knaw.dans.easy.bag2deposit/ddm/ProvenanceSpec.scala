@@ -152,8 +152,8 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     normalized(xml) shouldBe normalized(
       <prov:provenance xsi:schemaLocation={provLocations} xmlns:dct="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
-          <oldEncoding>{oldChars}</oldEncoding>
-          <newEncoding>{newChars}</newEncoding>
+          <oldEncoding><![CDATA[<E2><80><93> <E2><80><98> <e2><80><99> <cf><be>]]></oldEncoding>
+          <newEncoding>– ‘ ’ Ͼ</newEncoding>
           <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">
             <prov:old>
               <ddm:accessRights>REQUEST_PERMISSION</ddm:accessRights>

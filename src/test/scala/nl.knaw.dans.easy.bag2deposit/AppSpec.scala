@@ -24,7 +24,7 @@ import org.scalatest.matchers.should.Matchers
 import scalaj.http.HttpResponse
 
 import scala.language.postfixOps
-import scala.util.{Failure, Success, Try}
+import scala.util.{Success, Try}
 import scala.xml.XML
 
 class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSupport with FileSystemSupport {

@@ -19,7 +19,7 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.joda.time.DateTime.now
 import org.joda.time.format.DateTimeFormat
 
-import scala.xml.{Elem, Node}
+import scala.xml.{Elem, Node, PCData}
 
 class Provenance(app: String, version: String) extends DebugEnhancedLogging {
   private val dateFormat = now().toString(DateTimeFormat.forPattern("yyyy-MM-dd"))
@@ -46,8 +46,8 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging {
         ">
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
         { if ((oldDdmEncoding + newDdmEncoding).nonEmpty)
-          <oldEncoding>{ oldDdmEncoding }</oldEncoding>
-          <newEncoding>{ newDdmEncoding }</newEncoding>
+          <oldEncoding>{ PCData(oldDdmEncoding.trim) }</oldEncoding>
+          <newEncoding>{ newDdmEncoding.trim }</newEncoding>
         }
         { filtered.map { case (scheme, diff) =>
           <prov:file scheme={ scheme }>{ diff }</prov:file>
