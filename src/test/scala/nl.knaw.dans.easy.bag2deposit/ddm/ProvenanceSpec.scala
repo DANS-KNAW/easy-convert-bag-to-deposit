@@ -19,12 +19,13 @@ import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.{FileSystemSupport, FixedCurrentDateTimeSupport, XmlSupport}
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.compare
 import nl.knaw.dans.easy.bag2deposit.{AmdTransformer, loadXml}
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.xml.{Utility, XML}
 
-class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport {
+class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging{
   private val provLocations = """
                                 |        http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
                                 |        http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
@@ -237,14 +238,16 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     val ddmOut = XML.loadFile("src/test/resources/funder/ddm-out.xml")
     val expected = XML.loadFile("src/test/resources/funder/provenance.xml")
 
-    new Provenance("EasyConvertBagToDepositApp", "1.0.5")
+    val prov = new Provenance("EasyConvertBagToDepositApp", "1.0.5")
       .collectChangesInXmls(Map(
         "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" ->
           Seq.empty,
         "http://easy.dans.knaw.nl/schemas/md/ddm/" ->
           Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head),
-      ),"","")
-      .map(normalized).map(dropAttrs) shouldBe List(normalized(expected)).map(dropAttrs)
+      ), "", "")
+
+    trace(printer.format(Utility.trim(prov)))
+    prov.map(normalized).map(dropAttrs) shouldBe List(normalized(expected)).map(dropAttrs)
   }
 
   private def dropAttrs(s: String) = {
