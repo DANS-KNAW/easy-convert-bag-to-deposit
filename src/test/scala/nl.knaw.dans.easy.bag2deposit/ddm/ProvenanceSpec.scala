@@ -16,9 +16,9 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.{AmdTransformer, loadXml}
 import nl.knaw.dans.easy.bag2deposit.Fixture.{FileSystemSupport, FixedCurrentDateTimeSupport, XmlSupport}
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.compare
+import nl.knaw.dans.easy.bag2deposit.{AmdTransformer, loadXml}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -122,6 +122,49 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
         </prov:migration>
       </prov:provenance>
     ))
+  }
+  it should "show encoding changes" in {
+    (testDir / "encoded-ddm.xml").writeText(
+      """<ddm>
+        |  <ddm:profile>
+        |    <dc:title>Title <E2><80><93> of the <E2><80><98>dataset<e2><80><99><cf><be></dc:title>
+        |    <ddm:accessRights>REQUEST_PERMISSION</ddm:accessRights>
+        |  </ddm:profile>
+        |</ddm>""".stripMargin
+    )
+    val other = (
+      <ddm>
+        <ddm:profile>
+          <dc:title>Title – of the ‘dataset’Ͼ</dc:title>
+          <ddm:accessRights>ANONYMOUS</ddm:accessRights>
+        </ddm:profile>
+      </ddm>
+      )
+
+    val (ddm, oldChars, newChars) = loadXml(testDir / "encoded-ddm.xml")
+      .getOrElse(throw new IllegalArgumentException("could not load test data"))
+    val diffs = Map("http://easy.dans.knaw.nl/schemas/md/ddm/" ->
+      Provenance.compare((ddm \ "profile").head, (other \ "profile").head)
+    )
+
+    val xml = new Provenance("EasyConvertBagToDepositApp", "1.0.5")
+      .collectChangesInXmls(diffs, oldChars, newChars)
+    normalized(xml) shouldBe normalized(
+      <prov:provenance xsi:schemaLocation={provLocations} xmlns:dct="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
+        <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
+          <oldEncoding>{oldChars}</oldEncoding>
+          <newEncoding>{newChars}</newEncoding>
+          <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">
+            <prov:old>
+              <ddm:accessRights>REQUEST_PERMISSION</ddm:accessRights>
+            </prov:old>
+            <prov:new>
+              <ddm:accessRights>ANONYMOUS</ddm:accessRights>
+            </prov:new>
+          </prov:file>
+        </prov:migration>
+      </prov:provenance>
+    )
   }
   it should "show dropped zero point" in {
     val ddmIn = {

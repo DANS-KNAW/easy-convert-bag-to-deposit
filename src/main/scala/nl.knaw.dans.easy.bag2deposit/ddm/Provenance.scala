@@ -45,6 +45,10 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging {
         http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
         ">
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
+        { if ((oldDdmEncoding + newDdmEncoding).nonEmpty)
+          <oldEncoding>{ oldDdmEncoding }</oldEncoding>
+          <newEncoding>{ oldDdmEncoding }</newEncoding>
+        }
         { filtered.map { case (scheme, diff) =>
           <prov:file scheme={ scheme }>{ diff }</prov:file>
         }}
