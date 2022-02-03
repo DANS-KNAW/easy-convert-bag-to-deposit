@@ -708,6 +708,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         ddm(title = "Title <E2><80><93> of the <E2><80><98>dataset<e2><80><99><cf><be>", audience = "D37000", dcmi = <ddm:dcmiMetadata/>)
       )).replaceAll("&lt;", "<").replaceAll("&gt;", ">")
     )
+    // TODO expecting ꔰ from <a5><30> but getting �0
     val triedDdmIn = loadXml(testDir / "ddm-encoding.xml")
     triedDdmIn shouldBe a[Success[_]]
 

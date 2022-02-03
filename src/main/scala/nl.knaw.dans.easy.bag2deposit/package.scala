@@ -59,10 +59,13 @@ package object bag2deposit extends DebugEnhancedLogging {
 
   def loadXml(file: File): Try[Elem] = {
     trace(file)
+    // covering <a0> through <ff> as first unicode byte
+    // https://www.unicode.org/charts/PDF/ does not link to existing
+    // https://www.unicode.org/charts/PDF/UA500.pdf https://www.unicode.org/charts/PDF/UA700.pdf
     val regexp = {
       val d = "[0-9a-fA-F]"
-      val dd = "<[0-9a-fA-F]{2}>"
-      val b2 = s"<[cCdD]$d>$dd"
+      val dd = s"<$d{2}>"
+      val b2 = s"<[a-dA-D]$d>$dd"
       val b3 = s"<[eE]$d>$dd$dd"
       val b4 = s"<[fF]$d>$dd$dd$dd"
       s"(?s)(($b2)|($b3)|($b4))".r
