@@ -34,12 +34,15 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging {
   def collectChangesInXmls(changes: Map[String, Seq[Node]], oldDdmEncoding: String, newDdmEncoding: String): Elem = {
     trace(this.getClass)
     val filtered = changes.filter(_._2.nonEmpty)
-     <prov:provenance xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
-        xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns:dc="http://purl.org/dc/elements/1.1/"
-        xmlns:dct="http://purl.org/dc/terms/"
-        xsi:schemaLocation="
+    val bindings = filtered.values.flatten.flatMap(_.nonEmptyChildren.map(_.scope))
+      .filter(_.toString()!="").toList.distinct
+    // TODO filtered.mapValues(n => n.asInstanceOf[Elem].copy(scope = null)) ???
+    val xml = <prov:provenance xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
+                                xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/"
+                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                xmlns:dc="http://purl.org/dc/elements/1.1/"
+                                xmlns:dct="http://purl.org/dc/terms/"
+                                xsi:schemaLocation="
         http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
         http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
         http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
@@ -54,7 +57,11 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging {
         }}
         </prov:migration>
       </prov:provenance>
-
+    trace(bindings)
+    trace(bindings :+ xml.scope)
+    // TODO xml.copy(scopes = ...)
+    //  https://stackoverflow.com/questions/39395706/scala-rewriterules-to-set-namespace-schemalocation
+    xml
   }
 }
 object Provenance extends DebugEnhancedLogging {
