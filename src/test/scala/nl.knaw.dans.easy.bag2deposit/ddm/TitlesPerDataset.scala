@@ -19,16 +19,17 @@ import better.files.File
 import nl.knaw.dans.easy.bag2deposit.ddm
 import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.nrRegexp
 
-object TilesPerDataset extends App {
+object TitlesPerDataset extends App {
+  // expects titles extracted from solr in the last column
+  // example input line
+  // blabla\trabarbera\txxx\, xxx,xxx
   File("data/titles.tsv")
     .lines.toSeq
     .map(_.split("\t"))
     .foreach { a =>
       a.last
         .replaceAll(""""(.*)"""", "$1") // strip quotes
-        .replaceAll("""\\,""", "%") // replace real commas
-        .split("""(,|\\n *)""")
-        .map(_.replaceAll("%", ",")) // restore real commas
+        .split("""\\,""")
         .filter(_.trim.nonEmpty)
         .sortBy(identity)
         .distinct // e.g. easy-dataset:34135, easy-dataset:99840
