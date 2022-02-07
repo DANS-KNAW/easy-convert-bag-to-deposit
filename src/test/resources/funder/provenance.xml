@@ -1,10 +1,3 @@
-<prov:provenance
-        xsi:schemaLocation="
-        http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
-        http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
-        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
-        " xmlns:dct="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
-    <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
         <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">
             <prov:old>
                 <dcx-dai:contributorDetails
@@ -84,5 +77,3 @@
                 </ddm:funding>
             </prov:new>
         </prov:file>
-    </prov:migration>
-</prov:provenance>

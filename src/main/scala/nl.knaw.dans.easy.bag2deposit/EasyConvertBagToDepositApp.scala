@@ -113,10 +113,11 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       amdOut <- configuration.amdTransformer.transform(amdIn, ddmOut \ "ddm:created")
       agreementsFile = metadata / "depositor-info" / "agreements.xml"
       _ = checkAgreementsXml((amdOut \ "depositorId").text, agreementsFile)
-      provenanceXml = provenance.collectChangesInXmls(Map(
-        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
-        "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
-      ), oldDdmChars, newDdmChars)
+      provenanceXml = provenance.collectChangesInXmls(Seq(
+        compare(amdIn, amdOut, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/"),
+        compare(oldDcmi, newDcmi, "http://easy.dans.knaw.nl/schemas/md/ddm/"),
+        Provenance.fixedDdmEncoding(oldDdmChars, newDdmChars),
+      ))
       _ = trace(bagInfo)
       doi = depositProps.getString("identifier.doi")
       preStaged <- getPreStaged(bag, bagDir, doi, bagInfo.bagSeqNr)

@@ -31,13 +31,10 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging {
    *                the values are an empty list or the content for <prov:migration>
    * @return
    */
-  def collectChangesInXmls(changes: Map[String, Seq[Node]], oldDdmEncoding: String, newDdmEncoding: String): Elem = {
+  def collectChangesInXmls(maybeChanges: Seq[Option[Elem]]): Elem = {
+    val changes = maybeChanges.filter(_.nonEmpty).flatMap(_.toSeq)
     trace(this.getClass)
-    val filtered = changes.filter(_._2.nonEmpty)
-    val bindings = filtered.values.flatten.flatMap(_.nonEmptyChildren.map(_.scope))
-      .filter(_.toString()!="").toList.distinct
-    // TODO filtered.mapValues(n => n.asInstanceOf[Elem].copy(scope = null)) ???
-    val xml = <prov:provenance xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
+    <prov:provenance xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
                                 xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/"
                                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                                 xmlns:dc="http://purl.org/dc/elements/1.1/"
@@ -48,20 +45,9 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging {
         http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
         ">
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
-        { if ((oldDdmEncoding + newDdmEncoding).nonEmpty)
-          <oldEncoding>{ PCData(oldDdmEncoding.trim) }</oldEncoding>
-          <newEncoding>{ newDdmEncoding.trim }</newEncoding>
-        }
-        { filtered.map { case (scheme, diff) =>
-          <prov:file scheme={ scheme }>{ diff }</prov:file>
-        }}
+        { changes }
         </prov:migration>
-      </prov:provenance>
-    trace(bindings)
-    trace(bindings :+ xml.scope)
-    // TODO xml.copy(scopes = ...)
-    //  https://stackoverflow.com/questions/39395706/scala-rewriterules-to-set-namespace-schemalocation
-    xml
+    </prov:provenance>
   }
 }
 object Provenance extends DebugEnhancedLogging {
@@ -73,7 +59,7 @@ object Provenance extends DebugEnhancedLogging {
    *         when large/complex elements (like for example authors or polygons) have minor changes
    *         both versions of the complete element is returned
    */
-  def compare(oldXml: Node, newXml: Node): Seq[Node] = {
+  def compare(oldXml: Node, newXml: Node, scheme: String): Option[Elem] = {
     // TODO poor mans solution to call with ddm/dcmiMetadata respective root of amd
     val oldRootNodes = oldXml.flatMap(_.nonEmptyChildren)
     val newRootNodes = newXml.flatMap(_.nonEmptyChildren)
@@ -86,8 +72,26 @@ object Provenance extends DebugEnhancedLogging {
     val onlyInOld = oldNodes.diff(newNodes)
     val onlyInNew = newNodes.diff(oldNodes)
 
-    if (onlyInOld.isEmpty && onlyInNew.isEmpty) Seq.empty
-    else <prov:old>{ onlyInOld }</prov:old>
-         <prov:new>{ onlyInNew }</prov:new>
+    if (onlyInOld.isEmpty && onlyInNew.isEmpty) None
+    else Some(
+      <prov:file scheme={ scheme }>
+        <prov:old>{ onlyInOld }</prov:old>
+        <prov:new>{ onlyInNew }</prov:new>
+      </prov:file>
+    )
+  }
+
+  def fixedDdmEncoding(oldEncoding: String, newEncoding: String): Option[Elem] = {
+    if ((oldEncoding + newEncoding).isEmpty) None
+    else Some(
+      <prov:file filename="dataset.xml">
+        <prov:old>
+          <prov:encoding>{PCData(oldEncoding.trim)}</prov:encoding>
+        </prov:old>
+        <prov:new>
+          <prov:encoding>{newEncoding.trim}</prov:encoding>
+        </prov:new>
+      </prov:file>
+    )
   }
 }

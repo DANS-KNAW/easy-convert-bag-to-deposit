@@ -17,14 +17,15 @@ package nl.knaw.dans.easy.bag2deposit.Fixture
 
 import better.files.StringExtensions
 import org.scalatest.Assertions.fail
+import org.xml.sax.SAXParseException
 
 import java.net.UnknownHostException
 import javax.xml.XMLConstants
 import javax.xml.transform.Source
 import javax.xml.transform.stream.StreamSource
 import javax.xml.validation.SchemaFactory
-import scala.util.{ Failure, Try }
-import scala.xml.{ Node, PrettyPrinter, SAXParseException, Utility }
+import scala.util.{Failure, Success, Try}
+import scala.xml.{Node, PrettyPrinter, SAXParseException, Utility}
 
 trait SchemaSupport {
   val schema: String
@@ -43,7 +44,10 @@ trait SchemaSupport {
       println("UnknownHostException: " + e.getMessage)
       false
     case Failure(e: SAXParseException) if e.getMessage.contains("Cannot resolve") =>
-      println("Probably an offline third party schema: " + e.getMessage)
+      println(s"Probably an offline third party schema: $schema " + e.getMessage)
+      false
+    case Failure(e: SAXParseException)  =>
+      println(s"Possibly an invalid schema: $schema " + e.getMessage)
       false
     case _ => true
   }

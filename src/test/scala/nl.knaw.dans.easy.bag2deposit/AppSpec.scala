@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.BagSource._
-import nl.knaw.dans.easy.bag2deposit.Fixture.{AppConfigSupport, FileSystemSupport, XmlSupport}
+import nl.knaw.dans.easy.bag2deposit.Fixture.{AppConfigSupport, FileSystemSupport, SchemaSupport, XmlSupport}
 import nl.knaw.dans.easy.bag2deposit.IdType._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -27,7 +27,8 @@ import scala.language.postfixOps
 import scala.util.{Success, Try}
 import scala.xml.XML
 
-class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSupport with FileSystemSupport {
+class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSupport with FileSystemSupport with SchemaSupport {
+  override val schema = "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd"
   private val resourceBags: File = File("src/test/resources/bags/01")
   private val validUUID = "04e638eb-3af1-44fb-985d-36af12fccb2d"
   private val vaultUUID = "87151a3a-12ed-426a-94f2-97313c7ae1f2"
@@ -104,6 +105,9 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     (validBag / "metadata" / "amd.xml").contentAsString should include("<depositorId>user001</depositorId>")
     (movedBag / "metadata" / "amd.xml").contentAsString should
       (include("<depositorId>USer</depositorId>") and not include "<depositorId>user001</depositorId>")
+
+    assume(schemaIsAvailable)
+    validate(XML.loadFile((validBag / "bag-revision-1" / "data/easy-migration" / "provenance.xml").toJava))
   }
 
   it should "load amd.xml from Fedora when not in the input bag" in {
