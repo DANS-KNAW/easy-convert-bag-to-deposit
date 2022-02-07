@@ -27,12 +27,9 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging {
 
   def collectChangesInXmls(maybeChanges: Seq[Option[Elem]]): Elem = {
     trace(this.getClass)
-    <prov:provenance xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
-                                xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/"
-                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                                xmlns:dc="http://purl.org/dc/elements/1.1/"
-                                xmlns:dct="http://purl.org/dc/terms/"
-                                xsi:schemaLocation={ schemaLocations }>
+    <prov:provenance xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/"
+                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                     xsi:schemaLocation={ schemaLocations }>
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
         { maybeChanges.filter(_.nonEmpty).flatMap(_.toSeq) }
         </prov:migration>

@@ -31,7 +31,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     (testDir / "encoded-ddm.xml").writeText(
       """<ddm>
         |  <ddm:profile>
-        |    <dc:title>Title <E2><80><93> of the <E2><80><98>dataset<e2><80><99><cf><be></dc:title>
+        |    <dc:title>Title <E2><80><93> of the <E2><80><98>dataset<e2><80><99><cf><be><f0><92><80><80></dc:title>
         |    <ddm:accessRights>REQUEST_PERMISSION</ddm:accessRights>
         |  </ddm:profile>
         |</ddm>""".stripMargin
@@ -39,7 +39,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     val other = (
       <ddm>
         <ddm:profile>
-          <dc:title>Title – of the ‘dataset’Ͼ</dc:title>
+          <dc:title>Title – of the ‘dataset’Ͼ𒀀</dc:title>
           <ddm:accessRights>ANONYMOUS</ddm:accessRights>
         </ddm:profile>
       </ddm>
@@ -58,11 +58,11 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
           <prov:file filename="dataset.xml">
             <prov:old>
               <prov:encoding>
-                <![CDATA[<E2><80><93> <E2><80><98> <e2><80><99> <cf><be>]]>
+                <![CDATA[<E2><80><93> <E2><80><98> <e2><80><99> <cf><be> <f0><92><80><80>]]>
               </prov:encoding>
             </prov:old>
             <prov:new>
-              <prov:encoding>– ‘ ’ Ͼ</prov:encoding>
+              <prov:encoding>– ‘ ’ Ͼ 𒀀</prov:encoding>
             </prov:new>
           </prov:file>
           <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">
