@@ -75,7 +75,7 @@ object Provenance extends DebugEnhancedLogging {
     )
   }
 
-  def fixedDdmEncoding(oldEncoding: Seq[String], newEncoding: Seq[Array[Byte]]): Option[Elem] = {
+  def fixedDdmEncoding(oldEncoding: Seq[String], newEncoding: Seq[String]): Option[Elem] = {
     if (oldEncoding.isEmpty) None
     else Some(
       <prov:file filename="dataset.xml">
@@ -83,7 +83,7 @@ object Provenance extends DebugEnhancedLogging {
           <prov:encoding>{PCData(oldEncoding.zipWithIndex.map {case (s,i) => s"$i:$s" }.mkString(" "))}</prov:encoding>
         </prov:old>
         <prov:new>
-          <prov:encoding>{newEncoding.zipWithIndex.map {case (bytes,i) => s"$i:${new String(bytes, Charset.forName("UTF-8"))}" }.mkString(" ")}</prov:encoding>
+          <prov:encoding>{newEncoding.zipWithIndex.map {case (s,i) => s"$i:$s" }.mkString(" ")}</prov:encoding>
         </prov:new>
       </prov:file>
     )

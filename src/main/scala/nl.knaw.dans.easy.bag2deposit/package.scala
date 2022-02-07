@@ -58,18 +58,19 @@ package object bag2deposit extends DebugEnhancedLogging {
     }
   }
 
-  def loadXml(file: File): Try[(Elem, Seq[String], Seq[Array[Byte]])] = {
+  def loadXml(file: File): Try[(Elem, Seq[String], Seq[String])] = {
 
     val oldChars = new ListBuffer[String]()
-    val newChars = new ListBuffer[Array[Byte]]()
+    val newChars = new ListBuffer[String]()
     def convert(matchValue: Regex.Match): String = matchValue match {
       case _ =>
         val bytes = matchValue.toString.replaceAll("[<>]", "").grouped(2).toList.map(s =>
           Integer.parseInt(s, 16).toByte
         ).toArray
+        val str = new String(bytes, Charset.forName("UTF-8"))
         oldChars.append(matchValue.toString())
-        newChars.append(bytes)
-        new String(bytes, Charset.forName("UTF-8"))
+        newChars.append(str)
+        str
     }
     trace(file)
     // covering <a0> through <ff> as first unicode byte
