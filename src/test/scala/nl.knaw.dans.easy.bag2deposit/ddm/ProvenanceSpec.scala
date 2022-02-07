@@ -25,13 +25,7 @@ import org.scalatest.matchers.should.Matchers
 import scala.xml.{Utility, XML}
 
 class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport {
-  override val schema = "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd"
-  private val provLocations =
-    """
-      |        http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
-      |        http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
-      |        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
-      |        """.stripMargin
+  override val schema: String = Provenance.provSchemaLocation
 
   "Provenance" should "show encoding changes" in {
     (testDir / "encoded-ddm.xml").writeText(
@@ -59,7 +53,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
         Provenance.compare((ddm \ "profile").head, (other \ "profile").head, "http://easy.dans.knaw.nl/schemas/md/ddm/"),
       ))
     normalized(xml) shouldBe normalized(
-      <prov:provenance xsi:schemaLocation={provLocations} xmlns:dct="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
+      <prov:provenance xsi:schemaLocation={ Provenance.schemaLocations } xmlns:dct="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
           <prov:file filename="dataset.xml">
             <prov:old>

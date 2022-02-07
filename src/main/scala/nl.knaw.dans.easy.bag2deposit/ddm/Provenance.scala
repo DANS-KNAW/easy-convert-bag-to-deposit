@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.easy.bag2deposit.ddm
 
+import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.schemaLocations
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.joda.time.DateTime.now
 import org.joda.time.format.DateTimeFormat
@@ -24,33 +25,28 @@ import scala.xml.{Elem, Node, PCData}
 class Provenance(app: String, version: String) extends DebugEnhancedLogging {
   private val dateFormat = now().toString(DateTimeFormat.forPattern("yyyy-MM-dd"))
 
-  /**
-   * collects differences between old and new versions of XMLs as far as they we
-   *
-   * @param changes the key of the map is the schema of the compared XMLs
-   *                the values are an empty list or the content for <prov:migration>
-   * @return
-   */
   def collectChangesInXmls(maybeChanges: Seq[Option[Elem]]): Elem = {
-    val changes = maybeChanges.filter(_.nonEmpty).flatMap(_.toSeq)
     trace(this.getClass)
     <prov:provenance xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
                                 xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/"
                                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                                 xmlns:dc="http://purl.org/dc/elements/1.1/"
                                 xmlns:dct="http://purl.org/dc/terms/"
-                                xsi:schemaLocation="
-        http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
-        http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
-        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
-        ">
+                                xsi:schemaLocation={ schemaLocations }>
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
-        { changes }
+        { maybeChanges.filter(_.nonEmpty).flatMap(_.toSeq) }
         </prov:migration>
     </prov:provenance>
   }
 }
 object Provenance extends DebugEnhancedLogging {
+  val provSchemaLocation = """https://raw.githubusercontent.com/DANS-KNAW/easy-schema/9838ad51fa36dc0edeea407419c41969aa3caac5/lib/src/main/resources/bag/metadata/prov/2022/02/provenance.xsd"""
+  val schemaLocations: String =
+    s"""
+       |        http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
+       |        http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
+       |        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ $provSchemaLocation
+       |        """.stripMargin
   /**
    * Creates the content for a <prov:migration> by comparing the direct child elements of each XML.
    * @param oldXml the original instance

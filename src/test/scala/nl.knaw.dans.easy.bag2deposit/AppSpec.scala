@@ -19,6 +19,7 @@ import better.files.File
 import nl.knaw.dans.easy.bag2deposit.BagSource._
 import nl.knaw.dans.easy.bag2deposit.Fixture.{AppConfigSupport, FileSystemSupport, SchemaSupport, XmlSupport}
 import nl.knaw.dans.easy.bag2deposit.IdType._
+import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import scalaj.http.HttpResponse
@@ -28,7 +29,7 @@ import scala.util.{Success, Try}
 import scala.xml.XML
 
 class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSupport with FileSystemSupport with SchemaSupport {
-  override val schema = "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd"
+  override val schema: String = Provenance.provSchemaLocation
   private val resourceBags: File = File("src/test/resources/bags/01")
   private val validUUID = "04e638eb-3af1-44fb-985d-36af12fccb2d"
   private val vaultUUID = "87151a3a-12ed-426a-94f2-97313c7ae1f2"
