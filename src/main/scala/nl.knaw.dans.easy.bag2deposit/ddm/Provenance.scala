@@ -20,6 +20,7 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.joda.time.DateTime.now
 import org.joda.time.format.DateTimeFormat
 
+import java.nio.charset.Charset
 import scala.xml.{Elem, Node, PCData}
 
 class Provenance(app: String, version: String) extends DebugEnhancedLogging {
@@ -74,15 +75,15 @@ object Provenance extends DebugEnhancedLogging {
     )
   }
 
-  def fixedDdmEncoding(oldEncoding: String, newEncoding: String): Option[Elem] = {
-    if ((oldEncoding + newEncoding).isEmpty) None
+  def fixedDdmEncoding(oldEncoding: Seq[String], newEncoding: Seq[Array[Byte]]): Option[Elem] = {
+    if (oldEncoding.isEmpty) None
     else Some(
       <prov:file filename="dataset.xml">
         <prov:old>
-          <prov:encoding>{PCData(oldEncoding.trim)}</prov:encoding>
+          <prov:encoding>{PCData(oldEncoding.zipWithIndex.map {case (s,i) => s"$i:$s" }.mkString(" "))}</prov:encoding>
         </prov:old>
         <prov:new>
-          <prov:encoding>{newEncoding.trim}</prov:encoding>
+          <prov:encoding>{newEncoding.zipWithIndex.map {case (bytes,i) => s"$i:${new String(bytes, Charset.forName("UTF-8"))}" }.mkString(" ")}</prov:encoding>
         </prov:new>
       </prov:file>
     )

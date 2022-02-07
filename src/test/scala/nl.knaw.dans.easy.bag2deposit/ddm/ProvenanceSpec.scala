@@ -58,11 +58,11 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
           <prov:file filename="dataset.xml">
             <prov:old>
               <prov:encoding>
-                <![CDATA[<E2><80><93> <E2><80><98> <e2><80><99> <cf><be> <f0><92><80><80>]]>
+                <![CDATA[0:<E2><80><93> 1:<E2><80><98> 2:<e2><80><99> 3:<cf><be> 4:<f0><92><80><80>]]>
               </prov:encoding>
             </prov:old>
             <prov:new>
-              <prov:encoding>– ‘ ’ Ͼ 𒀀</prov:encoding>
+              <prov:encoding>0:– 1:‘ 2:’ 3:Ͼ 4:𒀀</prov:encoding>
             </prov:new>
           </prov:file>
           <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">

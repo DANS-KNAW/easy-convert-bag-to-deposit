@@ -27,6 +27,7 @@ import java.io.FileNotFoundException
 import java.nio.charset.Charset
 import java.nio.file.NoSuchFileException
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex
 import scala.util.{Failure, Try}
 import scala.xml._
@@ -57,19 +58,18 @@ package object bag2deposit extends DebugEnhancedLogging {
     }
   }
 
-  def loadXml(file: File): Try[(Elem, String, String)] = {
+  def loadXml(file: File): Try[(Elem, Seq[String], Seq[Array[Byte]])] = {
 
-    val oldChars = new StringBuffer()
-    val newChars = new StringBuffer()
+    val oldChars = new ListBuffer[String]()
+    val newChars = new ListBuffer[Array[Byte]]()
     def convert(matchValue: Regex.Match): String = matchValue match {
       case _ =>
         val bytes = matchValue.toString.replaceAll("[<>]", "").grouped(2).toList.map(s =>
           Integer.parseInt(s, 16).toByte
         ).toArray
-        val str = new String(bytes, Charset.forName("UTF-8"))
-        oldChars.append(matchValue + " ")
-        newChars.append(str + " ")
-        str
+        oldChars.append(matchValue.toString())
+        newChars.append(bytes)
+        new String(bytes, Charset.forName("UTF-8"))
     }
     trace(file)
     // covering <a0> through <ff> as first unicode byte
@@ -92,7 +92,7 @@ package object bag2deposit extends DebugEnhancedLogging {
         """<?xml version="1.0" encoding="UTF-8" ?>
           |""".stripMargin + s
       )
-      (xml, oldChars.toString, newChars.toString)
+      (xml, oldChars, newChars)
     }.recoverWith {
       case _: FileNotFoundException => Failure(InvalidBagException(s"Could not find: $file"))
       case _: NoSuchFileException => Failure(InvalidBagException(s"Could not find: $file"))
