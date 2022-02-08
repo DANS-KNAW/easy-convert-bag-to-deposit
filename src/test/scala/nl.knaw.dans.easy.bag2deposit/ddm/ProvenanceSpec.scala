@@ -272,4 +272,68 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       </prov:provenance>
     ))
   }
+
+  it should "show replaced empty date in amd" in {
+    (testDir / "amd.xml").writeText(
+      """<?xml version="1.0" encoding="UTF-8"?>""" +
+        Utility.serialize(
+          <damd:administrative-md xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" version="0.1">
+            <datasetState>PUBLISHED</datasetState>
+            <previousState>DRAFT</previousState>
+            <lastStateChange>2020-02-02T20:02:00.000+01:00</lastStateChange>
+            <depositorId>user001</depositorId>
+            <stateChangeDates>
+              <damd:stateChangeDate>
+                <fromState>SUBMITTED</fromState>
+                <toState>PUBLISHED</toState>
+                <changeDate></changeDate>
+              </damd:stateChangeDate>
+              <damd:stateChangeDate>
+                <fromState>PUBLISHED</fromState>
+                <toState>MAINTENANCE</toState>
+                <changeDate>2017-10-13T09:31:55.215+02:00</changeDate>
+              </damd:stateChangeDate>
+              <damd:stateChangeDate>
+                <fromState>MAINTENANCE</fromState>
+                <toState>PUBLISHED</toState>
+                <changeDate>2017-10-13T09:35:01.605+02:00</changeDate>
+              </damd:stateChangeDate>
+            </stateChangeDates>
+          </damd:administrative-md>
+        ).toString()
+    )
+
+    val transformer = new AmdTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
+    val amdIn = loadXml(testDir / "amd.xml").getOrElse(fail("could not load AMD"))
+    val created = <ddm:created>2016-31-12</ddm:created>
+    val amdOut = transformer.transform(amdIn, created).getOrElse(fail("could not transform"))
+    amdOut.text shouldNot include("<changeDate></changeDate>")
+    amdOut.text should include("2016-31-12")
+    new Provenance("EasyConvertBagToDepositApp", "1.0.5").collectChangesInXmls(Map(
+      "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
+    )).map(normalized) shouldBe List(normalized(
+      <prov:provenance xsi:schemaLocation={ provLocations }>
+        <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
+          <prov:file scheme="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
+            <prov:old>
+              <depositorId>user001</depositorId>
+              <damd:stateChangeDate>
+                <fromState>SUBMITTED</fromState>
+                <toState>PUBLISHED</toState>
+                <changeDate></changeDate>
+              </damd:stateChangeDate>
+            </prov:old>
+            <prov:new>
+              <depositorId>USer</depositorId>
+              <damd:stateChangeDate>
+                <fromState>SUBMITTED</fromState>
+                <toState>PUBLISHED</toState>
+                <changeDate>2016-31-12</changeDate>
+              </damd:stateChangeDate>
+            </prov:new>
+          </prov:file>
+        </prov:migration>
+      </prov:provenance>
+    ))
+  }
 }
