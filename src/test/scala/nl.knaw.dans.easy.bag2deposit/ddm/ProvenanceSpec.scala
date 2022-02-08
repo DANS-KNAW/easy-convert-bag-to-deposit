@@ -30,7 +30,8 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
   private val actualLocation = "https://raw.githubusercontent.com/DANS-KNAW/easy-schema/DD-811-encoding/lib/src/main/resources"
   private val defaultLocation = "https://easy.dans.knaw.nl/schemas"
   override val schema: String = defaultLocation + "/bag/metadata/prov/provenance.xsd"
-
+  private val ddmSchema = "http://easy.dans.knaw.nl/schemas/md/ddm/"
+  private val amdSchema = "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/"
   "Provenance" should "show encoding changes" in {
     val ddmOut = XML.loadFile("src/test/resources/encoding/ddm-out.xml")
     val (ddmIn, oldChars, newChars) = loadXml(File("src/test/resources/encoding/ddm-in.xml"))
@@ -38,8 +39,8 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     val provenance = new Provenance("EasyConvertBagToDepositApp", "1.0.5")
       .collectChangesInXmls(List(
         Provenance.fixedDdmEncoding(oldChars, newChars),
-        Provenance.compare((ddmIn \ "profile").head, (ddmOut \ "profile").head, "http://easy.dans.knaw.nl/schemas/md/ddm/"),
-        Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, "http://easy.dans.knaw.nl/schemas/md/ddm/"),
+        Provenance.compare((ddmIn \ "profile").head, (ddmOut \ "profile").head, ddmSchema),
+        Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, ddmSchema),
       ))
     // when loading XML, "<" in CDATA is interpreted into a plain string with "&lt;", so we have to re-parse the generated xml to compare
     normalized(XML.loadString(Utility.serialize(provenance).toString())) shouldBe
@@ -112,7 +113,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       </ddm>
     }
 
-    Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, "http://easy.dans.knaw.nl/schemas/md/ddm/")
+    Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, ddmSchema)
       .map(normalized) shouldBe Some(normalized(
       <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">
         <prov:old>
@@ -167,7 +168,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       </ddm>
     }
 
-    Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, "http://easy.dans.knaw.nl/schemas/md/ddm/")
+    Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, ddmSchema)
       .map(normalized) shouldBe Some(normalized(
           <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">
             <prov:old>
@@ -191,7 +192,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     Provenance.compare(
       (ddmIn \ "dcmiMetadata").head,
       (ddmOut \ "dcmiMetadata").head,
-      "http://easy.dans.knaw.nl/schemas/md/ddm/"
+      ddmSchema
     ).map(normalized).map(dropAttrs) shouldBe Some(normalized(expected)).map(dropAttrs)
   }
 
@@ -256,6 +257,77 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
               </damd:stateChangeDate>
             </prov:new>
           </prov:file>
+    ))
+  }
+
+  it should "show replaced empty date in amd" in {
+    (testDir / "amd.xml").writeText(
+      """<?xml version="1.0" encoding="UTF-8"?>""" +
+        Utility.serialize(
+          <damd:administrative-md xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" version="0.1">
+            <datasetState>PUBLISHED</datasetState>
+            <previousState>DRAFT</previousState>
+            <lastStateChange>2020-02-02T20:02:00.000+01:00</lastStateChange>
+            <depositorId>user001</depositorId>
+            <stateChangeDates>
+              <damd:stateChangeDate>
+                <fromState>SUBMITTED</fromState>
+                <toState>PUBLISHED</toState>
+                <changeDate></changeDate>
+              </damd:stateChangeDate>
+              <damd:stateChangeDate>
+                <fromState>PUBLISHED</fromState>
+                <toState>MAINTENANCE</toState>
+                <changeDate>2017-10-13T09:31:55.215+02:00</changeDate>
+              </damd:stateChangeDate>
+              <damd:stateChangeDate>
+                <fromState>MAINTENANCE</fromState>
+                <toState>PUBLISHED</toState>
+                <changeDate>2017-10-13T09:35:01.605+02:00</changeDate>
+              </damd:stateChangeDate>
+            </stateChangeDates>
+          </damd:administrative-md>
+        ).toString()
+    )
+
+    val (amdIn, _, _) = loadXml(testDir / "amd.xml").getOrElse(fail("could not load AMD"))
+    val amdOut = new AmdTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
+      .transform(amdIn, <ddm:created>2016-31-12</ddm:created>)
+      .getOrElse(fail("could not transform"))
+
+    // post condition 1: date is added
+    amdOut.text shouldNot include("<changeDate></changeDate>")
+    amdOut.text should include("2016-31-12")
+
+    // post condition 2: added date is reported in provenance
+    new Provenance("EasyConvertBagToDepositApp", "1.0.5").collectChangesInXmls(List(
+      Provenance.compare(amdIn, amdOut, amdSchema),
+    )).map(normalized) shouldBe List(normalized(
+      <prov:provenance xsi:schemaLocation="
+              http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
+              http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
+              ">
+        <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
+          <prov:file scheme="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
+            <prov:old>
+              <depositorId>user001</depositorId>
+              <damd:stateChangeDate>
+                <fromState>SUBMITTED</fromState>
+                <toState>PUBLISHED</toState>
+                <changeDate></changeDate>
+              </damd:stateChangeDate>
+            </prov:old>
+            <prov:new>
+              <depositorId>USer</depositorId>
+              <damd:stateChangeDate>
+                <fromState>SUBMITTED</fromState>
+                <toState>PUBLISHED</toState>
+                <changeDate>2016-31-12</changeDate>
+              </damd:stateChangeDate>
+            </prov:new>
+          </prov:file>
+        </prov:migration>
+      </prov:provenance>
     ))
   }
 }
