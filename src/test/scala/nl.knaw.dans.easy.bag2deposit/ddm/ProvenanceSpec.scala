@@ -22,63 +22,33 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.nio.charset.Charset
 import scala.xml.{Utility, XML}
 
 class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport {
-  override val schema: String = Provenance.provSchemaLocation
+  private val defaultLocation = "https://easy.dans.knaw.nl/schemas"
+  private val actualLocation = "https://raw.githubusercontent.com/DANS-KNAW/easy-schema/DD-811-encoding/lib/src/main/resources"
+  override val schema: String = actualLocation + "/bag/metadata/prov/provenance.xsd"
 
   "Provenance" should "show encoding changes" in {
-    (testDir / "encoded-ddm.xml").writeText(
-      """<ddm>
-        |  <ddm:profile>
-        |    <dc:title>Title <E2><80><93> of the <E2><80><98>dataset<e2><80><99><cf><be><f0><92><80><80></dc:title>
-        |    <ddm:accessRights>REQUEST_PERMISSION</ddm:accessRights>
-        |  </ddm:profile>
-        |</ddm>""".stripMargin
-    )
-    val other = (
-      <ddm>
-        <ddm:profile>
-          <dc:title>Title – of the ‘dataset’Ͼ𒀀</dc:title>
-          <ddm:accessRights>ANONYMOUS</ddm:accessRights>
-        </ddm:profile>
-      </ddm>
-    )
-
-    val (ddm, oldChars, newChars) = loadXml(testDir / "encoded-ddm.xml")
+    val ddmOut = XML.loadFile("src/test/resources/encoding/ddm-out.xml")
+    val (ddmIn, oldChars, newChars) = loadXml(File("src/test/resources/encoding/ddm-in.xml"))
       .getOrElse(throw new IllegalArgumentException("could not load test data"))
-    val xml = new Provenance("EasyConvertBagToDepositApp", "1.0.5")
+    val provenance = new Provenance("EasyConvertBagToDepositApp", "1.0.5")
       .collectChangesInXmls(List(
         Provenance.fixedDdmEncoding(oldChars, newChars),
-        Provenance.compare((ddm \ "profile").head, (other \ "profile").head, "http://easy.dans.knaw.nl/schemas/md/ddm/"),
+        Provenance.compare((ddmIn \ "profile").head, (ddmOut \ "profile").head, "http://easy.dans.knaw.nl/schemas/md/ddm/"),
+        Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, "http://easy.dans.knaw.nl/schemas/md/ddm/"),
       ))
-    normalized(xml) shouldBe normalized(
-      <prov:provenance xsi:schemaLocation={ Provenance.schemaLocations } xmlns:dct="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
-        <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
-          <prov:file filename="dataset.xml">
-            <prov:old>
-              <prov:encoding>
-                <![CDATA[0:<E2><80><93> 1:<E2><80><98> 2:<e2><80><99> 3:<cf><be> 4:<f0><92><80><80>]]>
-              </prov:encoding>
-            </prov:old>
-            <prov:new>
-              <prov:encoding>0:– 1:‘ 2:’ 3:Ͼ 4:𒀀</prov:encoding>
-            </prov:new>
-          </prov:file>
-          <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">
-            <prov:old>
-              <ddm:accessRights>REQUEST_PERMISSION</ddm:accessRights>
-            </prov:old>
-            <prov:new>
-              <ddm:accessRights>ANONYMOUS</ddm:accessRights>
-            </prov:new>
-          </prov:file>
-        </prov:migration>
-      </prov:provenance>
-    )
-    logger.trace(Utility.serialize(xml).toString())
+    // when loading XML, "<" in CDATA is interpreted into a plain string with "&lt;", so we have to re-parse the generated xml to compare
+    normalized(XML.loadString(Utility.serialize(provenance).toString())) shouldBe
+      normalized(XML.loadFile("src/test/resources/encoding/provenance.xml"))
+
     assume(schemaIsAvailable)
-    validate(xml)
+    val xmlString = File("src/test/resources/encoding/ddm-in.xml")
+      .contentAsString(Charset.forName("UTF-8"))
+      .replaceAll(" " + defaultLocation, " " + actualLocation)
+    validate(XML.loadString(xmlString))
   }
   "compare" should "show ddm diff" in {
     val ddmIn = {

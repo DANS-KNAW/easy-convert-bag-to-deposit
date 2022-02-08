@@ -25,6 +25,7 @@ trait XmlSupport {
     .format(Utility.trim(elem)) // this trim normalizes <a/> and <a></a>
     .replaceAll(nameSpaceRegExp, "") // the random order would cause differences in actual and expected
     .replaceAll(" +\n?", " ")
+    .replaceAll(" +srsName", " ")
     .replaceAll("\n +<", "\n<")
     .replaceAll(" +>", ">")
     .trim

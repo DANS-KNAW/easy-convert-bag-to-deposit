@@ -1,0 +1,16 @@
+<ddm:DDM xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:dcx-gml="http://easy.dans.knaw.nl/schemas/dcx/gml/"
+         xsi:schemaLocation=" http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd">
+    <ddm:profile>
+        <dc:title>Title <E2><80><93> of the <E2><80><98>dataset<e2><80><99><cf><be><f0><92><80><80></dc:title>
+    </ddm:profile>
+    <ddm:dcmiMetadata>
+        <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/28992">
+            <Point xmlns="http://www.opengis.net/gml">
+                <pos>0 0</pos>
+            </Point>
+        </dcx-gml:spatial>
+    </ddm:dcmiMetadata>
+</ddm:DDM>

@@ -20,7 +20,6 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.joda.time.DateTime.now
 import org.joda.time.format.DateTimeFormat
 
-import java.nio.charset.Charset
 import scala.xml.{Elem, Node, PCData}
 
 class Provenance(app: String, version: String) extends DebugEnhancedLogging {
@@ -38,12 +37,10 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging {
   }
 }
 object Provenance extends DebugEnhancedLogging {
-  val provSchemaLocation = """https://raw.githubusercontent.com/DANS-KNAW/easy-schema/9838ad51fa36dc0edeea407419c41969aa3caac5/lib/src/main/resources/bag/metadata/prov/2022/02/provenance.xsd"""
   val schemaLocations: String =
     s"""
        |        http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
-       |        http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
-       |        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ $provSchemaLocation
+       |        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
        |        """.stripMargin
   /**
    * Creates the content for a <prov:migration> by comparing the direct child elements of each XML.
@@ -80,7 +77,9 @@ object Provenance extends DebugEnhancedLogging {
     else Some(
       <prov:file filename="dataset.xml">
         <prov:old>
-          <prov:encoding>{PCData(oldEncoding.zipWithIndex.map {case (s,i) => s"$i:$s" }.mkString(" "))}</prov:encoding>
+          <prov:encoding>
+            {PCData(oldEncoding.zipWithIndex.map {case (s,i) => s"$i:$s" }.mkString(" "))}
+          </prov:encoding>
         </prov:old>
         <prov:new>
           <prov:encoding>{newEncoding.zipWithIndex.map {case (s,i) => s"$i:$s" }.mkString(" ")}</prov:encoding>
