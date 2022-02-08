@@ -77,9 +77,7 @@ object Provenance extends DebugEnhancedLogging {
     else Some(
       <prov:file filename="dataset.xml">
         <prov:old>
-          <prov:encoding>
-            {PCData(oldEncoding.zipWithIndex.map {case (s,i) => s"$i:$s" }.mkString(" "))}
-          </prov:encoding>
+          <prov:encoding>{PCData(oldEncoding.zipWithIndex.map {case (s,i) => s"$i:$s" }.mkString(" "))}</prov:encoding>
         </prov:old>
         <prov:new>
           <prov:encoding>{newEncoding.zipWithIndex.map {case (s,i) => s"$i:$s" }.mkString(" ")}</prov:encoding>
