@@ -16,9 +16,9 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.Fixture.{DdmSupport, SchemaSupport, XmlSupport}
+import nl.knaw.dans.easy.bag2deposit.Fixture.{DdmSupport, FileSystemSupport, SchemaSupport, XmlSupport}
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
-import nl.knaw.dans.easy.bag2deposit.{AmdTransformer, BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, parseCsv}
+import nl.knaw.dans.easy.bag2deposit.{AmdTransformer, BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, loadXml, parseCsv}
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -27,8 +27,10 @@ import java.net.URI
 import java.nio.charset.Charset
 import java.util.UUID
 import scala.util.{Failure, Success, Try}
+import scala.xml.XML
+import scala.xml.Utility
 
-class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Matchers with DdmSupport {
+class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Matchers with DdmSupport with FileSystemSupport {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
   private val ddmTransformer: DdmTransformer = new DdmTransformer(cfgDir, Map.empty)
 
@@ -113,7 +115,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:dcmiMetadata>
     )
 
-    val app = new EasyConvertBagToDepositApp(new Configuration(
+    val app = new EasyConvertBagToDepositApp(Configuration(
       "test version",
       dansDoiPrefixes = "10.17026/,10.5072/".split(","),
       dataverseIdAuthority = "10.80270",
@@ -264,6 +266,79 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
 
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())
+  }
+
+  "datesOfCollection" should "convert a proper dates pair" in {
+    val ddmIn = ddm(title = "datesOfCollection  test", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <dc:date>2019-10-20 (startdatum)</dc:date>
+          <dc:date>2019-10-24 (einddatum)</dc:date>
+        </ddm:dcmiMetadata>
+    )
+    val expectedDDM = ddm(title = "datesOfCollection test", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <ddm:datesOfCollection>2019-10-20/2019-10-24</ddm:datesOfCollection>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+        </ddm:dcmiMetadata>
+    )
+
+    assume(schemaIsAvailable)
+    validate(expectedDDM) shouldBe Success(())
+
+    ddmTransformer.transform(ddmIn, "eas-dataset:123").map(normalized)
+      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
+  }
+
+  it should "not convert one-and-a-half dates pair" in {
+    val ddmIn = ddm(title = "datesOfCollection  test", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <dc:date>2019-10-20 (startdatum)</dc:date>
+          <dc:date>2019-10-24 (einddatum)</dc:date>
+          <dc:date>2019-10-24 (einddatum)</dc:date>
+        </ddm:dcmiMetadata>
+    )
+    val expectedDDM = ddm(title = "datesOfCollection test", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <dc:date>2019-10-20 (startdatum)</dc:date>
+          <dc:date>2019-10-24 (einddatum)</dc:date>
+          <dc:date>2019-10-24 (einddatum)</dc:date>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+        </ddm:dcmiMetadata>
+    )
+    ddmTransformer.transform(ddmIn, "eas-dataset:123").map(normalized)
+      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
+  }
+
+  it should "convert a start only dates pair" in {
+    val ddmIn = ddm(title = "datesOfCollection  test", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <dc:date>2019-10-20 (startdatum)</dc:date>
+        </ddm:dcmiMetadata>
+    )
+    val expectedDDM = ddm(title = "datesOfCollection test", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <ddm:datesOfCollection>2019-10-20/</ddm:datesOfCollection>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+        </ddm:dcmiMetadata>
+    )
+    ddmTransformer.transform(ddmIn, "eas-dataset:123").map(normalized)
+      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
+  }
+
+  it should "convert ad end only dates pair" in {
+    val ddmIn = ddm(title = "datesOfCollection  test", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <dc:date>2019-10-20 (einddatum)</dc:date>
+        </ddm:dcmiMetadata>
+    )
+    val expectedDDM = ddm(title = "datesOfCollection test", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <ddm:datesOfCollection>/2019-10-20</ddm:datesOfCollection>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+        </ddm:dcmiMetadata>
+    )
+    ddmTransformer.transform(ddmIn, "eas-dataset:123").map(normalized)
+      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
   }
 
   "reportRewriteRule" should "leave briefrapport untouched" in {
@@ -497,7 +572,6 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       )))
   }
   it should "add rightsHolder with proper prefix" in {
-    val profile = <dc:title>blabla rabarbera</dc:title><dct:description/> +: creator +: created +: available +: <ddm:audience>Z99000</ddm:audience> +: openAccess
     // note that ddm in other tests have both dct as dcterms as namespace prefix for the same URI
     val ddmIn = {
       <ddm:DDM xmlns:dct="http://purl.org/dc/terms/">
@@ -615,6 +689,29 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
             <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
           </ddm:dcmiMetadata>
     )))
+  }
+  it should "replace funder role" in {
+    val ddmIn = XML.loadFile("src/test/resources/funder/ddm-in.xml")
+    val expectedDDM = XML.loadFile("src/test/resources/funder/ddm-out.xml")
+    val triedDdm = new DdmTransformer(File("src/main/assembly/dist/cfg"), Map.empty)
+      .transform(ddmIn, "easy-dataset:123")
+    triedDdm.map(normalized) shouldBe Success(normalized(expectedDDM))
+    assume(schemaIsAvailable)
+    validate(ddmIn) should matchPattern {
+      case Failure(e) if e.getMessage.contains("Funder") =>
+    }
+    validate(expectedDDM) shouldBe a[Success[_]]
+  }
+  it should "reject <AA><..><..>" in {
+    (testDir / "ddm-encoding.xml").writeText(
+      printer.format(Utility.trim(
+        ddm(title = "Title <AA><80><93> of the <E2><80><98>dataset<e2><80><99>", audience = "D37000", dcmi = <ddm:dcmiMetadata/>)
+      )).replaceAll("&lt;", "<").replaceAll("&gt;", ">")
+    )
+    val triedDdmIn = loadXml(testDir / "ddm-encoding.xml")
+    triedDdmIn should matchPattern { case Failure(e: InvalidBagException)
+      if e.getMessage.endsWith("The content of elements must consist of well-formed character data or markup.") =>
+    }
   }
   it should "keep the original license" in {
     val transformer = new DdmTransformer(cfgDir, Map.empty)

@@ -25,12 +25,12 @@ import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.compare
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
-import java.io.{ FileNotFoundException, IOException }
+import java.io.{FileNotFoundException, IOException}
 import java.nio.charset.Charset
 import java.nio.file.Paths
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 import scala.xml._
 
 class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnhancedLogging {
@@ -98,7 +98,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       metadata = bagDir / "metadata"
       migration = bagDir / "data" / "easy-migration"
       ddmFile = metadata / "dataset.xml"
-      ddmIn <- loadXml(ddmFile)
+      (ddmIn, oldDdmChars, newDdmChars) <- loadXml(ddmFile)
       depositProps <- depositPropertiesFactory.create(bagInfo, ddmIn)
       datasetId = depositProps.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
@@ -107,15 +107,16 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       amdFile = metadata / "amd.xml"
       amdIn <- getAmdXml(datasetId, amdFile)
-      _ = if (bagDir.name.startsWith(".") && (amdIn \\ "datasetState").text != "DELETED")
+      _ = if (bagDir.isHidden && (amdIn \\ "datasetState").text != "DELETED")
         throw InvalidBagException(s"Inactive bag does not have state DELETED: $amdFile")
       fromVault = depositProps.getString("deposit.origin") == "VAULT"
       amdOut <- configuration.amdTransformer.transform(amdIn, ddmOut \ "ddm:created")
       agreementsFile = metadata / "depositor-info" / "agreements.xml"
       _ = checkAgreementsXml((amdOut \ "depositorId").text, agreementsFile)
-      provenanceXml = provenance.collectChangesInXmls(Map(
-        "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" -> compare(amdIn, amdOut),
-        "http://easy.dans.knaw.nl/schemas/md/ddm/" -> compare(oldDcmi, newDcmi),
+      provenanceXml = provenance.collectChangesInXmls(Seq(
+        compare(amdIn, amdOut, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/"),
+        compare(oldDcmi, newDcmi, "http://easy.dans.knaw.nl/schemas/md/ddm/"),
+        Provenance.fixedDdmEncoding(oldDdmChars, newDdmChars),
       ))
       _ = trace(bagInfo)
       doi = depositProps.getString("identifier.doi")
@@ -174,7 +175,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
 
   private def getAmdXml(datasetId: String, amdFile: File): Try[Node] = {
     if (amdFile.exists)
-      loadXml(amdFile)
+      loadXml(amdFile).map(_._1)
     else {
       configuration.fedoraProvider.map { provider =>
         provider.loadFoXml(datasetId).flatMap(getAmd)

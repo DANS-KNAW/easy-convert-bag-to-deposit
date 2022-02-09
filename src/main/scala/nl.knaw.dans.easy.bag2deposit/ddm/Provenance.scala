@@ -15,46 +15,33 @@
  */
 package nl.knaw.dans.easy.bag2deposit.ddm
 
-import nl.knaw.dans.easy.bag2deposit.logger
+import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.schemaLocations
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.joda.time.DateTime.now
 import org.joda.time.format.DateTimeFormat
 
-import scala.xml.{Elem, Node}
+import scala.xml.{Elem, Node, PCData}
 
 class Provenance(app: String, version: String) extends DebugEnhancedLogging {
   private val dateFormat = now().toString(DateTimeFormat.forPattern("yyyy-MM-dd"))
 
-  /**
-   * collects differences between old and new versions of XMLs as far as they we
-   *
-   * @param changes the key of the map is the schema of the compared XMLs
-   *                the values are an empty list or the content for <prov:migration>
-   * @return
-   */
-  def collectChangesInXmls(changes: Map[String, Seq[Node]]): Elem = {
+  def collectChangesInXmls(maybeChanges: Seq[Option[Elem]]): Elem = {
     trace(this.getClass)
-    val filtered = changes.filter(_._2.nonEmpty)
-     <prov:provenance xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
-        xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns:dc="http://purl.org/dc/elements/1.1/"
-        xmlns:dct="http://purl.org/dc/terms/"
-        xsi:schemaLocation="
-        http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
-        http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
-        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
-        ">
+    <prov:provenance xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/"
+                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                     xsi:schemaLocation={ schemaLocations }>
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
-        { filtered.map { case (scheme, diff) =>
-          <prov:file scheme={ scheme }>{ diff }</prov:file>
-        }}
+        { maybeChanges.filter(_.nonEmpty).flatMap(_.toSeq) }
         </prov:migration>
-      </prov:provenance>
-
+    </prov:provenance>
   }
 }
 object Provenance extends DebugEnhancedLogging {
+  val schemaLocations: String =
+    s"""
+       |        http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
+       |        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
+       |        """.stripMargin
   /**
    * Creates the content for a <prov:migration> by comparing the direct child elements of each XML.
    * @param oldXml the original instance
@@ -63,7 +50,7 @@ object Provenance extends DebugEnhancedLogging {
    *         when large/complex elements (like for example authors or polygons) have minor changes
    *         both versions of the complete element is returned
    */
-  def compare(oldXml: Node, newXml: Node): Seq[Node] = {
+  def compare(oldXml: Node, newXml: Node, scheme: String): Option[Elem] = {
     // TODO poor mans solution to call with ddm/dcmiMetadata respective root of amd
     val oldRootNodes = oldXml.flatMap(_.nonEmptyChildren)
     val newRootNodes = newXml.flatMap(_.nonEmptyChildren)
@@ -76,8 +63,26 @@ object Provenance extends DebugEnhancedLogging {
     val onlyInOld = oldNodes.diff(newNodes)
     val onlyInNew = newNodes.diff(oldNodes)
 
-    if (onlyInOld.isEmpty && onlyInNew.isEmpty) Seq.empty
-    else <prov:old>{ onlyInOld }</prov:old>
-         <prov:new>{ onlyInNew }</prov:new>
+    if (onlyInOld.isEmpty && onlyInNew.isEmpty) None
+    else Some(
+      <prov:file scheme={ scheme }>
+        <prov:old>{ onlyInOld }</prov:old>
+        <prov:new>{ onlyInNew }</prov:new>
+      </prov:file>
+    )
+  }
+
+  def fixedDdmEncoding(oldEncoding: Seq[String], newEncoding: Seq[String]): Option[Elem] = {
+    if (oldEncoding.isEmpty) None
+    else Some(
+      <prov:file filename="dataset.xml">
+        <prov:old>
+          <prov:encoding>{PCData(oldEncoding.zipWithIndex.map {case (s,i) => s"$i:$s" }.mkString(" "))}</prov:encoding>
+        </prov:old>
+        <prov:new>
+          <prov:encoding>{newEncoding.zipWithIndex.map {case (s,i) => s"$i:$s" }.mkString(" ")}</prov:encoding>
+        </prov:new>
+      </prov:file>
+    )
   }
 }
