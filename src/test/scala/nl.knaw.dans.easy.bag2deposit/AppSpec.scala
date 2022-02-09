@@ -29,9 +29,10 @@ import scala.util.{Success, Try}
 import scala.xml.XML
 
 class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSupport with FileSystemSupport with SchemaSupport {
-  private val defaultLocation = "https://easy.dans.knaw.nl/schemas"
+  // use actual location (and replace in validated XML) when upgraded schema is not yet published
   private val actualLocation = "https://raw.githubusercontent.com/DANS-KNAW/easy-schema/DD-811-encoding/lib/src/main/resources"
-  override val schema: String = actualLocation + "/bag/metadata/prov/provenance.xsd"
+  private val defaultLocation = "https://easy.dans.knaw.nl/schemas"
+  override val schema: String = defaultLocation + "/bag/metadata/prov/provenance.xsd"
 
   private val resourceBags: File = File("src/test/resources/bags/01")
   private val validUUID = "04e638eb-3af1-44fb-985d-36af12fccb2d"
@@ -111,9 +112,9 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
       (include("<depositorId>USer</depositorId>") and not include "<depositorId>user001</depositorId>")
 
     assume(schemaIsAvailable)
-    val xmlString = File("src/test/resources/encoding/ddm-in.xml")
+    val xmlString = File("src/test/resources/encoding/provenance.xml")
       .contentAsString(Charset.forName("UTF-8"))
-      .replaceAll(" " + defaultLocation, " " + actualLocation)
+//      .replaceAll(" " + defaultLocation, " " + actualLocation)
     validate(XML.loadString(xmlString))
   }
 
