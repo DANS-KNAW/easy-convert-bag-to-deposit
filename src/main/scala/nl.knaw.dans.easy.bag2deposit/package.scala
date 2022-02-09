@@ -18,15 +18,18 @@ package nl.knaw.dans.easy
 import better.files.File
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.apache.commons.csv.{ CSVFormat, CSVParser, CSVRecord }
-import org.joda.time.format.{ DateTimeFormatter, ISODateTimeFormat }
-import org.joda.time.{ DateTime, DateTimeZone }
+import org.apache.commons.csv.{CSVFormat, CSVParser, CSVRecord}
+import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
+import org.joda.time.{DateTime, DateTimeZone}
 import resource.managed
 
 import java.io.FileNotFoundException
 import java.nio.charset.Charset
+import java.nio.file.NoSuchFileException
 import scala.collection.JavaConverters._
-import scala.util.{ Failure, Try }
+import scala.collection.mutable.ListBuffer
+import scala.util.matching.Regex
+import scala.util.{Failure, Try}
 import scala.xml._
 
 package object bag2deposit extends DebugEnhancedLogging {
@@ -55,13 +58,47 @@ package object bag2deposit extends DebugEnhancedLogging {
     }
   }
 
-  def loadXml(file: File): Try[Elem] = {
+  def loadXml(file: File): Try[(Elem, Seq[String], Seq[String])] = {
+
+    val oldChars = new ListBuffer[String]()
+    val newChars = new ListBuffer[String]()
+    def convert(matchValue: Regex.Match): String = matchValue match {
+      case _ =>
+        val bytes = matchValue.toString.replaceAll("[<>]", "").grouped(2).toList.map(s =>
+          Integer.parseInt(s, 16).toByte
+        ).toArray
+        val str = new String(bytes, Charset.forName("UTF-8"))
+        oldChars.append(matchValue.toString())
+        newChars.append(str)
+        str
+    }
     trace(file)
-    Try(XML.loadFile(file.toJava))
-      .recoverWith {
-        case t: FileNotFoundException => Failure(InvalidBagException(s"could not find: $file"))
-        case t: SAXParseException => Failure(InvalidBagException(s"could not load: $file - ${ t.getMessage }"))
-      }
+    // covering <a0> through <ff> as first unicode byte
+    // https://www.unicode.org/charts/PDF/ does not link to existing
+    // https://www.unicode.org/charts/PDF/UA500.pdf https://www.unicode.org/charts/PDF/UA700.pdf
+    val regexp = {
+      val d = "[0-9a-fA-F]"
+      val dd = s"<$d{2}>"
+      val b2 = s"<[a-dA-D]$d>$dd"
+      val b3 = s"<[eE]$d>$dd$dd"
+      val b4 = s"<[fF]$d>$dd$dd$dd"
+      s"(?s)(($b2)|($b3)|($b4))".r
+    }
+    Try {
+      val withoutPrologue = file
+        .contentAsString(Charset.forName("UTF-8"))
+        .replaceAll("<[?].+[?]>", "")
+      val s = regexp.replaceAllIn(withoutPrologue, matchValue => convert(matchValue))
+      val xml = XML.loadString(
+        """<?xml version="1.0" encoding="UTF-8" ?>
+          |""".stripMargin + s
+      )
+      (xml, oldChars, newChars)
+    }.recoverWith {
+      case _: FileNotFoundException => Failure(InvalidBagException(s"Could not find: $file"))
+      case _: NoSuchFileException => Failure(InvalidBagException(s"Could not find: $file"))
+      case t: SAXParseException => Failure(InvalidBagException(s"Could not load: $file - ${t.getMessage}"))
+    }
   }
 
   implicit class XmlExtensions(val elem: Node) extends AnyVal {

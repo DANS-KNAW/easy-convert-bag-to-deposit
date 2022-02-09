@@ -16,9 +16,9 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.Fixture.{DdmSupport, SchemaSupport, XmlSupport}
+import nl.knaw.dans.easy.bag2deposit.Fixture.{DdmSupport, FileSystemSupport, SchemaSupport, XmlSupport}
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
-import nl.knaw.dans.easy.bag2deposit.{AmdTransformer, BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, parseCsv}
+import nl.knaw.dans.easy.bag2deposit.{AmdTransformer, BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, loadXml, parseCsv}
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -28,8 +28,9 @@ import java.nio.charset.Charset
 import java.util.UUID
 import scala.util.{Failure, Success, Try}
 import scala.xml.XML
+import scala.xml.Utility
 
-class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Matchers with DdmSupport {
+class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Matchers with DdmSupport with FileSystemSupport {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
   private val ddmTransformer: DdmTransformer = new DdmTransformer(cfgDir, Map.empty)
 
@@ -700,6 +701,17 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       case Failure(e) if e.getMessage.contains("Funder") =>
     }
     validate(expectedDDM) shouldBe a[Success[_]]
+  }
+  it should "reject <AA><..><..>" in {
+    (testDir / "ddm-encoding.xml").writeText(
+      printer.format(Utility.trim(
+        ddm(title = "Title <AA><80><93> of the <E2><80><98>dataset<e2><80><99>", audience = "D37000", dcmi = <ddm:dcmiMetadata/>)
+      )).replaceAll("&lt;", "<").replaceAll("&gt;", ">")
+    )
+    val triedDdmIn = loadXml(testDir / "ddm-encoding.xml")
+    triedDdmIn should matchPattern { case Failure(e: InvalidBagException)
+      if e.getMessage.endsWith("The content of elements must consist of well-formed character data or markup.") =>
+    }
   }
   it should "keep the original license" in {
     val transformer = new DdmTransformer(cfgDir, Map.empty)

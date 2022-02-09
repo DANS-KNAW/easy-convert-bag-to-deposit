@@ -23,7 +23,7 @@
          xmlns:dcx-dai="http://easy.dans.knaw.nl/schemas/dcx/dai/"
          xmlns:id-type="http://easy.dans.knaw.nl/schemas/vocab/identifier-type/"
          xsi:schemaLocation="
-    http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
+        http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
         http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
         http://easy.dans.knaw.nl/schemas/vocab/identifier-type/ https://easy.dans.knaw.nl/schemas/vocab/identifier-type.xsd
     ">
