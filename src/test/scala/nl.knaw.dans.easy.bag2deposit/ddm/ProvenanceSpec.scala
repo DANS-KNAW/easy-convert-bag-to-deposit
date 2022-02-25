@@ -182,6 +182,23 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
           </prov:file>
     ))
   }
+  it should "keep valid spatial elements" in {
+    val (ddmIn, _, _) = loadXml(File("src/test/resources/DD-858/dataset.xml"))
+      .getOrElse(fail("could not load test data"))
+    val (expectedDdm, _, _) = loadXml(File("src/test/resources/DD-858/expected-dataset.xml"))
+      .getOrElse(fail("could not load test data"))
+
+    // a few steps of EasyConvertBagToDepositApp.addProps
+    val transformer = new DdmTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
+    val ddmOut = transformer.transform(ddmIn, "easy-dataset:123")
+      .getOrElse(fail("no DDM returned"))
+
+    Provenance.compare(
+      (ddmIn \ "dcmiMetadata").head,
+      (ddmOut \ "dcmiMetadata").head,
+      "http://easy.dans.knaw.nl/schemas/md/ddm/"
+    ) shouldBe None
+  }
   it should "show funder diff" in {
     // compare the DDM files manually for finer details than in the provenance
     val ddmIn = XML.loadFile("src/test/resources/funder/ddm-in.xml")
