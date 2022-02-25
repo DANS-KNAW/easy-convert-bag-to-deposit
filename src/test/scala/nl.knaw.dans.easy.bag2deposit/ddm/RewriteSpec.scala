@@ -33,6 +33,7 @@ import scala.xml.Utility
 class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Matchers with DdmSupport with FileSystemSupport {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
   private val ddmTransformer: DdmTransformer = new DdmTransformer(cfgDir, Map.empty)
+  private val amdTransformer = new AmdTransformer(cfgDir)
 
   override val schema = "https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"
 
@@ -121,7 +122,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       dataverseIdAuthority = "10.80270",
       bagIndex = BagIndex(new URI("http://localhost:20120/")),
       ddmTransformer = ddmTransformer,
-      amdTransformer = new AmdTransformer(cfgDir),
+      amdTransformer = amdTransformer,
       fedoraProvider = None,
       maybePreStagedProvider = None,
       agreementsPath = cfgDir / "agreements"
@@ -726,5 +727,20 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
             <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
           </ddm:dcmiMetadata>
     )))
+  }
+
+  "AmdTransformer" should "should not remove dates" in {
+    val (ddmIn, _, _) = loadXml(File("src/test/resources/DD-857/dataset.xml"))
+      .getOrElse(fail("could not load test data"))
+    val (amdIn, _, _) = loadXml(File("src/test/resources/DD-857/amd.xml"))
+      .getOrElse(fail("could not load test data"))
+
+    // a few steps of EasyConvertBagToDepositApp.addProps
+    val ddmOut = ddmTransformer.transform(ddmIn, "easy-dataset:123")
+      .getOrElse(fail("no DDM returned"))
+    val amdOut = amdTransformer.transform(amdIn, ddmOut \\ "created")
+      .getOrElse(fail("no AMD returned"))
+
+    normalized(amdIn) shouldBe normalized(amdOut)
   }
 }
