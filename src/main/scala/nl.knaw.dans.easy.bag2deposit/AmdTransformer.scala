@@ -56,6 +56,8 @@ class AmdTransformer(cfgDir: File) {
   implicit val charset: Charset = Charset.forName("UTF-8")
 
   def transform(xmlIn: Node, ddmCreated: NodeSeq): Try[Node] = {
+    if (ddmCreated.isEmpty)
+      return Failure(InvalidBagException("no date created found in DDM"))
     val yearCreated = yearOf(ddmCreated.text)
     val changedToPublished = (xmlIn \\ "stateChangeDate")
       .filter(n => (n \ "toState").text.trim == "PUBLISHED")
