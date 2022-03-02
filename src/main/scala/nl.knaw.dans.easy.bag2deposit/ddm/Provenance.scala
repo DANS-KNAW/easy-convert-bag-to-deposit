@@ -20,7 +20,7 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.joda.time.DateTime.now
 import org.joda.time.format.DateTimeFormat
 
-import scala.xml.{Elem, Node, PCData}
+import scala.xml.{Elem, Node, PCData, Utility}
 
 class Provenance(app: String, version: String) extends DebugEnhancedLogging {
   private val dateFormat = now().toString(DateTimeFormat.forPattern("yyyy-MM-dd"))
@@ -52,16 +52,16 @@ object Provenance extends DebugEnhancedLogging {
    */
   def compare(oldXml: Node, newXml: Node, scheme: String): Option[Elem] = {
     // TODO poor mans solution to call with ddm/dcmiMetadata respective root of amd
-    val oldRootNodes = oldXml.flatMap(_.nonEmptyChildren)
-    val newRootNodes = newXml.flatMap(_.nonEmptyChildren)
+    val oldRootNodes = Utility.trim(oldXml).flatMap(_.nonEmptyChildren)
+    val newRootNodes = Utility.trim(newXml).flatMap(_.nonEmptyChildren)
     val oldStateNodes = oldRootNodes.find(_.label == "stateChangeDates").toSeq.flatten.flatMap(_.nonEmptyChildren)
     val newStateNodes = newRootNodes.find(_.label == "stateChangeDates").toSeq.flatten.flatMap(_.nonEmptyChildren)
     val newSimpleNodes = newRootNodes.filterNot(_.label == "stateChangeDates")
     val oldSimpleNodes = oldRootNodes.filterNot(_.label == "stateChangeDates")
     val newNodes = newSimpleNodes.theSeq ++ newStateNodes.theSeq
     val oldNodes = oldSimpleNodes.theSeq ++ oldStateNodes.theSeq
-    val onlyInOld = oldNodes.diff(newNodes)
-    val onlyInNew = newNodes.diff(oldNodes)
+    val onlyInOld = oldNodes.diff(newNodes).filter(_.nonEmpty)
+    val onlyInNew = newNodes.diff(oldNodes).filter(_.nonEmpty)
 
     if (onlyInOld.isEmpty && onlyInNew.isEmpty) None
     else Some(

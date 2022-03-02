@@ -23,6 +23,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.nio.charset.Charset
+import scala.util.Success
 import scala.xml.{Utility, XML}
 
 class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport {
@@ -140,6 +141,11 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
               <gml:pos>0 0</gml:pos>
             </gml:Point>
           </dcx-gml:spatial>
+          <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+            <Point xmlns="http://www.opengis.net/gml">
+              <pos></pos>
+            </Point>
+          </dcx-gml:spatial>
           <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/28992">
             <Point xmlns="http://www.opengis.net/gml">
               <description>Entrance of DANS Building</description>
@@ -164,6 +170,11 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
               <pos>0 0</pos>
             </Point>
           </dcx-gml:spatial>
+          <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+            <Point xmlns="http://www.opengis.net/gml">
+              <pos></pos>
+            </Point>
+          </dcx-gml:spatial>
         </ddm:dcmiMetadata>
       </ddm>
     }
@@ -182,6 +193,24 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
             </prov:new>
           </prov:file>
     ))
+  }
+  it should "keep valid spatial elements" in {
+    val (ddmIn, _, _) = loadXml(File("src/test/resources/DD-858/dataset.xml"))
+      .getOrElse(fail("could not load test data"))
+
+    // a few steps of EasyConvertBagToDepositApp.addProps
+    val transformer = new DdmTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
+    val ddmOut = transformer.transform(ddmIn, "easy-dataset:123")
+      .getOrElse(fail("no DDM returned"))
+
+    Provenance.compare(
+      (ddmIn \ "dcmiMetadata").head,
+      (ddmOut \ "dcmiMetadata").head,
+      "http://easy.dans.knaw.nl/schemas/md/ddm/"
+    ) shouldBe None
+
+    assume(schemaIsAvailable)
+    validate(ddmIn) shouldBe Success(())
   }
   it should "show funder diff" in {
     // compare the DDM files manually for finer details than in the provenance

@@ -1,0 +1,115 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ddm:DDM xsi:schemaLocation="http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"
+         xmlns:id-type="http://easy.dans.knaw.nl/schemas/vocab/identifier-type/"
+         xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
+         xmlns:dcx-gml="http://easy.dans.knaw.nl/schemas/dcx/gml/"
+         xmlns:dcx-dai="http://easy.dans.knaw.nl/schemas/dcx/dai/" xmlns:dct="http://purl.org/dc/terms/"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dc="http://purl.org/dc/elements/1.1/">
+     <ddm:profile>
+       <dc:title>Titel voor testgeval 2 van Neriman</dc:title>
+       <dct:description>Een korte description voor testgeval 2</dct:description>
+       
+       
+       <dcx-dai:creatorDetails><dcx-dai:author>
+        
+        <dcx-dai:initials>A.</dcx-dai:initials>
+        
+        <dcx-dai:surname>Eerste Creator</dcx-dai:surname>
+        <dcx-dai:ORCID>https://orcid.org/0000-0002-1825-0097</dcx-dai:ORCID>
+        <dcx-dai:ISNI>http://isni.org/isni/000000012281955X</dcx-dai:ISNI>
+        <dcx-dai:DAI>info:eu-repo/dai/nl/358163587</dcx-dai:DAI>
+        
+        
+      </dcx-dai:author> </dcx-dai:creatorDetails><dcx-dai:creatorDetails><dcx-dai:author>
+        <dcx-dai:titles>Ir.</dcx-dai:titles>
+        <dcx-dai:initials>P.A.</dcx-dai:initials>
+        
+        <dcx-dai:surname>Vader</dcx-dai:surname>
+        
+        <dcx-dai:ISNI>http://isni.org/isni/000000012281955X</dcx-dai:ISNI>
+        
+        
+        <dcx-dai:organization>
+        <dcx-dai:name>Organisatie van de 2e Creator</dcx-dai:name>
+        
+      </dcx-dai:organization>
+      </dcx-dai:author> </dcx-dai:creatorDetails>
+       <ddm:created>1999-07-07</ddm:created>
+       <ddm:available>2022-02-03</ddm:available>
+       <ddm:audience>D11200</ddm:audience><ddm:audience>D37000</ddm:audience>
+       <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
+     </ddm:profile>
+     <ddm:dcmiMetadata>
+         <dct:identifier xsi:type="id-type:URN">urn:nbn:nl:ui:13-z4-mc95</dct:identifier>
+         <dct:identifier xsi:type="id-type:DOI">10.80270/test-z7b-sc2j</dct:identifier>
+         <dct:identifier xsi:type="id-type:EASY2">easy-dataset:34280</dct:identifier>
+
+         <dct:alternative>Alternatieve tekst voor testgeval 2</dct:alternative>
+       
+       
+       
+       
+       
+       
+       <dcx-dai:contributorDetails><dcx-dai:author>
+        
+        <dcx-dai:initials>A.</dcx-dai:initials>
+        
+        <dcx-dai:surname>Eerste Rightsholder</dcx-dai:surname>
+        <dcx-dai:ORCID>https://orcid.org/0000-0002-1825-0098</dcx-dai:ORCID>
+        <dcx-dai:ISNI>http://isni.org/isni/000000012281955X</dcx-dai:ISNI>
+        <dcx-dai:DAI>info:eu-repo/dai/nl/358163587</dcx-dai:DAI>
+        <dcx-dai:role>RightsHolder</dcx-dai:role>
+        
+      </dcx-dai:author> </dcx-dai:contributorDetails><dcx-dai:contributorDetails><dcx-dai:author>
+        
+        <dcx-dai:initials>A.</dcx-dai:initials>
+        
+        <dcx-dai:surname>Eerste Rightsholder</dcx-dai:surname>
+        <dcx-dai:ORCID>https://orcid.org/0000-0002-1825-0098</dcx-dai:ORCID>
+        <dcx-dai:ISNI>http://isni.org/isni/000000012281955X</dcx-dai:ISNI>
+        <dcx-dai:DAI>info:eu-repo/dai/nl/358163587</dcx-dai:DAI>
+        <dcx-dai:role>RightsHolder</dcx-dai:role>
+        
+      </dcx-dai:author> </dcx-dai:contributorDetails>
+       <dct:rightsHolder>A. Eerste Rightsholder</dct:rightsHolder><dct:rightsHolder>A. Eerste Rightsholder</dct:rightsHolder>
+       <dct:publisher>Shell</dct:publisher>
+       
+       <dct:type xsi:type="dct:DCMIType">Collection</dct:type><dct:type xsi:type="dct:DCMIType">Event</dct:type>
+       <dct:format>application/pdf</dct:format><dct:format>video/quicktime</dct:format>
+
+
+         <dct:spatial>Netherlands</dct:spatial>
+         <dct:spatial>Spain</dct:spatial>
+         <dct:spatial>France</dct:spatial>
+         <dct:dateSubmitted xsi:type="dct:W3CDTF">2021-10-01</dct:dateSubmitted>
+         <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+             <Point xmlns="http://www.opengis.net/gml">
+                 <pos>90 -180</pos>
+             </Point>
+         </dcx-gml:spatial>
+         <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+             <Point xmlns="http://www.opengis.net/gml">
+                 <pos>50.555 -30.873</pos>
+             </Point>
+         </dcx-gml:spatial>
+         <dcx-gml:spatial>
+             <boundedBy xmlns="http://www.opengis.net/gml">
+                 <Envelope srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                     <lowerCorner>-90.0 -180.0</lowerCorner>
+                     <upperCorner>90.0 180.0</upperCorner>
+                 </Envelope>
+             </boundedBy>
+         </dcx-gml:spatial>
+         <dcx-gml:spatial>
+             <boundedBy xmlns="http://www.opengis.net/gml">
+                 <Envelope srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                     <lowerCorner>45.555 -100.666</lowerCorner>
+                     <upperCorner>90.0 179.999</upperCorner>
+                 </Envelope>
+             </boundedBy>
+         </dcx-gml:spatial>
+         <dct:license xsi:type="dct:URI">http://creativecommons.org/publicdomain/zero/1.0</dct:license>
+
+     </ddm:dcmiMetadata>
+   </ddm:DDM>
