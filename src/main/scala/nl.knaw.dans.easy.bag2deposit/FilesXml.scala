@@ -45,7 +45,7 @@ object FilesXml extends DebugEnhancedLogging {
     object insertElements extends RewriteRule {
       override def transform(node: Node): Seq[Node] = node match {
         case Elem(boundPrefix, "files", _, boundScope, children@_*) =>
-          <files>
+          <files xmlns="http://easy.dans.knaw.nl/schemas/bag/metadata/files/" >
             {children}
             {newFileElements}
           </files>.copy(prefix = boundPrefix, scope = boundScope)
