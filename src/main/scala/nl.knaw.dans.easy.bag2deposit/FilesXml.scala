@@ -22,18 +22,24 @@ import scala.xml.{Elem, NamespaceBinding, Node, NodeSeq, XML}
 
 object FilesXml extends DebugEnhancedLogging {
 
-  val DEFAULT_PREFIX = "dcterms"
-  val DEFAULT_URI = "http://purl.org/dc/terms/"
+  val DCTERMS_PREFIX = "dcterms"
+  val DCTERMS_URI = "http://purl.org/dc/terms/"
+  val FILES_PREFIX = null
+  val FILES_URI = "http://easy.dans.knaw.nl/schemas/bag/metadata/files/"
 
   def apply(filesXml: Elem, destination: String, addedFiles: Seq[String], mimeType: String): Node = {
 
-    val formatTagPrefix = Option(filesXml.scope.getPrefix(DEFAULT_URI)).getOrElse(DEFAULT_PREFIX)
-    val binding = NamespaceBinding(formatTagPrefix, DEFAULT_URI, filesXml.scope)
+    val formatTagPrefix = Option(filesXml.scope.getPrefix(DCTERMS_URI)).getOrElse(DCTERMS_PREFIX)
+    val filesBinding = NamespaceBinding(FILES_PREFIX, FILES_URI, filesXml.scope)
+    val binding = NamespaceBinding(formatTagPrefix, DCTERMS_URI, filesBinding)
     val format = <xx:format>{ mimeType }</xx:format>
       .copy(prefix = formatTagPrefix)
-    val filesXmlWithPossiblyAddedNamespace = Option(filesXml.scope.getURI(formatTagPrefix))
+    val filesXmlWithPossiblyAddedNamespace2 = Option(filesXml.scope.getURI(FILES_PREFIX))
       .map(_ => filesXml)
-      .getOrElse(filesXml.copy(scope = binding))
+      .getOrElse(filesXml.copy(scope = filesBinding))
+    val filesXmlWithPossiblyAddedNamespace = Option(filesXml.scope.getURI(formatTagPrefix))
+      .map(_ => filesXmlWithPossiblyAddedNamespace2)
+      .getOrElse(filesXmlWithPossiblyAddedNamespace2.copy(scope = binding))
     val newFileElements = addedFiles.map(newFile =>
       <file filepath={s"$destination/$newFile"} >
         { format }

@@ -486,4 +486,58 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     (movedBag / "metadata" / "amd.xml").contentAsString should
       include("<depositorId>USer</depositorId>")
   }
+
+  it should "add default namespace for files.xml" in {
+    val delegate = mock[MockBagIndex]
+    val appConfig = testConfig(delegatingBagIndex(delegate), null)
+    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty)
+
+    val originalFilesXml =
+      <files xmlns:dc="http://purl.org/dc/terms/">
+        <file filepath="data/leeg.txt">
+          <dc:format>text/xml</dc:format>
+        </file>
+      </files>
+    val expectedFilesXml =
+      <files xmlns:dc="http://purl.org/dc/terms/" xmlns="http://easy.dans.knaw.nl/schemas/bag/metadata/files/">
+
+        <file filepath="data/leeg.txt">
+          <dc:format>text/xml</dc:format>
+        </file>
+        <file filepath="data/easy-migration/provenance.xml">
+          <dc:format>text/xml</dc:format>
+          <accessibleToRights>ANONYMOUS</accessibleToRights>
+          <visibleToRights>ANONYMOUS</visibleToRights>
+        </file>
+        <file filepath="data/easy-migration/dataset.xml">
+          <dc:format>text/xml</dc:format>
+          <accessibleToRights>ANONYMOUS</accessibleToRights>
+          <visibleToRights>ANONYMOUS</visibleToRights>
+        </file>
+        <file filepath="data/easy-migration/files.xml">
+          <dc:format>text/xml</dc:format>
+          <accessibleToRights>ANONYMOUS</accessibleToRights>
+          <visibleToRights>ANONYMOUS</visibleToRights>
+        </file>
+        <file filepath="data/easy-migration/emd.xml">
+          <dc:format>text/xml</dc:format>
+          <accessibleToRights>ANONYMOUS</accessibleToRights>
+          <visibleToRights>ANONYMOUS</visibleToRights>
+        </file>
+      </files>
+    (resourceBags / validUUID).copyTo(testDir / "exports" / validUUID)
+    val testBag = testDir / "exports" / validUUID / "bag-revision-1"
+    (testBag / "metadata" / "files.xml")
+      .writeText(originalFilesXml.serialize)
+
+    new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
+      (testDir / "exports").children,
+      maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
+      DepositPropertiesFactory(appConfig, DOI, FEDORA)
+    ) shouldBe Success("No fatal errors")
+
+    val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
+    val filesXml = movedBag / "metadata" / "files.xml"
+    normalized(XML.loadFile(filesXml.toJava)) shouldBe normalized(expectedFilesXml)
+  }
 }
