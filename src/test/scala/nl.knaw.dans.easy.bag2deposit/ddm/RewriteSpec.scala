@@ -743,4 +743,30 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
 
     normalized(amdIn) shouldBe normalized(amdOut)
   }
+
+  "ZeroPosRewriteRule" should "drop '0 0' position" in {
+    val ddmIn = ddm(title = "blabla", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/28992">
+            <gml:Point>
+              <gml:pos>0 0</gml:pos>
+            </gml:Point>
+          </dcx-gml:spatial>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+        </ddm:dcmiMetadata>
+    )
+    val transformer = new DdmTransformer(
+      cfgDir,
+      Map.empty,
+    )
+
+    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+      Success(normalized(ddm(
+        title = "blabla",
+        audience = "D37000",
+        dcmi = <ddm:dcmiMetadata>
+                 <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+               </ddm:dcmiMetadata>,
+      )))
+  }
 }
