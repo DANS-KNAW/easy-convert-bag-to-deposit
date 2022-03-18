@@ -426,7 +426,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
               >Bureauonderzoek en Inventariserend veldonderzoek (verkennende fase)</ddm:acquisitionMethod>
               <ddm:acquisitionMethod
                 schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/554ca1ec-3ed8-42d3-ae4b-47bcb848b238"
-                valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/bd4d913f-1cab-4f08-ab00-77b64a6273e0" }
+                valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/4e0dd439-480f-4039-bccc-4ce5ca2cbc05" }
                 subjectScheme="ABR verwervingswijzen"
               >Bureauonderzoek en Inventariserend veldonderzoek (verkennende fase)</ddm:acquisitionMethod>
               <ddm:acquisitionMethod
@@ -456,12 +456,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
               >Archeologisch bureauonderzoek en gecombineerd verkennend en karterend booronderzoek</ddm:acquisitionMethod>
               <ddm:acquisitionMethod
                 schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/554ca1ec-3ed8-42d3-ae4b-47bcb848b238"
-                valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/bd4d913f-1cab-4f08-ab00-77b64a6273e0" }
-                subjectScheme="ABR verwervingswijzen"
-              >Archeologisch bureauonderzoek en gecombineerd verkennend en karterend booronderzoek</ddm:acquisitionMethod>
-              <ddm:acquisitionMethod
-                schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/554ca1ec-3ed8-42d3-ae4b-47bcb848b238"
-                valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/0bd089db-adf3-4246-8828-e64224e2324b" }
+                valueURI={ s"https://data.cultureelerfgoed.nl/term/id/abr/e06a84fa-62e8-42ff-8f38-0ddfe9485a15" }
                 subjectScheme="ABR verwervingswijzen"
               >Archeologisch bureauonderzoek en gecombineerd verkennend en karterend booronderzoek</ddm:acquisitionMethod>
               <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
