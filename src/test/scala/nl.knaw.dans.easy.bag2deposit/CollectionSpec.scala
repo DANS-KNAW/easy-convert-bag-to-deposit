@@ -53,7 +53,7 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     val sampleElem =
         <ddm:inCollection
           schemeURI="https://vocabularies.dans.knaw.nl/collections"
-          valueURI="https://vocabularies.dans.knaw.nl/collections/archaeology#Diachronbv"
+          valueURI="https://vocabularies.dans.knaw.nl/collections/archaeology/Diachronbv"
           subjectScheme="DANS Collection"
         >Diachron bv</ddm:inCollection>
 
