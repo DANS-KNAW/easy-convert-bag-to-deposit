@@ -19,13 +19,14 @@ import better.files.StringExtensions
 import org.scalatest.Assertions.fail
 import org.xml.sax.SAXParseException
 
+import java.io.InputStream
 import java.net.UnknownHostException
 import javax.xml.XMLConstants
 import javax.xml.transform.Source
 import javax.xml.transform.stream.StreamSource
 import javax.xml.validation.SchemaFactory
-import scala.util.{Failure, Success, Try}
-import scala.xml.{Node, PrettyPrinter, SAXParseException, Utility}
+import scala.util.{ Failure, Success, Try }
+import scala.xml.{ Node, PrettyPrinter, SAXParseException, Utility }
 
 trait SchemaSupport {
   val schema: String
@@ -34,7 +35,7 @@ trait SchemaSupport {
   // - schemaFile is set by concrete test class
   // - postpone loading until actually validating
 
-  private lazy val triedSchema = Try(SchemaFactory
+  lazy val triedSchema = Try(SchemaFactory
     .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
     .newSchema(Array[Source](new StreamSource(schema)))
   )
@@ -58,6 +59,13 @@ trait SchemaSupport {
     triedSchema.flatMap { schema =>
       val source = new StreamSource(serialized.inputStream)
       Try(schema.newValidator().validate(source))
+    }
+  }
+
+  def validate(is: InputStream): Try[Unit] = {
+    triedSchema.getOrElse(fail("Please prefix the test with 'assume(schemaIsAvailable)' to ignore a failure due to not reachable schema's"))
+    triedSchema.flatMap { schema =>
+      Try(schema.newValidator().validate(new StreamSource(is)))
     }
   }
 }

@@ -16,15 +16,16 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.Fixture.{FileSystemSupport, FixedCurrentDateTimeSupport, SchemaSupport, XmlSupport}
-import nl.knaw.dans.easy.bag2deposit.{AmdTransformer, loadXml}
+import nl.knaw.dans.easy.bag2deposit.Fixture.{ FileSystemSupport, FixedCurrentDateTimeSupport, SchemaSupport, XmlSupport }
+import nl.knaw.dans.easy.bag2deposit.{ AmdTransformer, loadXml }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.io.FileInputStream
 import java.nio.charset.Charset
 import scala.util.Success
-import scala.xml.{Utility, XML}
+import scala.xml.{ Utility, XML }
 
 class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport {
   // use actual location (and replace in validated XML) when upgraded scheme is not yet published
@@ -33,6 +34,10 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
   override val schema: String = defaultLocation + "/bag/metadata/prov/provenance.xsd"
   private val ddmSchema = "http://easy.dans.knaw.nl/schemas/md/ddm/"
   private val amdSchema = "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/"
+
+  "DD-976-sample" should "validate" in {
+    validate(new FileInputStream("src/test/resources/DD-976-provenance-validation/sample.xml")) shouldBe a[Success[_]]
+  }
   "Provenance" should "show encoding changes" in {
     val ddmOut = XML.loadFile("src/test/resources/encoding/ddm-out.xml")
     val (ddmIn, oldChars, newChars) = loadXml(File("src/test/resources/encoding/ddm-in.xml"))
