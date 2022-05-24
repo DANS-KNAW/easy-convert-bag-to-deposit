@@ -22,9 +22,8 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.io.FileInputStream
 import java.nio.charset.Charset
-import scala.util.Success
+import scala.util.{ Failure, Success }
 import scala.xml.{ Utility, XML }
 
 class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport {
@@ -35,9 +34,21 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
   private val ddmSchema = "http://easy.dans.knaw.nl/schemas/md/ddm/"
   private val amdSchema = "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/"
 
-  "DD-976-sample" should "validate" in {
-    validate(new FileInputStream("src/test/resources/DD-976-provenance-validation/sample.xml")) shouldBe a[Success[_]]
+  "DD-976-sample" should "reproduce the problems" in {
+    val sample = File("src/test/resources/DD-976-provenance-validation/sample.xml").contentAsString
+    val fixedDate = sample.replace("<changeDate>2014-01-01</changeDate>", "<changeDate>2014-01-01T13:13:20.776+02:00</changeDate>")
+    val fixedBoth = fixedDate.replace("<prov:new>", """<prov:new xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/" xmlns:dcterms="http://purl.org/dc/terms/">""")
+    parseError(sample) shouldBe
+      "org.xml.sax.SAXParseException; lineNumber: 15; columnNumber: 56; cvc-datatype-valid.1.2.3: '2014-01-01' is not a valid value of union type 'dateTime-or-nothing'."
+    parseError(fixedDate) shouldBe
+      """org.xml.sax.SAXParseException; lineNumber: 36; columnNumber: 68; The prefix "ddm" for element "ddm:language" is not bound."""
+    validate(XML.loadString(fixedBoth)) shouldBe a[Success[_]]
   }
+
+  private def parseError(sample: String) = {
+    validate(XML.loadString(sample)).asInstanceOf[Failure[_]].exception.toString
+  }
+
   "Provenance" should "show encoding changes" in {
     val ddmOut = XML.loadFile("src/test/resources/encoding/ddm-out.xml")
     val (ddmIn, oldChars, newChars) = loadXml(File("src/test/resources/encoding/ddm-in.xml"))
