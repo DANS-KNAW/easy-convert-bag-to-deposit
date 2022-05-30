@@ -22,7 +22,7 @@ import org.joda.time.format.DateTimeFormat
 
 import scala.xml.{Elem, Node, PCData, Utility}
 
-class Provenance(app: String, version: String) extends DebugEnhancedLogging {
+case class Provenance(app: String, version: String) extends DebugEnhancedLogging {
   private val dateFormat = now().toString(DateTimeFormat.forPattern("yyyy-MM-dd"))
 
   def collectChangesInXmls(maybeChanges: Seq[Option[Elem]]): Elem = {
@@ -66,8 +66,8 @@ object Provenance extends DebugEnhancedLogging {
     if (onlyInOld.isEmpty && onlyInNew.isEmpty) None
     else Some(
       <prov:file scheme={ scheme }>
-        <prov:old>{ onlyInOld }</prov:old>
-        <prov:new>{ onlyInNew }</prov:new>
+        { <prov:old>{ onlyInOld }</prov:old>.copy(scope = oldXml.scope) }
+        { <prov:new>{ onlyInNew }</prov:new>.copy(scope = newXml.scope) }
       </prov:file>
     )
   }

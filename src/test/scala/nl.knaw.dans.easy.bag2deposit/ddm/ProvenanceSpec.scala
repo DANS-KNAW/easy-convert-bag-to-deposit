@@ -22,22 +22,26 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.nio.charset.Charset
 import scala.util.{ Failure, Success }
 import scala.xml.{ Utility, XML }
 
 class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport {
-  // use actual location (and replace in validated XML) when upgraded scheme is not yet published
-  private val actualLocation = "https://raw.githubusercontent.com/DANS-KNAW/easy-schema/DD-811-encoding/lib/src/main/resources"
-  private val defaultLocation = "https://easy.dans.knaw.nl/schemas"
-  override val schema: String = defaultLocation + "/bag/metadata/prov/provenance.xsd"
+  override val schema: String = "https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd"
   private val ddmSchema = "http://easy.dans.knaw.nl/schemas/md/ddm/"
   private val amdSchema = "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/"
+
+  // FixedCurrentDateTimeSupport would not be effective for a val
+  private def provenanceBuilder = Provenance("EasyConvertBagToDepositApp", "1.0.5")
+
+  private def parseError(sample: String) = {
+    validate(XML.loadString(sample)).asInstanceOf[Failure[_]].exception.toString
+  }
 
   "DD-976-sample" should "reproduce the problems" in {
     val sample = File("src/test/resources/DD-976-provenance-validation/sample.xml").contentAsString
     val fixedDate = sample.replace("<changeDate>2014-01-01</changeDate>", "<changeDate>2014-01-01T13:13:20.776+02:00</changeDate>")
     val fixedBoth = fixedDate.replace("<prov:new>", """<prov:new xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/" xmlns:dcterms="http://purl.org/dc/terms/">""")
+    assume(schemaIsAvailable)
     parseError(sample) shouldBe
       "org.xml.sax.SAXParseException; lineNumber: 15; columnNumber: 56; cvc-datatype-valid.1.2.3: '2014-01-01' is not a valid value of union type 'dateTime-or-nothing'."
     parseError(fixedDate) shouldBe
@@ -45,33 +49,33 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     validate(XML.loadString(fixedBoth)) shouldBe a[Success[_]]
   }
 
-  private def parseError(sample: String) = {
-    validate(XML.loadString(sample)).asInstanceOf[Failure[_]].exception.toString
-  }
-
   "Provenance" should "show encoding changes" in {
     val ddmOut = XML.loadFile("src/test/resources/encoding/ddm-out.xml")
     val (ddmIn, oldChars, newChars) = loadXml(File("src/test/resources/encoding/ddm-in.xml"))
       .getOrElse(throw new IllegalArgumentException("could not load test data"))
-    val provenance = new Provenance("EasyConvertBagToDepositApp", "1.0.5")
-      .collectChangesInXmls(List(
+    val provenance = provenanceBuilder.collectChangesInXmls(List(
         Provenance.fixedDdmEncoding(oldChars, newChars),
         Provenance.compare((ddmIn \ "profile").head, (ddmOut \ "profile").head, ddmSchema),
         Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, ddmSchema),
       ))
-    // when loading XML, "<" in CDATA is interpreted into a plain string with "&lt;", so we have to re-parse the generated xml to compare
-    normalized(XML.loadString(Utility.serialize(provenance).toString())) shouldBe
-      normalized(XML.loadFile("src/test/resources/encoding/provenance.xml"))
+
+    Seq(ddmIn.scope) shouldNot be(empty)
+      (provenance \\ "old").map(_.scope).mkString("") shouldBe ddmIn.scope.toString()
+
+    // TODO comparing text avoids random order of attributes, but we loose the labels too
+    Utility.trim(provenance).text shouldBe
+      Utility.trim(XML.loadFile("src/test/resources/encoding/provenance.xml")).text
 
     assume(schemaIsAvailable)
-    val xmlString = File("src/test/resources/encoding/provenance.xml")
-      .contentAsString(Charset.forName("UTF-8"))
-//      .replaceAll(" " + defaultLocation, " " + actualLocation)
-    validate(XML.loadString(xmlString))
+    validate(provenance) // TODO also validates without fix the scope
   }
   "compare" should "show ddm diff" in {
     val ddmIn = {
-      <ddm>
+      <ddm:DDM xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xmlns:dc="http://purl.org/dc/elements/1.1/"
+               xmlns:dcx-gml="http://easy.dans.knaw.nl/schemas/dcx/gml/"
+               xsi:schemaLocation=" http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd">
         <ddm:profile>
           <dc:title>Rapport 123</dc:title>
         </ddm:profile>
@@ -85,7 +89,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
           <dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject>
           <dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
         </ddm:dcmiMetadata>
-      </ddm>
+      </ddm:DDM>
     }
 
     val ddmOut = {
@@ -130,20 +134,35 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       </ddm>
     }
 
-    Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, ddmSchema)
-      .map(normalized) shouldBe Some(normalized(
-      <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">
-        <prov:old>
-          <dc:title>Rapport 456</dc:title> <dcterms:temporal xsi:type="abr:ABRperiode">VMEA</dcterms:temporal> <dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject> <dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
-        </prov:old>
-        <prov:new>
-          <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f" subjectScheme="ABR Rapporten" reportNo="456">Rapport 456</ddm:reportNumber> <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/90f3092a-818e-4db2-8467-35b64262c5b3" subjectScheme="ABR Rapporten" reportNo="2859">Transect-rapport 2859</ddm:reportNumber> <ddm:temporal xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/330e7fe0-a1f7-43de-b448-d477898f6648" subjectScheme="ABR Perioden" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">Vroege Middeleeuwen A</ddm:temporal> <ddm:subject xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/6ae3ab19-49ca-44a7-8b65-3a3395014bb9" subjectScheme="ABR Complextypen" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">veenwinning (inclusief zouthoudend veen t.b.v. zoutproductie)</ddm:subject>
-          <ddm:subject xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/f182d72c-2d22-47ae-b799-26dea01e770c" subjectScheme="ABR Complextypen" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">akker / tuin</ddm:subject>
-          <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f" subjectScheme="ABR Rapporten" reportNo="123">Rapport 123</ddm:reportNumber>
-          <dct:rightsHolder>Unknown</dct:rightsHolder>
-        </prov:new>
-      </prov:file>
+    val expected = {
+      <prov:provenance xsi:schemaLocation="
+      http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
+        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
+      ">
+        <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
+          <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">
+            <prov:old>
+              <dc:title>Rapport 456</dc:title> <dcterms:temporal xsi:type="abr:ABRperiode">VMEA</dcterms:temporal> <dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject> <dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
+            </prov:old>
+            <prov:new>
+              <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f" subjectScheme="ABR Rapporten" reportNo="456">Rapport 456</ddm:reportNumber> <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/90f3092a-818e-4db2-8467-35b64262c5b3" subjectScheme="ABR Rapporten" reportNo="2859">Transect-rapport 2859</ddm:reportNumber> <ddm:temporal xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/330e7fe0-a1f7-43de-b448-d477898f6648" subjectScheme="ABR Perioden" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">Vroege Middeleeuwen A</ddm:temporal> <ddm:subject xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/6ae3ab19-49ca-44a7-8b65-3a3395014bb9" subjectScheme="ABR Complextypen" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">veenwinning (inclusief zouthoudend veen t.b.v. zoutproductie)</ddm:subject>
+              <ddm:subject xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/f182d72c-2d22-47ae-b799-26dea01e770c" subjectScheme="ABR Complextypen" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">akker / tuin</ddm:subject>
+              <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f" subjectScheme="ABR Rapporten" reportNo="123">Rapport 123</ddm:reportNumber>
+              <dct:rightsHolder>Unknown</dct:rightsHolder>
+            </prov:new>
+          </prov:file>
+        </prov:migration>
+      </prov:provenance>
+    }
+    val provenance = provenanceBuilder.collectChangesInXmls(List(
+      Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, ddmSchema)
     ))
+
+    // TODO comparing text avoids random order of attributes, but we loose the labels too
+    Utility.trim(provenance).text shouldBe Utility.trim(expected).text
+
+    assume(schemaIsAvailable)
+    validate(provenance) // TODO also validates without fix the scope
   }
   it should "show dropped zero point" in {
     val ddmIn = {
@@ -345,7 +364,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     amdOut.text should include("2016-31-12")
 
     // post condition 2: added date is reported in provenance
-    new Provenance("EasyConvertBagToDepositApp", "1.0.5").collectChangesInXmls(List(
+    provenanceBuilder.collectChangesInXmls(List(
       Provenance.compare(amdIn, amdOut, amdSchema),
     )).map(normalized) shouldBe List(normalized(
       <prov:provenance xsi:schemaLocation="

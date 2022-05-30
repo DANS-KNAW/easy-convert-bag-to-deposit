@@ -21,6 +21,7 @@ trait XmlSupport {
   private val nameSpaceRegExp = """ xmlns:[a-z-]+="[^"]*"""" // these attributes have a variable order
   val printer = new PrettyPrinter(160, 2) // Utility.serialize would preserve white space, now tests are better readable
 
+  // TODO trimming and dropping namespaces affect one another
   def normalized(elem: Node): String = printer
     .format(Utility.trim(elem)) // this trim normalizes <a/> and <a></a>
     .replaceAll(nameSpaceRegExp, "") // the random order would cause differences in actual and expected
