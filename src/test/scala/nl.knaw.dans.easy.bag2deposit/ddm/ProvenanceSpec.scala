@@ -166,7 +166,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
 
     assume(schemaIsAvailable)
     parseError(printer.format(actual)) shouldBe
-      "org.xml.sax.SAXParseException; lineNumber: 8; columnNumber: 262; The prefix \"dcterms\" for element \"dcterms:temporal\" is not bound."
+      """org.xml.sax.SAXParseException; lineNumber: 8; columnNumber: 262; The prefix "dcterms" for element "dcterms:temporal" is not bound."""
   }
   it should "show dropped zero point" in {
     val ddmIn = {
