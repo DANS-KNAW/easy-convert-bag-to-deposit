@@ -30,4 +30,13 @@ trait XmlSupport {
     .replaceAll("\n +<", "\n<")
     .replaceAll(" +>", ">")
     .trim
+
+  def closingTags(actual: Node): String = {
+    printer.format(actual).split("\n")
+      .filter(str => str.contains("</") || str.contains("/>"))
+      .map(_
+        .replaceAll(".*</([^<]*)", "<$1") // </xxx>
+        .replaceAll(".*(<[^<]*)/>", "$1>") // <xxx/>
+      ).mkString("\n")
+  }
 }

@@ -23,7 +23,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.util.{ Failure, Success }
-import scala.xml.{ Utility, XML }
+import scala.xml.{ Node, PrettyPrinter, Utility, XML }
 
 class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport {
   override val schema: String = "https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd"
@@ -59,15 +59,17 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
         Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, ddmSchema),
       ))
 
-    Seq(ddmIn.scope) shouldNot be(empty)
-      (provenance \\ "old").map(_.scope).mkString("") shouldBe ddmIn.scope.toString()
+    val actual = Utility.trim(provenance)
+    val expected = Utility.trim(XML.loadFile("src/test/resources/encoding/provenance.xml"))
+    actual.text shouldBe expected.text
+    closingTags(actual) shouldBe closingTags(expected)
 
-    // TODO comparing text avoids random order of attributes, but we loose the labels too
-    Utility.trim(provenance).text shouldBe
-      Utility.trim(XML.loadFile("src/test/resources/encoding/provenance.xml")).text
+    Seq(ddmIn.scope) shouldNot be(empty)
+    (provenance \\ "file").map(_.scope).mkString("") shouldBe ddmIn.scope.toString()
 
     assume(schemaIsAvailable)
-    validate(provenance) // TODO also validates without fix the scope
+    validate(provenance)
+    validate(XML.loadFile("src/test/resources/encoding/provenance.xml")) shouldBe a[Success[_]]
   }
   "compare" should "show ddm diff" in {
     val ddmIn = {
@@ -134,7 +136,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       </ddm>
     }
 
-    val expected = {
+    val expected = Utility.trim(
       <prov:provenance xsi:schemaLocation="
       http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
         http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
@@ -153,16 +155,18 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
           </prov:file>
         </prov:migration>
       </prov:provenance>
-    }
+    )
     val provenance = provenanceBuilder.collectChangesInXmls(List(
       Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, ddmSchema)
     ))
 
-    // TODO comparing text avoids random order of attributes, but we loose the labels too
-    Utility.trim(provenance).text shouldBe Utility.trim(expected).text
+    val actual = Utility.trim(provenance)
+    actual.text shouldBe expected.text
+    closingTags(actual) shouldBe closingTags(expected)
 
     assume(schemaIsAvailable)
-    validate(provenance) // TODO also validates without fix the scope
+    validate(provenance) // TODO also validates without the (incomplete) fix of the scope
+    logger.trace(printer.format(provenance))
   }
   it should "show dropped zero point" in {
     val ddmIn = {
@@ -367,10 +371,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     provenanceBuilder.collectChangesInXmls(List(
       Provenance.compare(amdIn, amdOut, amdSchema),
     )).map(normalized) shouldBe List(normalized(
-      <prov:provenance xsi:schemaLocation="
-              http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
-              http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
-              ">
+      <prov:provenance xsi:schemaLocation="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd">
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
           <prov:file scheme="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
             <prov:old>
