@@ -301,10 +301,10 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
 
     val transformer = new AmdTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
     val amdIn = XML.loadFile((testDir / "amd.xml").toJava)
-    val created = <ddm:created>2016-31-12</ddm:created>
+    val created = <ddm:created>2016-12-31</ddm:created>
     val amdOut = transformer.transform(amdIn, created).getOrElse(fail("could not transform"))
     amdOut.text shouldNot include("2017-05-02T13:01:26.752+02:00")
-    amdOut.text should include("2016-31-12")
+    amdOut.text should include("2016-12-31")
     val provenance = provenanceBuilder.collectChangesInXmls(List(
       Provenance.compare(amdIn, amdOut, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/")
     ))
@@ -325,7 +325,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
               <damd:stateChangeDate xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
                 <fromState>SUBMITTED</fromState>
                 <toState>PUBLISHED</toState>
-                <changeDate>2016-31-12</changeDate>
+                <changeDate>2016-12-31T00:00:00.000+01:00</changeDate>
               </damd:stateChangeDate>
             </prov:new>
           </prov:file>
@@ -372,12 +372,12 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
 
     val (amdIn, _, _) = loadXml(testDir / "amd.xml").getOrElse(fail("could not load AMD"))
     val amdOut = new AmdTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
-      .transform(amdIn, <ddm:created>2016-31-12</ddm:created>)
+      .transform(amdIn, <ddm:created>2016-12-31</ddm:created>)
       .getOrElse(fail("could not transform"))
 
     // post condition 1: date is added
     amdOut.text shouldNot include("<changeDate></changeDate>")
-    amdOut.text should include("2016-31-12")
+    amdOut.text should include("2016-12-31")
 
     // post condition 2: added date is reported in provenance
     provenanceBuilder.collectChangesInXmls(List(
@@ -399,7 +399,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
               <damd:stateChangeDate>
                 <fromState>SUBMITTED</fromState>
                 <toState>PUBLISHED</toState>
-                <changeDate>2016-31-12</changeDate>
+                <changeDate>2016-12-31T00:00:00.000+01:00</changeDate>
               </damd:stateChangeDate>
             </prov:new>
           </prov:file>
