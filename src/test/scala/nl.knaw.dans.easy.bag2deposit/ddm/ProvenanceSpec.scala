@@ -23,7 +23,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.util.{ Failure, Success }
-import scala.xml.{ Node, PrettyPrinter, Utility, XML }
+import scala.xml.{ Utility, XML }
 
 class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport {
   override val schema: String = "https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd"
@@ -71,7 +71,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     validate(provenance)
     validate(XML.loadFile("src/test/resources/encoding/provenance.xml")) shouldBe a[Success[_]]
   }
-  "compare" should "show ddm diff" in {
+  it should "show ddm diff" in {
     val ddmIn = {
       <ddm:DDM xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -165,8 +165,8 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     closingTags(actual) shouldBe closingTags(expected)
 
     assume(schemaIsAvailable)
-    validate(provenance) // TODO also validates without the (incomplete) fix of the scope
-    logger.trace(printer.format(provenance))
+    parseError(printer.format(actual)) shouldBe
+      "org.xml.sax.SAXParseException; lineNumber: 8; columnNumber: 262; The prefix \"dcterms\" for element \"dcterms:temporal\" is not bound."
   }
   it should "show dropped zero point" in {
     val ddmIn = {
@@ -305,12 +305,16 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     val amdOut = transformer.transform(amdIn, created).getOrElse(fail("could not transform"))
     amdOut.text shouldNot include("2017-05-02T13:01:26.752+02:00")
     amdOut.text should include("2016-31-12")
-    Provenance.compare(amdIn, amdOut, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/")
-      .map(normalized) shouldBe Some(normalized(
-          <prov:file scheme="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
+    val provenance = provenanceBuilder.collectChangesInXmls(List(
+      Provenance.compare(amdIn, amdOut, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/")
+    ))
+    val expected = Utility.trim(
+      <prov:provenance xsi:schemaLocation="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/">
+        <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
+          <prov:file scheme="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
             <prov:old>
-              <depositorId>user001</depositorId>
-              <damd:stateChangeDate>
+              <depositorId xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">user001</depositorId>
+              <damd:stateChangeDate xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
                 <fromState>SUBMITTED</fromState>
                 <toState>PUBLISHED</toState>
                 <changeDate>2017-05-02T13:01:26.752+02:00</changeDate>
@@ -318,14 +322,22 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
             </prov:old>
             <prov:new>
               <depositorId>USer</depositorId>
-              <damd:stateChangeDate>
+              <damd:stateChangeDate xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
                 <fromState>SUBMITTED</fromState>
                 <toState>PUBLISHED</toState>
                 <changeDate>2016-31-12</changeDate>
               </damd:stateChangeDate>
             </prov:new>
           </prov:file>
-    ))
+        </prov:migration>
+      </prov:provenance>
+    )
+    val actual = Utility.trim(provenance)
+    actual.text shouldBe expected.text
+    closingTags(actual) shouldBe closingTags(expected)
+
+    assume(schemaIsAvailable)
+    parseError(printer.format(provenance)) shouldBe """org.xml.sax.SAXParseException; lineNumber: 5; columnNumber: 98; cvc-complex-type.2.4.a: Invalid content was found starting with element 'depositorId'. One of '{"http://purl.org/dc/elements/1.1/":any, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/":depositorId, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/":stateChangeDate, "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/":encoding}' is expected."""
   }
 
   it should "show replaced empty date in amd" in {
