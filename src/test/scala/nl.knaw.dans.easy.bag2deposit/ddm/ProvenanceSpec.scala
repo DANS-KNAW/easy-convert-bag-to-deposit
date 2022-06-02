@@ -32,6 +32,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
   private val schemaLocation = s"http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ $schema"
   private val ddmSchema = "http://easy.dans.knaw.nl/schemas/md/ddm/"
   private val amdSchema = "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/"
+  private val transformer = new DdmTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
 
   // FixedCurrentDateTimeSupport is not effective for a val
   private def provenanceBuilder = Provenance("EasyConvertBagToDepositApp", "1.0.5", schemaRoot)
@@ -79,7 +80,9 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       <ddm:DDM xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                xmlns:dc="http://purl.org/dc/elements/1.1/"
+               xmlns:dcterms="http://purl.org/dc/terms/"
                xmlns:dcx-gml="http://easy.dans.knaw.nl/schemas/dcx/gml/"
+               xmlns:abr="http://www.den.nl/standaard/166/Archeologisch-Basisregister/"
                xsi:schemaLocation=" http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd">
         <ddm:profile>
           <dc:title>Rapport 123</dc:title>
@@ -134,7 +137,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
           valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f"
           subjectScheme="ABR Rapporten"
           reportNo="123">Rapport 123</ddm:reportNumber>
-          <dct:rightsHolder>Unknown</dct:rightsHolder>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
       </ddm>
     }
@@ -156,7 +159,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
               <ddm:subject xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/6ae3ab19-49ca-44a7-8b65-3a3395014bb9" subjectScheme="ABR Complextypen" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">veenwinning (inclusief zouthoudend veen t.b.v. zoutproductie)</ddm:subject>
               <ddm:subject xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/f182d72c-2d22-47ae-b799-26dea01e770c" subjectScheme="ABR Complextypen" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">akker / tuin</ddm:subject>
               <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f" subjectScheme="ABR Rapporten" reportNo="123">Rapport 123</ddm:reportNumber>
-              <dct:rightsHolder>Unknown</dct:rightsHolder>
+              <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
             </prov:new>
           </prov:file>
         </prov:migration>
@@ -171,8 +174,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     closingTags(actual) shouldBe closingTags(expected)
 
     assume(schemaIsAvailable)
-    parseError(printer.format(actual)) shouldBe
-      """org.xml.sax.SAXParseException; lineNumber: 8; columnNumber: 262; The prefix "dcterms" for element "dcterms:temporal" is not bound."""
+    validate(actual) shouldBe a[Success[_]]
   }
   it should "show dropped zero point" in {
     val ddmIn = {
@@ -253,15 +255,15 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     closingTags(actual) shouldBe closingTags(expected)
 
     assume(schemaIsAvailable)
-    parseError(printer.format(actual)) shouldBe
-      """org.xml.sax.SAXParseException; lineNumber: 6; columnNumber: 22; The prefix "gml" for element "gml:Point" is not bound."""
+    validate(provenance) shouldBe a[Success[_]]
+    // TODO  The prefix "gml" for element "gml:Point" is not bound
+    //  point as in test/resources/DD-858/dataset.xml what is the problem?
   }
   it should "keep valid spatial elements" in { // TODO this test has nothing to do with provenance
     val (ddmIn, _, _) = loadXml(File("src/test/resources/DD-858/dataset.xml"))
       .getOrElse(fail("could not load test data"))
 
     // a few steps of EasyConvertBagToDepositApp.addProps
-    val transformer = new DdmTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
     val ddmOut = transformer.transform(ddmIn, "easy-dataset:123")
       .getOrElse(fail("no DDM returned"))
 
@@ -285,11 +287,15 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       (ddmOut \ "dcmiMetadata").head,
       ddmSchema
     )))
-    dropAttrs(normalized((provenance \\ "file").head)) shouldBe dropAttrs(normalized(expected))
-  }
 
-  private def dropAttrs(s: String) = {
-    s.replaceAll("<prov:migration[^>]*", "<prov:migration") // get rid of random order attributes
+    normalized((provenance \\ "file").head) shouldBe normalized(expected)
+
+    val actual = Utility.trim(provenance)
+    actual.text shouldBe expected.text
+    closingTags(actual) shouldBe closingTags(<prov:provenance><prov:migration>{ expected }</prov:migration></prov:provenance>)
+
+    assume(schemaIsAvailable)
+    validate(actual) shouldBe a[Success[_]]
   }
 
   it should "show amd diff" in {
@@ -360,7 +366,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     closingTags(actual) shouldBe closingTags(expected)
 
     assume(schemaIsAvailable)
-    parseError(printer.format(provenance)) shouldBe s"""org.xml.sax.SAXParseException; lineNumber: 5; columnNumber: 98; cvc-complex-type.2.4.a: Invalid content was found starting with element 'depositorId'. One of '{"http://purl.org/dc/elements/1.1/":any, "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/":depositorId, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/":stateChangeDate, "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/":encoding}' is expected."""
+    validate(provenance) shouldBe a[Success[_]] // TODO One of "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/":depositorId,
   }
 
   it should "show replaced empty date in amd" in {
@@ -437,7 +443,6 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     closingTags(actual) shouldBe closingTags(expected)
 
     assume(schemaIsAvailable)
-    parseError(printer.format(provenance)) shouldBe
-      s"""org.xml.sax.SAXParseException; lineNumber: 5; columnNumber: 94; cvc-complex-type.2.4.a: Invalid content was found starting with element 'depositorId'. One of '{"http://purl.org/dc/elements/1.1/":any, "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/":depositorId, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/":stateChangeDate, "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/":encoding}' is expected."""
+    validate(provenance) shouldBe a[Success[_]] // TODO One of "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/":depositorId,
   }
 }
