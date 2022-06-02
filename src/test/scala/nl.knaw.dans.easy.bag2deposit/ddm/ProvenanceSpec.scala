@@ -366,7 +366,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     closingTags(actual) shouldBe closingTags(expected)
 
     assume(schemaIsAvailable)
-    validate(provenance) shouldBe a[Success[_]] // TODO One of "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/":depositorId,
+    validate(provenance) shouldBe a[Success[_]]
   }
 
   it should "show replaced empty date in amd" in {
@@ -443,6 +443,6 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     closingTags(actual) shouldBe closingTags(expected)
 
     assume(schemaIsAvailable)
-    validate(provenance) shouldBe a[Success[_]] // TODO One of "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/":depositorId,
+    validate(provenance) shouldBe a[Success[_]]
   }
 }
