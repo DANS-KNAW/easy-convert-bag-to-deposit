@@ -26,12 +26,15 @@ import scala.util.{ Failure, Success }
 import scala.xml.{ Utility, XML }
 
 class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport {
-  override val schema: String = "https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd"
+  // use the raw github location while upgraded schema is not yet published, from your own fork if not even merged
+  private val schemaRoot = /*"https://easy.dans.knaw.nl/schemas"*/ "https://raw.githubusercontent.com/DANS-KNAW-jp/easy-schema/DD-976-provenance-validation/lib/src/main/resources"
+  override val schema: String = schemaRoot + "/bag/metadata/prov/provenance.xsd"
+  private val schemaLocation = s"http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ $schema"
   private val ddmSchema = "http://easy.dans.knaw.nl/schemas/md/ddm/"
   private val amdSchema = "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/"
 
-  // FixedCurrentDateTimeSupport would not be effective for a val
-  private def provenanceBuilder = Provenance("EasyConvertBagToDepositApp", "1.0.5")
+  // FixedCurrentDateTimeSupport is not effective for a val
+  private def provenanceBuilder = Provenance("EasyConvertBagToDepositApp", "1.0.5", schemaRoot)
 
   private def parseError(sample: String) = {
     validate(XML.loadString(sample)).asInstanceOf[Failure[_]].exception.toString
@@ -137,17 +140,20 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     }
 
     val expected = Utility.trim(
-      <prov:provenance xsi:schemaLocation="
-      http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
-        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
-      ">
+      <prov:provenance xsi:schemaLocation={ schemaLocation }>
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
           <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">
             <prov:old>
-              <dc:title>Rapport 456</dc:title> <dcterms:temporal xsi:type="abr:ABRperiode">VMEA</dcterms:temporal> <dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject> <dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
+              <dc:title>Rapport 456</dc:title>
+              <dcterms:temporal xsi:type="abr:ABRperiode">VMEA</dcterms:temporal>
+              <dc:subject xsi:type="abr:ABRcomplex">EGVW</dc:subject>
+              <dcterms:subject xsi:type="abr:ABRcomplex">ELA</dcterms:subject>
             </prov:old>
             <prov:new>
-              <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f" subjectScheme="ABR Rapporten" reportNo="456">Rapport 456</ddm:reportNumber> <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/90f3092a-818e-4db2-8467-35b64262c5b3" subjectScheme="ABR Rapporten" reportNo="2859">Transect-rapport 2859</ddm:reportNumber> <ddm:temporal xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/330e7fe0-a1f7-43de-b448-d477898f6648" subjectScheme="ABR Perioden" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">Vroege Middeleeuwen A</ddm:temporal> <ddm:subject xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/6ae3ab19-49ca-44a7-8b65-3a3395014bb9" subjectScheme="ABR Complextypen" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">veenwinning (inclusief zouthoudend veen t.b.v. zoutproductie)</ddm:subject>
+              <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f" subjectScheme="ABR Rapporten" reportNo="456">Rapport 456</ddm:reportNumber>
+              <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/90f3092a-818e-4db2-8467-35b64262c5b3" subjectScheme="ABR Rapporten" reportNo="2859">Transect-rapport 2859</ddm:reportNumber>
+              <ddm:temporal xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/330e7fe0-a1f7-43de-b448-d477898f6648" subjectScheme="ABR Perioden" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">Vroege Middeleeuwen A</ddm:temporal>
+              <ddm:subject xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/6ae3ab19-49ca-44a7-8b65-3a3395014bb9" subjectScheme="ABR Complextypen" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">veenwinning (inclusief zouthoudend veen t.b.v. zoutproductie)</ddm:subject>
               <ddm:subject xml:lang="nl" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/f182d72c-2d22-47ae-b799-26dea01e770c" subjectScheme="ABR Complextypen" schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/b6df7840-67bf-48bd-aa56-7ee39435d2ed">akker / tuin</ddm:subject>
               <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e" valueURI="https://data.cultureelerfgoed.nl/term/id/abr/fcff6035-9e90-450f-8b39-cf33447e6e9f" subjectScheme="ABR Rapporten" reportNo="123">Rapport 123</ddm:reportNumber>
               <dct:rightsHolder>Unknown</dct:rightsHolder>
@@ -170,7 +176,11 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
   }
   it should "show dropped zero point" in {
     val ddmIn = {
-      <ddm>
+      <ddm:DDM xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xmlns:dc="http://purl.org/dc/elements/1.1/"
+               xmlns:dcx-gml="http://easy.dans.knaw.nl/schemas/dcx/gml/"
+               xsi:schemaLocation=" http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd">
         <ddm:profile>
           <dc:title>blabla</dc:title>
         </ddm:profile>
@@ -193,7 +203,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
             </Point>
           </dcx-gml:spatial>
         </ddm:dcmiMetadata>
-      </ddm>
+      </ddm:DDM>
     }
 
     val ddmOut = {
@@ -218,8 +228,12 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       </ddm>
     }
 
-    Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, ddmSchema)
-      .map(normalized) shouldBe Some(normalized(
+    val provenance = provenanceBuilder.collectChangesInXmls(List(
+      Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, ddmSchema)
+    ))
+    val expected = Utility.trim(
+      <prov:provenance xsi:schemaLocation={ schemaLocation }>
+        <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
           <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">
             <prov:old>
               <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/28992">
@@ -231,9 +245,18 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
             <prov:new>
             </prov:new>
           </prov:file>
-    ))
+        </prov:migration>
+      </prov:provenance>
+    )
+    val actual = Utility.trim(provenance)
+    actual.text shouldBe expected.text
+    closingTags(actual) shouldBe closingTags(expected)
+
+    assume(schemaIsAvailable)
+    parseError(printer.format(actual)) shouldBe
+      """org.xml.sax.SAXParseException; lineNumber: 6; columnNumber: 22; The prefix "gml" for element "gml:Point" is not bound."""
   }
-  it should "keep valid spatial elements" in {
+  it should "keep valid spatial elements" in { // TODO this test has nothing to do with provenance
     val (ddmIn, _, _) = loadXml(File("src/test/resources/DD-858/dataset.xml"))
       .getOrElse(fail("could not load test data"))
 
@@ -255,18 +278,18 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     // compare the DDM files manually for finer details than in the provenance
     val ddmIn = XML.loadFile("src/test/resources/funder/ddm-in.xml")
     val ddmOut = XML.loadFile("src/test/resources/funder/ddm-out.xml")
-    val expected = XML.loadFile("src/test/resources/funder/provenance.xml")
+    val expected = Utility.trim(XML.loadFile("src/test/resources/funder/provenance.xml"))
 
-    Provenance.compare(
+    val provenance = provenanceBuilder.collectChangesInXmls(List(Provenance.compare(
       (ddmIn \ "dcmiMetadata").head,
       (ddmOut \ "dcmiMetadata").head,
       ddmSchema
-    ).map(normalized).map(dropAttrs) shouldBe Some(normalized(expected)).map(dropAttrs)
+    )))
+    dropAttrs(normalized((provenance \\ "file").head)) shouldBe dropAttrs(normalized(expected))
   }
 
   private def dropAttrs(s: String) = {
     s.replaceAll("<prov:migration[^>]*", "<prov:migration") // get rid of random order attributes
-      .replaceAll("(?m)<prov:provenance[^>]*>", "") // get rid of random order in xsi:schemaLocation=
   }
 
   it should "show amd diff" in {
@@ -309,7 +332,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       Provenance.compare(amdIn, amdOut, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/")
     ))
     val expected = Utility.trim(
-      <prov:provenance xsi:schemaLocation="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/">
+      <prov:provenance xsi:schemaLocation={ schemaLocation } xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/">
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
           <prov:file scheme="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
             <prov:old>
@@ -337,14 +360,14 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     closingTags(actual) shouldBe closingTags(expected)
 
     assume(schemaIsAvailable)
-    parseError(printer.format(provenance)) shouldBe """org.xml.sax.SAXParseException; lineNumber: 5; columnNumber: 98; cvc-complex-type.2.4.a: Invalid content was found starting with element 'depositorId'. One of '{"http://purl.org/dc/elements/1.1/":any, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/":depositorId, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/":stateChangeDate, "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/":encoding}' is expected."""
+    parseError(printer.format(provenance)) shouldBe s"""org.xml.sax.SAXParseException; lineNumber: 5; columnNumber: 98; cvc-complex-type.2.4.a: Invalid content was found starting with element 'depositorId'. One of '{"http://purl.org/dc/elements/1.1/":any, "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/":depositorId, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/":stateChangeDate, "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/":encoding}' is expected."""
   }
 
   it should "show replaced empty date in amd" in {
     (testDir / "amd.xml").writeText(
       """<?xml version="1.0" encoding="UTF-8"?>""" +
         Utility.serialize(
-          <damd:administrative-md xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" version="0.1">
+          <damd:administrative-md xmlns:damd="schemas/bag/metadata/prov/dataset-administrative-metadata/" version="0.1">
             <datasetState>PUBLISHED</datasetState>
             <previousState>DRAFT</previousState>
             <lastStateChange>2020-02-02T20:02:00.000+01:00</lastStateChange>
@@ -378,12 +401,8 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     // post condition 1: date is added
     amdOut.text shouldNot include("<changeDate></changeDate>")
     amdOut.text should include("2016-12-31")
-
-    // post condition 2: added date is reported in provenance
-    provenanceBuilder.collectChangesInXmls(List(
-      Provenance.compare(amdIn, amdOut, amdSchema),
-    )).map(normalized) shouldBe List(normalized(
-      <prov:provenance xsi:schemaLocation="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd">
+    val expected = Utility.trim{
+      <prov:provenance xsi:schemaLocation={ schemaLocation }>
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
           <prov:file scheme="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
             <prov:old>
@@ -405,6 +424,20 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
           </prov:file>
         </prov:migration>
       </prov:provenance>
+    }
+
+    // post condition 2: added date is reported in provenance
+    val provenance = provenanceBuilder.collectChangesInXmls(List(
+      Provenance.compare(amdIn, amdOut, amdSchema),
     ))
+
+    normalized(provenance) shouldBe normalized(expected)
+    val actual = Utility.trim(provenance)
+    actual.text shouldBe expected.text
+    closingTags(actual) shouldBe closingTags(expected)
+
+    assume(schemaIsAvailable)
+    parseError(printer.format(provenance)) shouldBe
+      s"""org.xml.sax.SAXParseException; lineNumber: 5; columnNumber: 94; cvc-complex-type.2.4.a: Invalid content was found starting with element 'depositorId'. One of '{"http://purl.org/dc/elements/1.1/":any, "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/":depositorId, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/":stateChangeDate, "http://easy.dans.knaw.nl/schemas/bag/metadata/prov/":encoding}' is expected."""
   }
 }
