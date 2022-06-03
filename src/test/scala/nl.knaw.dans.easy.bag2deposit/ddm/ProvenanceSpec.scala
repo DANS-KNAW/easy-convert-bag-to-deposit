@@ -26,7 +26,7 @@ import scala.util.{ Failure, Success }
 import scala.xml.{ Utility, XML }
 
 class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport {
-  // use the raw github location while upgraded schema is not yet published, from your own fork if not even merged
+  // use the raw github location while upgraded schema is not yet published, your own fork if not yet merged, if not yet pushed ~/git/service/easy/easy-schema
   private val schemaRoot = /*"https://easy.dans.knaw.nl/schemas"*/ "https://raw.githubusercontent.com/DANS-KNAW-jp/easy-schema/DD-976-provenance-validation/lib/src/main/resources"
   override val schema: String = schemaRoot + "/bag/metadata/prov/provenance.xsd"
   private val schemaLocation = s"http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ $schema"
@@ -365,6 +365,9 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     actual.text shouldBe expected.text
     closingTags(actual) shouldBe closingTags(expected)
 
+    (provenance \\ "file").head.scope.toString() shouldBe """ xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/""""
+    logger.trace(Utility.serialize(x = provenance, preserveWhitespace = true).toString())
+
     assume(schemaIsAvailable)
     validate(provenance) shouldBe a[Success[_]]
   }
@@ -373,7 +376,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     (testDir / "amd.xml").writeText(
       """<?xml version="1.0" encoding="UTF-8"?>""" +
         Utility.serialize(
-          <damd:administrative-md xmlns:damd="schemas/bag/metadata/prov/dataset-administrative-metadata/" version="0.1">
+          <damd:administrative-md xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/" version="0.1">
             <datasetState>PUBLISHED</datasetState>
             <previousState>DRAFT</previousState>
             <lastStateChange>2020-02-02T20:02:00.000+01:00</lastStateChange>
@@ -408,7 +411,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     amdOut.text shouldNot include("<changeDate></changeDate>")
     amdOut.text should include("2016-12-31")
     val expected = Utility.trim{
-      <prov:provenance xsi:schemaLocation={ schemaLocation }>
+      <prov:provenance xsi:schemaLocation={ schemaLocation } xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/">
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
           <prov:file scheme="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">
             <prov:old>
@@ -441,6 +444,9 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     val actual = Utility.trim(provenance)
     actual.text shouldBe expected.text
     closingTags(actual) shouldBe closingTags(expected)
+
+    (provenance \\ "file").head.scope.toString() shouldBe """ xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/""""
+    logger.trace(Utility.serialize(x = provenance, preserveWhitespace = true).toString())
 
     assume(schemaIsAvailable)
     validate(provenance) shouldBe a[Success[_]]
