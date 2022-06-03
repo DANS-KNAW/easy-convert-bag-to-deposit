@@ -49,7 +49,7 @@
                 <dcx-dai:insertions>van</dcx-dai:insertions>
                 <dcx-dai:surname>Loon</dcx-dai:surname>
                 <dcx-dai:ORCID>https://orcid.org/0000-0002-8895-0427</dcx-dai:ORCID>
-                <dcx-dai:role>WorkPackageLeader</dcx-dai:role>
+                <dcx-dai:role>Funder</dcx-dai:role>
                 <dcx-dai:organization>
                     <dcx-dai:name>Universiteit van Amsterdam</dcx-dai:name>
                 </dcx-dai:organization>
@@ -62,13 +62,13 @@
                 <dcx-dai:insertions>de</dcx-dai:insertions>
                 <dcx-dai:surname>Groeve</dcx-dai:surname>
                 <dcx-dai:ORCID>https://orcid.org/0000-0002-1274-3237</dcx-dai:ORCID>
-                <dcx-dai:role>ProjectManager</dcx-dai:role>
+                <dcx-dai:role>Funder</dcx-dai:role>
             </dcx-dai:author>
         </dcx-dai:contributorDetails>
         <dcx-dai:contributorDetails>
             <dcx-dai:organization>
                 <dcx-dai:name>Data Archiving and Networked Services - DANS</dcx-dai:name>
-                <dcx-dai:role>RegistrationAgency</dcx-dai:role>
+                <dcx-dai:role>Funder</dcx-dai:role>
             </dcx-dai:organization>
         </dcx-dai:contributorDetails>
         <dct:rightsHolder>Some Body</dct:rightsHolder>

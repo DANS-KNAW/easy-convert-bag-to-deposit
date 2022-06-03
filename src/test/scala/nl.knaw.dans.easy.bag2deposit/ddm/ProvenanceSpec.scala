@@ -294,7 +294,9 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     closingTags(actual) shouldBe closingTags(<prov:provenance><prov:migration>{ expected }</prov:migration></prov:provenance>)
 
     assume(schemaIsAvailable)
-    validate(actual) shouldBe a[Success[_]]
+    // see PR #78 issue DD-806 claims it are only one or two datasets
+    parseError(Utility.serialize(actual).toString()) shouldBe
+      """org.xml.sax.SAXParseException; lineNumber: 1; columnNumber: 1453; cvc-enumeration-valid: Value 'Funder' is not facet-valid with respect to enumeration '[ContactPerson, DataCollector, DataCurator, DataManager, Distributor, Editor, HostingInstitution, Other, Producer, ProjectLeader, ProjectManager, ProjectMember, RegistrationAgency, RegistrationAuthority, RelatedPerson, ResearchGroup, RightsHolder, Researcher, Sponsor, Supervisor, WorkPackageLeader]'. It must be a value from the enumeration."""
   }
 
   it should "show amd diff" in {
