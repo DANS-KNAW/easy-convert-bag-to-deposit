@@ -188,9 +188,9 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
         </ddm:profile>
         <ddm:dcmiMetadata>
           <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/28992">
-            <gml:Point>
-              <gml:pos>0 0</gml:pos>
-            </gml:Point>
+            <Point xmlns="http://www.opengis.net/gml">
+              <pos>0 0</pos>
+            </Point>
           </dcx-gml:spatial>
           <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
             <Point xmlns="http://www.opengis.net/gml">
@@ -234,14 +234,14 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, ddmSchema)
     ))
     val expected = Utility.trim(
-      <prov:provenance xsi:schemaLocation={ schemaLocation }>
+      <prov:provenance xsi:schemaLocation={ schemaLocation } xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/">
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
           <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">
-            <prov:old>
-              <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/28992">
-                <gml:Point>
-                  <gml:pos>0 0</gml:pos>
-                </gml:Point>
+            <prov:old xmlns:dcx-gml="http://easy.dans.knaw.nl/schemas/dcx/gml/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
+              <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/28992" xmlns:dcx-gml="http://easy.dans.knaw.nl/schemas/dcx/gml/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
+                <Point>
+                  <pos>0 0</pos>
+                </Point>
               </dcx-gml:spatial>
             </prov:old>
             <prov:new>
@@ -253,13 +253,12 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     val actual = Utility.trim(provenance)
     actual.text shouldBe expected.text
     closingTags(actual) shouldBe closingTags(expected)
+    logger.trace(Utility.serialize(provenance, preserveWhitespace = true).toString())
 
     assume(schemaIsAvailable)
     validate(provenance) shouldBe a[Success[_]]
-    // TODO  The prefix "gml" for element "gml:Point" is not bound
-    //  point as in test/resources/DD-858/dataset.xml what is the problem?
   }
-  it should "keep valid spatial elements" in { // TODO this test has nothing to do with provenance
+  it should "keep valid spatial elements" in {
     val (ddmIn, _, _) = loadXml(File("src/test/resources/DD-858/dataset.xml"))
       .getOrElse(fail("could not load test data"))
 
