@@ -26,8 +26,8 @@ import scala.util.{ Failure, Success }
 import scala.xml.{ Utility, XML }
 
 class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport {
-  // use the raw github location while upgraded schema is not yet published, your own fork if not yet merged, if not yet pushed ~/git/service/easy/easy-schema
-  private val schemaRoot = /*"https://easy.dans.knaw.nl/schemas"*/ "https://raw.githubusercontent.com/DANS-KNAW-jp/easy-schema/DD-976-provenance-validation/lib/src/main/resources"
+  // use the raw github location while upgraded schema is not yet published, your own fork if not yet merged.
+  private val schemaRoot = "https://easy.dans.knaw.nl/schemas"
   override val schema: String = schemaRoot + "/bag/metadata/prov/provenance.xsd"
   private val schemaLocation = s"http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ $schema"
   private val ddmSchema = "http://easy.dans.knaw.nl/schemas/md/ddm/"
@@ -296,7 +296,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     assume(schemaIsAvailable)
     // see PR #78 issue DD-806 claims it are only one or two datasets
     parseError(Utility.serialize(actual).toString()) shouldBe
-      """org.xml.sax.SAXParseException; lineNumber: 1; columnNumber: 1453; cvc-enumeration-valid: Value 'Funder' is not facet-valid with respect to enumeration '[ContactPerson, DataCollector, DataCurator, DataManager, Distributor, Editor, HostingInstitution, Other, Producer, ProjectLeader, ProjectManager, ProjectMember, RegistrationAgency, RegistrationAuthority, RelatedPerson, ResearchGroup, RightsHolder, Researcher, Sponsor, Supervisor, WorkPackageLeader]'. It must be a value from the enumeration."""
+      """org.xml.sax.SAXParseException; lineNumber: 1; columnNumber: 1376; cvc-enumeration-valid: Value 'Funder' is not facet-valid with respect to enumeration '[ContactPerson, DataCollector, DataCurator, DataManager, Distributor, Editor, HostingInstitution, Other, Producer, ProjectLeader, ProjectManager, ProjectMember, RegistrationAgency, RegistrationAuthority, RelatedPerson, ResearchGroup, RightsHolder, Researcher, Sponsor, Supervisor, WorkPackageLeader]'. It must be a value from the enumeration."""
   }
 
   it should "show amd diff" in {
