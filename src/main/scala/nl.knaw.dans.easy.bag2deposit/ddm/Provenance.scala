@@ -15,21 +15,21 @@
  */
 package nl.knaw.dans.easy.bag2deposit.ddm
 
-import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.schemaLocations
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.joda.time.DateTime.now
 import org.joda.time.format.DateTimeFormat
 
-import scala.xml.{Elem, Node, PCData, Utility}
+import scala.xml.{ Elem, Node, PCData, Utility }
 
-class Provenance(app: String, version: String) extends DebugEnhancedLogging {
+case class Provenance(app: String, version: String, schemaRoot: String = "https://easy.dans.knaw.nl/schemas") extends DebugEnhancedLogging {
+  private val schemaLocation = s"http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ $schemaRoot/bag/metadata/prov/provenance.xsd"
   private val dateFormat = now().toString(DateTimeFormat.forPattern("yyyy-MM-dd"))
 
   def collectChangesInXmls(maybeChanges: Seq[Option[Elem]]): Elem = {
     trace(this.getClass)
     <prov:provenance xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/"
                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                     xsi:schemaLocation={ schemaLocations }>
+                     xsi:schemaLocation={  schemaLocation }>
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
         { maybeChanges.filter(_.nonEmpty).flatMap(_.toSeq) }
         </prov:migration>
@@ -37,11 +37,6 @@ class Provenance(app: String, version: String) extends DebugEnhancedLogging {
   }
 }
 object Provenance extends DebugEnhancedLogging {
-  val schemaLocations: String =
-    s"""
-       |        http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd
-       |        http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd
-       |        """.stripMargin
   /**
    * Creates the content for a <prov:migration> by comparing the direct child elements of each XML.
    * @param oldXml the original instance
@@ -68,7 +63,7 @@ object Provenance extends DebugEnhancedLogging {
       <prov:file scheme={ scheme }>
         <prov:old>{ onlyInOld }</prov:old>
         <prov:new>{ onlyInNew }</prov:new>
-      </prov:file>
+      </prov:file>.copy(scope = oldXml.scope) // TODO in case of ddm perhaps also dc[t[erms]] and dcx-gml?
     )
   }
 

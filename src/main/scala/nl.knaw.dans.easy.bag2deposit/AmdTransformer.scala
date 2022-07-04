@@ -17,11 +17,13 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import org.apache.commons.csv.CSVFormat.RFC4180
+import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
 
 import java.nio.charset.Charset
-import scala.util.{Failure, Success, Try}
-import scala.xml.transform.{RewriteRule, RuleTransformer}
-import scala.xml.{Elem, Node, NodeSeq, Text}
+import scala.util.{ Failure, Success, Try }
+import scala.xml.transform.{ RewriteRule, RuleTransformer }
+import scala.xml.{ Elem, Node, NodeSeq, Text }
 
 class AmdTransformer(cfgDir: File) {
   private val csvFile: File = cfgDir / "account-substitutes.csv"
@@ -59,6 +61,8 @@ class AmdTransformer(cfgDir: File) {
     if (ddmCreated.isEmpty)
       return Failure(InvalidBagException("no date created found in DDM"))
     val yearCreated = yearOf(ddmCreated.text)
+    val dateTimeCreated =new DateTime(ddmCreated.text)
+      .toString(ISODateTimeFormat.dateTime())
     val changedToPublished = (xmlIn \\ "stateChangeDate")
       .filter(n => (n \ "toState").text.trim == "PUBLISHED")
     val oldestPublished = if (changedToPublished.isEmpty) NodeSeq.Empty
@@ -70,7 +74,7 @@ class AmdTransformer(cfgDir: File) {
       else
         new RuleTransformer(
           userRewriteRule,
-          citationDateRewriteRule(ddmCreated.text, oldestDate),
+          citationDateRewriteRule(dateTimeCreated, oldestDate),
         )
     transformer
       .transform(xmlIn).headOption.map(Success(_))
