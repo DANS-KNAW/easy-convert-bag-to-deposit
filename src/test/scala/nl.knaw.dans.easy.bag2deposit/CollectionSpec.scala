@@ -72,14 +72,14 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     csvFile.contentAsString shouldBe expectedCsv
   }
 
-  it should "return members from xhtml" ignore {
+  it should "return members from xhtml" in {
     val originalCsv =
       """naam,EASY-dataset-id,type,opmerkingen,members
         |"Odyssee onderzoeksprojecten",easy-dataset:34359,organisatie
         |""".stripMargin
     val expectedCsv = // note that the quotes on the first field disappear
       """name,EASY-dataset-id,type,comment,members
-        |Odyssee onderzoeksprojecten,easy-dataset:34359,organisatie,,"easy-dataset:62503,easy-dataset:62773,easy-dataset:31688,easy-dataset:34099,easy-dataset:47464,easy-dataset:55947,easy-dataset:57517,easy-dataset:54529,easy-dataset:48388,easy-dataset:54459,easy-dataset:50635,easy-dataset:46315,easy-dataset:41884,easy-dataset:62505,easy-dataset:61129,easy-dataset:50636,easy-dataset:50610,easy-dataset:57281,easy-dataset:50715,easy-dataset:60949,easy-dataset:55302,easy-dataset:50711,easy-dataset:68647,easy-dataset:57698"
+        |Odyssee onderzoeksprojecten,easy-dataset:34359,organisatie,,"dans-xt6-nvu8,dans-zr8-q94c,easy-dataset:31688,easy-dataset:34099,easy-dataset:47464,easy-dataset:55947,easy-dataset:57517,easy-dataset:54529,easy-dataset:48388,easy-dataset:54459,easy-dataset:50635,easy-dataset:46315,easy-dataset:41884,easy-dataset:62505,easy-dataset:61129,easy-dataset:50636,easy-dataset:50610,easy-dataset:57281,easy-dataset:50715,easy-dataset:60949,easy-dataset:55302,easy-dataset:50711,dans-2bv-ksfg,dans-xm8-n2c2"
         |""".stripMargin
     val mockedProvider: FedoraProvider = mock[FedoraProvider]
     expectJumpoffTxt("easy-dataset:34359", jumpoffMocks / "3931-for-dataset-34359.html", mockedProvider)
