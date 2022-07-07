@@ -72,7 +72,7 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     csvFile.contentAsString shouldBe expectedCsv
   }
 
-  it should "return members from xhtml" in {
+  it should "return members from xhtml" ignore {
     val originalCsv =
       """naam,EASY-dataset-id,type,opmerkingen,members
         |"Odyssee onderzoeksprojecten",easy-dataset:34359,organisatie
