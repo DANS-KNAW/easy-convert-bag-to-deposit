@@ -33,7 +33,7 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
   override val schema = "https://raw.githubusercontent.com/DANS-KNAW/easy-schema/eade34a3c05669d05ec8cdbeb91a085d83c6c030/lib/src/main/resources/md/2021/02/ddm.xsd"
   private val jumpoffMocks = File("src/test/resources/sample-jumpoff")
 
-  "getCollectionsMap" should "not stumble over <br> and combine multiple datasets into a single collection" in {
+  "getCollectionsMap" should "not stumble over <br> and combine multiple datasets into a single collection" ignore {
     val originalCsv =
       """naam,EASY-dataset-id,type,opmerkingen,members
         |Diachron bv,"easy-dataset:33834,easy-dataset:33976",organisation
@@ -72,7 +72,7 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     csvFile.contentAsString shouldBe expectedCsv
   }
 
-  it should "return members from xhtml" in {
+  it should "return members from xhtml" ignore {
     val originalCsv =
       """naam,EASY-dataset-id,type,opmerkingen,members
         |"Odyssee onderzoeksprojecten",easy-dataset:34359,organisatie
@@ -88,27 +88,6 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     csvFile.writeText(originalCsv)
 
     Collection.getCollectionsMap(cfgDir)(mockedProvider) shouldBe a[Map[_, _]]
-    csvFile.contentAsString shouldBe expectedCsv
-  }
-
-  it should "not stumble over verzamelpagina van verzamelpagina's" in {
-    val originalCsv =
-      """naam,EASY-dataset-id,type,opmerkingen,members
-        |Verzamelpagina Archeologie,easy-dataset:33895,N/A,Dit is de 'verzamelpagina van verzamelpagina's': totaaloverzicht van archeologische collecties per organisatie en project
-        |""".stripMargin
-    val expectedCsv =
-      """name,EASY-dataset-id,type,comment,members
-        |Verzamelpagina Archeologie,easy-dataset:33895,N/A,Dit is de 'verzamelpagina van verzamelpagina's': totaaloverzicht van archeologische collecties per organisatie en project,"easy-dataset:67448,easy-dataset:62268,easy-dataset:40219,easy-dataset:33755,easy-dataset:34105,easy-dataset:33589,easy-dataset:31719,easy-dataset:61090,easy-dataset:33828,easy-dataset:53557,easy-dataset:34083,easy-dataset:72615,easy-dataset:33964,easy-dataset:74256,easy-dataset:32085,easy-dataset:33601,easy-dataset:31948,easy-dataset:35543,easy-dataset:33925,easy-dataset:74255,easy-dataset:34138,easy-dataset:33834,easy-dataset:34501,easy-dataset:33887,easy-dataset:72624,easy-dataset:72605,easy-dataset:73112,easy-dataset:75452,easy-dataset:75432,easy-dataset:73619,easy-dataset:75441,easy-dataset:34141,easy-dataset:34176,easy-dataset:34144,easy-dataset:77105,easy-dataset:77152,easy-dataset:40373,easy-dataset:75443,easy-dataset:33886,easy-dataset:35522,easy-dataset:32076,easy-dataset:34081,easy-dataset:44053,easy-dataset:32045,easy-dataset:34509,easy-dataset:32516,easy-dataset:32806,easy-dataset:33998,easy-dataset:33604,easy-dataset:72627,easy-dataset:33841,easy-dataset:34090,easy-dataset:34148,easy-dataset:34106,easy-dataset:75451,easy-dataset:34149,easy-dataset:34352,easy-dataset:33946,easy-dataset:44722,easy-dataset:54328,easy-dataset:60377,easy-dataset:32660,easy-dataset:33551,easy-dataset:34383,easy-dataset:33600,easy-dataset:33598,easy-dataset:34385,easy-dataset:75442,easy-dataset:61052,easy-dataset:33731,easy-dataset:61089,easy-dataset:33976,easy-dataset:34118,easy-dataset:60381,easy-dataset:60382,easy-dataset:33458,easy-dataset:33094,easy-dataset:34150,easy-dataset:34359,easy-dataset:48192,easy-dataset:52784,easy-dataset:61393,easy-dataset:40460,easy-dataset:49278,easy-dataset:49230,easy-dataset:40120,easy-dataset:44093,easy-dataset:50396,easy-dataset:49288,easy-dataset:42923,easy-dataset:60384,easy-dataset:64371"
-        |""".stripMargin
-    val mockedProvider: FedoraProvider = mock[FedoraProvider]
-    expectJumpoff("easy-dataset:33895", jumpoffMocks / "for-33895.html", mockedProvider)
-    val cfgDir = propsFile("").parent
-    val csvFile = cfgDir / "ThemathischeCollecties.csv"
-    csvFile.writeText(originalCsv)
-
-    val collectionMap = Collection.getCollectionsMap(cfgDir)(mockedProvider)
-    collectionMap.values.toList.distinct.head.head.text.trim shouldBe
-      "Verzamelpagina Archeologie not found in collections skos"
     csvFile.contentAsString shouldBe expectedCsv
   }
 
