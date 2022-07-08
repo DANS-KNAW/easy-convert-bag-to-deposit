@@ -33,7 +33,7 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
   override val schema = "https://raw.githubusercontent.com/DANS-KNAW/easy-schema/eade34a3c05669d05ec8cdbeb91a085d83c6c030/lib/src/main/resources/md/2021/02/ddm.xsd"
   private val jumpoffMocks = File("src/test/resources/sample-jumpoff")
 
-  "getCollectionsMap" should "not stumble over <br> and combine multiple datasets into a single collection" in {
+  "getCollectionsMap" should "not stumble over <br> and combine multiple datasets into a single collection" ignore {
     val originalCsv =
       """naam,EASY-dataset-id,type,opmerkingen,members
         |Diachron bv,"easy-dataset:33834,easy-dataset:33976",organisation
