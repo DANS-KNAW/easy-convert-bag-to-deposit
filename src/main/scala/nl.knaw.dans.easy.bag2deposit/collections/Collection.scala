@@ -40,7 +40,6 @@ case class Collection(name: String, ids: Seq[String], collectionType: String, co
 object Collection extends DebugEnhancedLogging {
 
   private val browser = JsoupBrowser()
-  private val resolver: Resolver = Resolver()
 
   private def parseCsv(file: File, format: CSVFormat): Try[Iterable[CSVRecord]] = {
     trace(file)
@@ -95,7 +94,7 @@ object Collection extends DebugEnhancedLogging {
   }
 
   /** @return collection-member-dataset-id -> <ddm:inCollection> */
-  def getCollectionsMap(cfgDir: File)(fedoraProvider: FedoraProvider): Map[String, Seq[Elem]] = {
+  def getCollectionsMap(cfgDir: File)(fedoraProvider: FedoraProvider, resolver: Resolver): Map[String, Seq[Elem]] = {
     val skosFile = cfgDir / "excel2skos-collecties.csv"
     val collectionsFile = cfgDir / "ThemathischeCollecties.csv"
 
@@ -103,7 +102,7 @@ object Collection extends DebugEnhancedLogging {
       def updateWhenNotProvided(original: Collection)(implicit printer: CSVPrinter): Try[Collection] = {
         trace(original)
         val updated = if (original.members.nonEmpty) original
-        else original.copy(members = original.ids.flatMap(membersOf(fedoraProvider)))
+        else original.copy(members = original.ids.flatMap(membersOf(fedoraProvider, resolver)))
         writeCollectionRecord(printer, updated).map(_ => updated)
       }
 
@@ -141,7 +140,7 @@ object Collection extends DebugEnhancedLogging {
     collection.members.map(id => id -> elem)
   }
 
-  private def membersOf(fedoraProvider: FedoraProvider)(datasetId: String): Seq[String] = {
+  private def membersOf(fedoraProvider: FedoraProvider, resolver: Resolver)(datasetId: String): Seq[String] = {
     trace(datasetId)
 
     def getMu(jumpoffId: String, streamId: String) = {
@@ -178,12 +177,13 @@ object Collection extends DebugEnhancedLogging {
         .map(_.attr("href"))
         .sortBy(identity)
         .distinct
-      maybeIds = hrefs.withFilter(_.matches(regexp)).map(toDatasetId)
+      maybeIds = hrefs.withFilter(_.matches(regexp)).map(toDatasetId(resolver))
+      _ = logger.trace(s"maybeIds ${ maybeIds.map(_.getOrElse("-")) }")
     } yield maybeIds.withFilter(_.isDefined).map(_.get)
   }.doIfFailure { case e => logger.error(s"could not find members of $datasetId: $e", e) }
     .getOrElse(Seq.empty)
 
-  private def toDatasetId(str: String): Option[String] = {
+  private def toDatasetId(resolver: Resolver)(str: String): Option[String] = {
     val trimmed = str
       .replaceAll(".*doi.org/", "")
       .replaceAll(".*identifier=", "")

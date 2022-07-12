@@ -19,7 +19,7 @@ import better.files.File
 import better.files.File.root
 import cats.implicits.{ catsStdInstancesForTry, catsSyntaxApplicativeError }
 import nl.knaw.dans.easy.bag2deposit.collections.Collection.getCollectionsMap
-import nl.knaw.dans.easy.bag2deposit.collections.FedoraProvider
+import nl.knaw.dans.easy.bag2deposit.collections.{ FedoraProvider, Resolver }
 import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer
 import nl.knaw.dans.lib.error.TryExtensions
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
@@ -56,7 +56,7 @@ object Command extends App with DebugEnhancedLogging {
   val fedoraProvider = FedoraProvider(properties)
 
   private val collectionMap = fedoraProvider
-    .map(getCollectionsMap(cfgPath))
+    .map(getCollectionsMap(cfgPath)(_, Resolver(properties.getString("dataverse.api.key"))))
     .getOrElse(Map.empty)
   val configuration = Configuration(
     version,
