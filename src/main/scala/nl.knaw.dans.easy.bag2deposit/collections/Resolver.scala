@@ -15,13 +15,12 @@
  */
 package nl.knaw.dans.easy.bag2deposit.collections
 
-import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import scalaj.http.Http
 
-import scala.util.{ Success, Try }
+import scala.util.{ Failure, Success, Try }
 
-case class Resolver(dataverseApiKey: String) extends DebugEnhancedLogging{
+case class Resolver() extends DebugEnhancedLogging{
 
   def getDatasetId(id: String): Try[Option[String]] = {
     id.slice(0, 3) match {
@@ -34,28 +33,6 @@ case class Resolver(dataverseApiKey: String) extends DebugEnhancedLogging{
     }
   }
 
-  def resolveIfMigrated(supposedEasyURL: String): String = {
-    if (!supposedEasyURL.contains(".nl/citation?")) supposedEasyURL
-    else {
-      val url = supposedEasyURL.replace("citation", "api/datasets/:persistentId/versions/1.0/metadata/citation") +
-        "&"
-      trace(url)
-      val request = Http(url = url).copy(headers = Seq(
-        ("Content-Type","application/json"),
-        ("X-Dataverse-key",dataverseApiKey)
-      ))
-      Try(request.asString).map {
-        case response if response.code == 200 =>
-          response.body.replaceAll(".*easy-dataset:","easy-dataset:").replaceAll("\".*","")
-        case response =>
-          logger.error(s"Not expected response code from '$url' ${ response.code } - ${ response.body }")
-          supposedEasyURL
-      }.doIfFailure { case e =>
-        logger.error(s"could not resolve $url: $e") // no stack trace, usually a timeout
-      }.getOrElse(supposedEasyURL)
-    }
-  }
-
   private def resolve(url: String) = {
     trace(url)
     Try(Http(url).asString).flatMap {
@@ -65,7 +42,6 @@ case class Resolver(dataverseApiKey: String) extends DebugEnhancedLogging{
       case response if response.code == 302 =>
         Success(Some(response
           .header("Location")
-          .map(resolveIfMigrated)
           .map(_.replaceAll(".*/", "").replace("%3A", ":"))
           .getOrElse(throw new Exception(s"no location header returned by $url - ${ response.body }"))
         ))
