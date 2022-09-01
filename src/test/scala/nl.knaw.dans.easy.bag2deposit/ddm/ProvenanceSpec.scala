@@ -46,8 +46,8 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     val fixedDate = sample.replace("<changeDate>2014-01-01</changeDate>", "<changeDate>2014-01-01T13:13:20.776+02:00</changeDate>")
     val fixedBoth = fixedDate.replace("<prov:new>", """<prov:new xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/" xmlns:dcterms="http://purl.org/dc/terms/">""")
     assume(schemaIsAvailable)
-    parseError(sample) shouldBe
-      "org.xml.sax.SAXParseException; lineNumber: 15; columnNumber: 56; cvc-datatype-valid.1.2.3: '2014-01-01' is not a valid value of union type 'dateTime-or-nothing'."
+    parseError(sample) shouldNot // schema is more flexible since https://github.com/DANS-KNAW/easy-schema/pull/104
+      be("org.xml.sax.SAXParseException; lineNumber: 15; columnNumber: 56; cvc-datatype-valid.1.2.3: '2014-01-01' is not a valid value of union type 'dateTime-or-nothing'.")
     parseError(fixedDate) shouldBe
       """org.xml.sax.SAXParseException; lineNumber: 36; columnNumber: 68; The prefix "ddm" for element "ddm:language" is not bound."""
     validate(XML.loadString(fixedBoth)) shouldBe a[Success[_]]
