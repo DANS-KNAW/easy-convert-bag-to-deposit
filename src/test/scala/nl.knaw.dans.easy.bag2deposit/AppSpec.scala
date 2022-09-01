@@ -48,6 +48,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     (delegate.execute(_: String)) expects s"bags/4722d09d-e431-4899-904c-0733cd773034" returning
       new HttpResponse[String]("<result><bag-info><urn>urn:nbn:nl:ui:13-z4-f8cm</urn><doi>10.5072/dans-2xg-umq8</doi></bag-info></result>", 200, Map.empty)
     val appConfig = testConfig(delegatingBagIndex(delegate), None)
+      .copy(bagSequence = true)
     (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty)
     (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 2) returning Success(Seq.empty)
 
@@ -354,6 +355,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
   it should "add the new data/easy-migration files into metadata/files.xml for FEDORA datasets" in {
     val delegate = mock[MockBagIndex]
     val appConfig = testConfig(delegatingBagIndex(delegate), null)
+      .copy(bagSequence = true)
     (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty)
     val originalFilesXml =
       <files xmlns:dcterms="http://purl.org/dc/terms/" xmlns="http://easy.dans.knaw.nl/schemas/bag/metadata/files/">
@@ -410,6 +412,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     (delegate.execute(_: String)) expects s"bags/4722d09d-e431-4899-904c-0733cd773034" returning
       new HttpResponse[String]("<result><bag-info><urn>urn:nbn:nl:ui:13-z4-f8cm</urn><doi>10.5072/dans-2xg-umq8</doi></bag-info></result>", 200, Map.empty)
     val appConfig = testConfig(delegatingBagIndex(delegate), null)
+      .copy(bagSequence = true)
     (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 2) returning Success(Seq.empty)
 
 
