@@ -61,6 +61,8 @@ class CommandLineOptions(args: Array[String], version: String) extends ScallopCo
     descr = "Optional. Directory that will receive completed deposits with atomic moves.")
   val preStaged: ScallopOption[Boolean] = opt(name = "pre-staged", default = Some(false), short = 'p', required = false,
     descr = s"Examine migration-info from dataverse to build pre-staged.csv and remove corresponding payload files from the bag")
+  val bagSequence: ScallopOption[Boolean] = opt(name = "bag-sequence", default = Some(false), short = 'p', required = false,
+    descr = s"Retrieve previous versions from the vault")
 
   requireOne(bagParentDir, bagGrandParentDir)
   validate(outputDir) { dir =>
@@ -69,6 +71,7 @@ class CommandLineOptions(args: Array[String], version: String) extends ScallopCo
   }
   validate(bagSource) {
     case BagSource.FEDORA if idType() != IdType.DOI => Left(s"source FEDORA requires dataverse-identifier-type=DOI")
+    case BagSource.FEDORA if bagSequence() => Left(s"bag-sequence only makes sense for source VAULT")
     case _ => Right(())
   }
 

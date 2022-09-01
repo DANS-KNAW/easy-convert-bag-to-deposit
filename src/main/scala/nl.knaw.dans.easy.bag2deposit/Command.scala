@@ -63,6 +63,7 @@ object Command extends App with DebugEnhancedLogging {
     dansDoiPrefixes = properties.getStringArray("dans-doi.prefixes"),
     dataverseIdAuthority = properties.getString("dataverse.id-authority"),
     bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
+    bagSequence = commandLine.bagSequence(),
     ddmTransformer = new DdmTransformer(cfgPath, collectionMap),
     amdTransformer = new AmdTransformer(cfgPath),
     fedoraProvider = fedoraProvider,

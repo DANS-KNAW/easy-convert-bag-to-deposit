@@ -23,11 +23,12 @@ import nl.knaw.dans.easy.bag2deposit.{ BagIndex, Configuration, PreStagedProvide
 trait AppConfigSupport extends BagIndexSupport with FedoraProviderSupport with PreStagedSupport {
   def testConfig(bagIndex: BagIndex, fedoraProvider: Option[FedoraProvider], preStagedProvider: PreStagedProvider = mock[PreStagedProvider]): Configuration = {
     val cfgFile = File("src/main/assembly/dist/cfg")
-    new Configuration(
+    Configuration(
       version = "testVersion",
       dansDoiPrefixes = Seq("10.17026", "10.5072"),
       dataverseIdAuthority = "10.80270",
       bagIndex = bagIndex,
+      bagSequence = false,
       ddmTransformer = new DdmTransformer(cfgFile),
       amdTransformer = new AmdTransformer(cfgFile),
       fedoraProvider = fedoraProvider,
