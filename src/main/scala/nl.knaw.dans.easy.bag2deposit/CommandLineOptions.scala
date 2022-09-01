@@ -61,7 +61,7 @@ class CommandLineOptions(args: Array[String], version: String) extends ScallopCo
     descr = "Optional. Directory that will receive completed deposits with atomic moves.")
   val preStaged: ScallopOption[Boolean] = opt(name = "pre-staged", default = Some(false), short = 'p', required = false,
     descr = s"Examine migration-info from dataverse to build pre-staged.csv and remove corresponding payload files from the bag")
-  val bagSequence: ScallopOption[Boolean] = opt(name = "bag-sequence", default = Some(false), short = 'p', required = false,
+  val bagSequence: ScallopOption[Boolean] = opt(name = "bag-sequence", default = Some(false), short = 'b', required = false,
     descr = s"Retrieve previous versions from the vault")
 
   requireOne(bagParentDir, bagGrandParentDir)
