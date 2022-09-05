@@ -30,7 +30,7 @@ trait AppConfigSupport extends BagIndexSupport with FedoraProviderSupport with P
       bagIndex = bagIndex,
       bagSequence = false,
       ddmTransformer = new DdmTransformer(cfgFile),
-      amdTransformer = new AmdTransformer(cfgFile),
+      amdTransformer = new AmdTransformer(cfgFile / "archaeology" / "account-substitutes.csv"),
       fedoraProvider = fedoraProvider,
       maybePreStagedProvider = Some(preStagedProvider),
       agreementsPath = cfgFile / "agreements"

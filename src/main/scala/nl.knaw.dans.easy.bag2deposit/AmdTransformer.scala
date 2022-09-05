@@ -25,8 +25,7 @@ import scala.util.{ Failure, Success, Try }
 import scala.xml.transform.{ RewriteRule, RuleTransformer }
 import scala.xml.{ Elem, Node, NodeSeq, Text }
 
-class AmdTransformer(cfgDir: File) {
-  private val csvFile: File = cfgDir / "account-substitutes.csv"
+class AmdTransformer(csvFile: File) {
   private val userMap = if (!csvFile.exists || csvFile.isEmpty)
                           Map[String, String]()
                         else parseCsv(

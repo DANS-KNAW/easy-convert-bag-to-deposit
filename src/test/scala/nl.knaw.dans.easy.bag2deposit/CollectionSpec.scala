@@ -51,7 +51,7 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
     val mockedProvider: FedoraProvider = mock[FedoraProvider]
     expectJumpoff("easy-dataset:33834", jumpoffMocks / "for-33834.html", mockedProvider)
     expectJumpoffTxt("easy-dataset:33976", jumpoffMocks / "for-33976.html", mockedProvider)
-    val cfgDir = propsFile("").parent
+    val cfgDir = propsFile("").parent / "archaeology"
     val csvFile = cfgDir / "ThemathischeCollecties.csv"
     csvFile.writeText(originalCsv)
 
@@ -88,7 +88,7 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
         |Odyssee onderzoeksprojecten,easy-dataset:34359,organisatie,,""".stripMargin
     val mockedProvider: FedoraProvider = mock[FedoraProvider]
     expectJumpoffTxt("easy-dataset:34359", jumpoffMocks / "3931-for-dataset-34359.html", mockedProvider)
-    val cfgDir = propsFile("").parent
+    val cfgDir = propsFile("").parent / "archaeology"
     val csvFile = cfgDir / "ThemathischeCollecties.csv"
     csvFile.writeText(originalCsv)
 
@@ -107,7 +107,7 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
         |Verzamelpagina Archeologie,easy-dataset:33895,N/A,Dit is de 'verzamelpagina van verzamelpagina's': totaaloverzicht van archeologische collecties per organisatie en project,"""".stripMargin
     val mockedProvider: FedoraProvider = mock[FedoraProvider]
     expectJumpoff("easy-dataset:33895", jumpoffMocks / "for-33895.html", mockedProvider)
-    val cfgDir = propsFile("").parent
+    val cfgDir = propsFile("").parent / "archaeology"
     val csvFile = cfgDir / "ThemathischeCollecties.csv"
     csvFile.writeText(originalCsv)
 
@@ -128,7 +128,7 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
         |Oral history,easy-dataset:64608,organisatie,,"""".stripMargin
     val mockedProvider: FedoraProvider = mock[FedoraProvider]
     expectJumpoff("easy-dataset:64608", jumpoffMocks / "for-64608.html", mockedProvider)
-    val cfgDir = propsFile("").parent
+    val cfgDir = propsFile("").parent / "archaeology"
     val csvFile = cfgDir / "ThemathischeCollecties.csv"
     csvFile.writeText(originalCsv)
 

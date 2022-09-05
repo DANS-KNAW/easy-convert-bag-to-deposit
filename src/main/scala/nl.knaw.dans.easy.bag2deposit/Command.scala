@@ -56,7 +56,7 @@ object Command extends App with DebugEnhancedLogging {
   val fedoraProvider = FedoraProvider(properties)
 
   private val collectionMap = fedoraProvider
-    .map(getCollectionsMap(cfgPath))
+    .map(getCollectionsMap(cfgPath / commandLine.target()))
     .getOrElse(Map.empty)
   val configuration = Configuration(
     version,
@@ -65,7 +65,7 @@ object Command extends App with DebugEnhancedLogging {
     bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
     bagSequence = commandLine.bagSequence(),
     ddmTransformer = new DdmTransformer(cfgPath, collectionMap),
-    amdTransformer = new AmdTransformer(cfgPath),
+    amdTransformer = new AmdTransformer(cfgPath / commandLine.target() / "account-substitutes.csv"),
     fedoraProvider = fedoraProvider,
     maybePreStagedProvider = if (commandLine.preStaged())
                                Some(PreStagedProvider(new URI(properties.getString("migration-info.url"))))

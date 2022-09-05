@@ -26,7 +26,7 @@ ARGUMENTS
 
     Options:
 
-         --bag-sequence                       Retrieve previous versions from the vault
+         -b, --bag-sequence                       Retrieve previous versions from the vault
          -t, --dataverse-identifier-type  <arg>   the field to be used as Dataverse identifier, either doi or urn:nbn
          -d, --dir  <arg>                         directory with the deposits. These deposit-dirs each MUST have the
                                                   uuid of the bag as directory name, and have one bag-dir each
@@ -35,6 +35,7 @@ ARGUMENTS
          -p, --pre-staged                         Examine migration-info from dataverse to build pre-staged.csv and
                                                   remove corresponding payload files from the bag
          -s, --source  <arg>                      The source of the bags
+             --target  <arg>                      Specifies a data-station alias a subdirectory in the cfg directory.
          -u, --uuid  <arg>                        directory with a bag. This directory MUST be a uuid.
          -h, --help                               Show help message
          -v, --version                            Show version of this program
