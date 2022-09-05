@@ -121,6 +121,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       dansDoiPrefixes = "10.17026/,10.5072/".split(","),
       dataverseIdAuthority = "10.80270",
       bagIndex = BagIndex(new URI("http://localhost:20120/")),
+      bagSequence = false,
       ddmTransformer = ddmTransformer,
       amdTransformer = amdTransformer,
       fedoraProvider = None,

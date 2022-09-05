@@ -48,6 +48,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     (delegate.execute(_: String)) expects s"bags/4722d09d-e431-4899-904c-0733cd773034" returning
       new HttpResponse[String]("<result><bag-info><urn>urn:nbn:nl:ui:13-z4-f8cm</urn><doi>10.5072/dans-2xg-umq8</doi></bag-info></result>", 200, Map.empty)
     val appConfig = testConfig(delegatingBagIndex(delegate), None)
+      .copy(bagSequence = true)
     (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty)
     (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 2) returning Success(Seq.empty)
 
@@ -77,6 +78,82 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     movedDirs.size + leftDirs.size shouldBe resourceBags.children.toList.size
 
     movedDirs.size shouldBe 2 // base-bag-not-found is moved together with the valid bag-revision-1
+    // TODO should addPropsToBags check existence of base-bag in case of versioned bags?
+    //  If so, can the base-bag have been moved to ingest-dir while processing?
+
+    //////// changes made to the valid bag
+
+    val validBag = resourceBags / validUUID / "bag-revision-1"
+    val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
+
+    // DDM should have preserved its white space
+    (movedBag / "metadata" / "dataset.xml").contentAsString should include
+    """    <dcterms:description>An example of a dataset.
+      |
+      |    With another paragraph.
+      |    </dcterms:description>""".stripMargin
+
+    // content verified in BagInfoSpec
+    validBag / ".." / "deposit.properties" shouldNot exist
+    movedBag / ".." / "deposit.properties" should exist
+
+    // other content changes verified in DepositPropertiesFactorySpec
+    (validBag / "bag-info.txt").contentAsString should include(BagFacade.EASY_USER_ACCOUNT_KEY)
+    (movedBag / "bag-info.txt").contentAsString shouldNot include(BagFacade.EASY_USER_ACCOUNT_KEY)
+
+    // content of provenance verified in ddm.ProvenanceSpec
+    (validBag / "tagmanifest-sha1.txt").contentAsString shouldNot include("metadata/provenance.xml")
+    (movedBag / "tagmanifest-sha1.txt").contentAsString should include("metadata/provenance.xml")
+
+    // other content changes are verified in ddm.*Spec
+    (validBag / "metadata" / "dataset.xml").contentAsString should include("<dc:title>Example</dc:title>")
+    (movedBag / "metadata" / "dataset.xml").contentAsString shouldNot include("<dc:title>Example</dc:title>")
+    (validBag / "metadata" / "amd.xml").contentAsString should include("<depositorId>user001</depositorId>")
+    (movedBag / "metadata" / "amd.xml").contentAsString should
+      (include("<depositorId>USer</depositorId>") and not include "<depositorId>user001</depositorId>")
+
+    assume(schemaIsAvailable)
+    val xmlString = File("src/test/resources/encoding/provenance.xml")
+      .contentAsString(Charset.forName("UTF-8"))
+//      .replaceAll(" " + defaultLocation, " " + actualLocation)
+    validate(XML.loadString(xmlString))
+  }
+
+  "addPropsToBags" should "move valid exports and skip previous bag in sequence" in {
+    val delegate = mock[MockBagIndex]
+    val noBaseBagUUID = "87151a3a-12ed-426a-94f2-97313c7ae1f2"
+    (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
+      new HttpResponse[String]("123", 200, Map.empty)
+    val appConfig = testConfig(delegatingBagIndex(delegate), None)
+      .copy(bagSequence = false)
+    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty)
+
+    resourceBags.copyTo(testDir / "exports")
+
+    //////// end of mocking and preparations
+
+    new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
+      (testDir / "exports").children,
+      maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
+      DepositPropertiesFactory(appConfig, DOI, VAULT)
+    ) shouldBe Success("No fatal errors")
+
+    //////// general post conditions
+
+    // TODO (manually) intercept logging: the bag names should reflect the errors
+    //  no variation in bag-info.txt not found or a property in that file not found
+
+    val movedDirs = (testDir / "ingest-dir").children.toList
+    val leftDirs = (testDir / "exports").children.toList
+
+    // only moved dirs changed
+    leftDirs.foreach(dir => dir.isSameContentAs(resourceBags / dir.name) shouldBe true)
+    movedDirs.foreach(dir => dir.isSameContentAs(resourceBags / dir.name) shouldBe false)
+
+    // total number of deposits should not change
+    movedDirs.size + leftDirs.size shouldBe resourceBags.children.toList.size
+
+    movedDirs.size shouldBe 1 // base-bag-not-found is moved together with the valid bag-revision-1
     // TODO should addPropsToBags check existence of base-bag in case of versioned bags?
     //  If so, can the base-bag have been moved to ingest-dir while processing?
 
@@ -354,6 +431,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
   it should "add the new data/easy-migration files into metadata/files.xml for FEDORA datasets" in {
     val delegate = mock[MockBagIndex]
     val appConfig = testConfig(delegatingBagIndex(delegate), null)
+      .copy(bagSequence = true)
     (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty)
     val originalFilesXml =
       <files xmlns:dcterms="http://purl.org/dc/terms/" xmlns="http://easy.dans.knaw.nl/schemas/bag/metadata/files/">
@@ -410,6 +488,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     (delegate.execute(_: String)) expects s"bags/4722d09d-e431-4899-904c-0733cd773034" returning
       new HttpResponse[String]("<result><bag-info><urn>urn:nbn:nl:ui:13-z4-f8cm</urn><doi>10.5072/dans-2xg-umq8</doi></bag-info></result>", 200, Map.empty)
     val appConfig = testConfig(delegatingBagIndex(delegate), null)
+      .copy(bagSequence = true)
     (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 2) returning Success(Seq.empty)
 
 

@@ -49,12 +49,11 @@ case class DepositPropertiesFactory(configuration: Configuration, idType: IdType
       .text
 
     val basePids: BasePids = bagInfo.versionOf.map { uuid =>
-      bagSource match {
-        case VAULT => bagIndex.gePIDs(uuid).unsafeGetOrThrow
-        case FEDORA => bagInfo.basePids.getOrElse(throw InvalidBagException(
-          s"bag-info.txt should have the ${ BagInfo.baseUrnKey } and ${ BagInfo.baseDoiKey } of ${ bagInfo.versionOf }")
-        )
-      }
+      if (configuration.bagSequence)
+        bagIndex.gePIDs(uuid).unsafeGetOrThrow
+      else bagInfo.basePids.getOrElse(throw InvalidBagException(
+        s"bag-info.txt should have the ${ BagInfo.baseUrnKey } and ${ BagInfo.baseDoiKey } of ${ bagInfo.versionOf }")
+      )
     }.getOrElse(BasePids(urn, doi))
 
     def checkSequence(): Unit = {

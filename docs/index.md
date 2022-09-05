@@ -26,6 +26,7 @@ ARGUMENTS
 
     Options:
 
+         --bag-sequence                       Retrieve previous versions from the vault
          -t, --dataverse-identifier-type  <arg>   the field to be used as Dataverse identifier, either doi or urn:nbn
          -d, --dir  <arg>                         directory with the deposits. These deposit-dirs each MUST have the
                                                   uuid of the bag as directory name, and have one bag-dir each
