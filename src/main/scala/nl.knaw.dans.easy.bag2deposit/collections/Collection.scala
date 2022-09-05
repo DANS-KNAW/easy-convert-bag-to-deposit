@@ -15,10 +15,7 @@
  */
 package nl.knaw.dans.easy.bag2deposit.collections
 
-import better.files.{ Dispose, File }
-import cats.implicits.catsStdInstancesForTry
-import cats.instances.list._
-import cats.syntax.traverse._
+import better.files.File
 import com.yourmediashelf.fedora.client.FedoraClientException
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
@@ -26,8 +23,7 @@ import net.ruippeixotog.scalascraper.dsl.DSL._
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.csv.CSVFormat.RFC4180
-import org.apache.commons.csv.{ CSVFormat, CSVParser, CSVPrinter, CSVRecord }
-import org.joda.time.DateTime.now
+import org.apache.commons.csv.{ CSVFormat, CSVParser, CSVRecord }
 import resource.managed
 
 import java.nio.charset.{ Charset, StandardCharsets }
@@ -74,11 +70,6 @@ object Collection extends DebugEnhancedLogging {
     )
   }.getOrElse(throw new IllegalArgumentException(s"invalid line $r"))
 
-  private def writeCollectionRecord(printer: CSVPrinter, c: Collection): Try[Collection] = Try {
-    printer.printRecord(c.name, c.ids.mkString(","), c.collectionType, c.comment, c.members.mkString(","))
-    c
-  }
-
   private val skosCsvFormat = RFC4180
     .withHeader("URI", "prefLabel", "definition", "broader", "notation")
     .withDelimiter(',')
@@ -95,26 +86,9 @@ object Collection extends DebugEnhancedLogging {
   }
 
   /** @return collection-member-dataset-id -> <ddm:inCollection> */
-  def getCollectionsMap(cfgDir: File)(fedoraProvider: FedoraProvider): Map[String, Seq[Elem]] = {
+  def getCollectionsMap(cfgDir: File): Map[String, Seq[Elem]] = {
     val skosFile = cfgDir / "excel2skos-collecties.csv"
     val collectionsFile = cfgDir / "ThemathischeCollecties.csv"
-
-    def updateCollections(originalCollections: Seq[Collection]): Try[List[Collection]] = {
-      def updateWhenNotProvided(original: Collection)(implicit printer: CSVPrinter): Try[Collection] = {
-        trace(original)
-        val updated = if (original.members.nonEmpty) original
-        else original.copy(members = original.ids.flatMap(membersOf(fedoraProvider)))
-        writeCollectionRecord(printer, updated).map(_ => updated)
-      }
-
-      for {
-        _ <- Try(collectionsFile.moveTo(File(collectionsFile.toString().replace(".csv", s"-$now.csv"))))
-        updates <- new Dispose(collectionCsvFormat.print(collectionsFile.newFileWriter()))
-          .apply(implicit csvPrinter =>
-            originalCollections.map(updateWhenNotProvided).toList.sequence
-          )
-      } yield updates
-    }
 
     trace(skosFile, collectionsFile)
     val tuples = {
@@ -123,8 +97,7 @@ object Collection extends DebugEnhancedLogging {
         collectionRecords <- parseCsv(collectionsFile, collectionCsvFormat)
         originalCollections = collectionRecords.toList.map(parseCollectionRecord)
         skosMap = skosRecords.map(parseSkosRecord).toMap
-        updatedCollections <- updateCollections(originalCollections)
-      } yield updatedCollections.flatMap { collection =>
+      } yield originalCollections.flatMap { collection =>
         memberToCollections(skosMap, collection)
       }
     }.doIfFailure { case e => logger.error(s"could not build CollectionsMap: $cfgDir $e", e) }

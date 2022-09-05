@@ -17,7 +17,6 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import better.files.File.root
-import cats.implicits.{ catsStdInstancesForTry, catsSyntaxApplicativeError }
 import nl.knaw.dans.easy.bag2deposit.collections.Collection.getCollectionsMap
 import nl.knaw.dans.easy.bag2deposit.collections.FedoraProvider
 import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer
@@ -55,9 +54,7 @@ object Command extends App with DebugEnhancedLogging {
       .getOrElse(Iterator.empty))
   val fedoraProvider = FedoraProvider(properties)
 
-  private val collectionMap = fedoraProvider
-    .map(getCollectionsMap(cfgPath / commandLine.target()))
-    .getOrElse(Map.empty)
+  private val collectionMap = getCollectionsMap(cfgPath / commandLine.target())
   val configuration = Configuration(
     version,
     dansDoiPrefixes = properties.getStringArray("dans-doi.prefixes"),
