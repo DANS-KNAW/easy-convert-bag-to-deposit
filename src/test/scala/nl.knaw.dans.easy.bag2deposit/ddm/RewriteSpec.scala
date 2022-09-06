@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ DdmSupport, FileSystemSupport, SchemaSupport, XmlSupport }
+import nl.knaw.dans.easy.bag2deposit.TargetDataStation.HSS
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
 import nl.knaw.dans.easy.bag2deposit.{ AmdTransformer, BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, TargetDataStation, loadXml, parseCsv }
 import org.apache.commons.csv.CSVRecord
@@ -728,8 +729,11 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     val (amdIn, _, _) = loadXml(File("src/test/resources/DD-857/amd.xml"))
       .getOrElse(fail("could not load test data"))
 
+
     // a few steps of EasyConvertBagToDepositApp.addProps
-    val ddmOut = ddmTransformer.transform(ddmIn, "easy-dataset:123")
+    val transformer = new DdmTransformer(cfgDir, HSS, Map.empty)
+    val amdTransformer = new AmdTransformer(cfgDir / HSS.toString / "account-substitutes.csv")
+    val ddmOut = transformer.transform(ddmIn, "easy-dataset:123")
       .getOrElse(fail("no DDM returned"))
     val amdOut = amdTransformer.transform(amdIn, ddmOut \\ "created")
       .getOrElse(fail("no AMD returned"))
