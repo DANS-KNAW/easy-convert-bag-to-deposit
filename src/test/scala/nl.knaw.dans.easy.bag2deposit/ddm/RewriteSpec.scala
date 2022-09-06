@@ -16,9 +16,9 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.Fixture.{DdmSupport, FileSystemSupport, SchemaSupport, XmlSupport}
+import nl.knaw.dans.easy.bag2deposit.Fixture.{ DdmSupport, FileSystemSupport, SchemaSupport, XmlSupport }
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
-import nl.knaw.dans.easy.bag2deposit.{AmdTransformer, BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, loadXml, parseCsv}
+import nl.knaw.dans.easy.bag2deposit.{ AmdTransformer, BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, TargetDataStation, loadXml, parseCsv }
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -26,29 +26,29 @@ import org.scalatest.matchers.should.Matchers
 import java.net.URI
 import java.nio.charset.Charset
 import java.util.UUID
-import scala.util.{Failure, Success, Try}
-import scala.xml.XML
-import scala.xml.Utility
+import scala.util.{ Failure, Success, Try }
+import scala.xml.{ Utility, XML }
 
 class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Matchers with DdmSupport with FileSystemSupport {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
   private val ddmTransformer: DdmTransformer = new DdmTransformer(cfgDir, Map.empty)
-  private val amdTransformer = new AmdTransformer(cfgDir / "archaeology" / "account-substitutes.csv")
+  private val archaeologyCfgDir: File = cfgDir / TargetDataStation.archaeology.toString
+  private val amdTransformer = new AmdTransformer(archaeologyCfgDir / "account-substitutes.csv")
 
   override val schema = "https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"
 
   "ABR-complex" should "be valid" in {
-    val records = parseCsv(cfgDir / "ABR-complex.csv", AbrRewriteRule.nrOfHeaderLines)
+    val records = parseCsv(archaeologyCfgDir / "ABR-complex.csv", AbrRewriteRule.nrOfHeaderLines)
     records.map(tryUuid).filter(_.isFailure) shouldBe empty
     getDuplicates(records) shouldBe empty
-    records.size shouldBe AbrRewriteRule.subjectRewriteRule(cfgDir).map.size
+    records.size shouldBe AbrRewriteRule.subjectRewriteRule(archaeologyCfgDir).map.size
   }
 
   "ABR-period" should "be valid" in {
-    val records = parseCsv(cfgDir / "ABR-period.csv", AbrRewriteRule.nrOfHeaderLines)
+    val records = parseCsv(archaeologyCfgDir / "ABR-period.csv", AbrRewriteRule.nrOfHeaderLines)
     getDuplicates(records) shouldBe empty
     records.map(tryUuid).filter(_.isFailure) shouldBe empty
-    records.size shouldBe AbrRewriteRule.temporalRewriteRule(cfgDir).map.size
+    records.size shouldBe AbrRewriteRule.temporalRewriteRule(archaeologyCfgDir).map.size
   }
 
   private def tryUuid(r: CSVRecord) = Try(UUID.fromString(r.get(2)))

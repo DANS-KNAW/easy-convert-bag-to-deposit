@@ -29,7 +29,7 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
       """naam,EASY-dataset-id,type,opmerkingen,members
         |Diachron bv,"easy-dataset:33834,easy-dataset:33976",organisation,,"easy-dataset:64188"
         |""".stripMargin
-    val cfgDir = propsFile("").parent / "archaeology"
+    val cfgDir = propsFile("").parent / TargetDataStation.archaeology.toString
     val csvFile = cfgDir / "ThemathischeCollecties.csv"
     csvFile.writeText(originalCsv)
 

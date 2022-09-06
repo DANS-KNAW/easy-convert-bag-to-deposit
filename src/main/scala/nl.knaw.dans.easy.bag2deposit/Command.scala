@@ -54,7 +54,8 @@ object Command extends App with DebugEnhancedLogging {
       .getOrElse(Iterator.empty))
   val fedoraProvider = FedoraProvider(properties)
 
-  private val collectionMap = getCollectionsMap(cfgPath / commandLine.target())
+  private val targetCfgPath = cfgPath / commandLine.target().toString
+  private val collectionMap = getCollectionsMap(targetCfgPath)
   val configuration = Configuration(
     version,
     dansDoiPrefixes = properties.getStringArray("dans-doi.prefixes"),
@@ -62,7 +63,7 @@ object Command extends App with DebugEnhancedLogging {
     bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
     bagSequence = commandLine.bagSequence(),
     ddmTransformer = new DdmTransformer(cfgPath, collectionMap),
-    amdTransformer = new AmdTransformer(cfgPath / commandLine.target() / "account-substitutes.csv"),
+    amdTransformer = new AmdTransformer(targetCfgPath / "account-substitutes.csv"),
     fedoraProvider = fedoraProvider,
     maybePreStagedProvider = if (commandLine.preStaged())
                                Some(PreStagedProvider(new URI(properties.getString("migration-info.url"))))

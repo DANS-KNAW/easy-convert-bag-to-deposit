@@ -21,7 +21,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class ReportRewriteRuleSpec extends AnyFlatSpec with Matchers {
-  private val rule: ReportRewriteRule = ddm.ReportRewriteRule(File("src/main/assembly/dist/cfg"))
+  private val rule: ReportRewriteRule = ddm.ReportRewriteRule(File("src/main/assembly/dist/cfg/archaeology"))
 
   "each regexp" should "have proper optional nr. suffix for rapport/project/code/notitie" in {
     val nrSuffix = "[a-z.]*"
