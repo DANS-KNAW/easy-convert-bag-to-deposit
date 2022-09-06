@@ -63,6 +63,8 @@ class CommandLineOptions(args: Array[String], version: String) extends ScallopCo
     descr = s"Examine migration-info from dataverse to build pre-staged.csv and remove corresponding payload files from the bag")
   val bagSequence: ScallopOption[Boolean] = opt(name = "bag-sequence", default = Some(false), short = 'b', required = false,
     descr = s"Retrieve previous versions from the vault")
+  val target: ScallopOption[String] = opt(name = "target", noshort = true, required = true,
+    descr = s"Specifies a data-station alias a subdirectory in the cfg directory.")
 
   requireOne(bagParentDir, bagGrandParentDir)
   validate(outputDir) { dir =>

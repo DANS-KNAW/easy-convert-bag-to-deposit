@@ -31,7 +31,7 @@ class DebugConfigSpec extends AnyFlatSpec with Matchers {
     val filesInDebugConfig = debugConfigDir.list.toSet
     val filesInDistCfg = configDir.list.toSet
 
-    filesInDebugConfig.map(_.name) shouldBe filesInDistCfg.map(_.name)
+    filesInDebugConfig.map(_.name) should contain theSameElementsAs filesInDistCfg.map(_.name)
   }
 
   it should "contain an application.properties with the same keys as the one in src/main/assembly/dist/cfg" in {

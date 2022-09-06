@@ -17,7 +17,6 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import better.files.File.root
-import cats.implicits.{ catsStdInstancesForTry, catsSyntaxApplicativeError }
 import nl.knaw.dans.easy.bag2deposit.collections.Collection.getCollectionsMap
 import nl.knaw.dans.easy.bag2deposit.collections.FedoraProvider
 import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer
@@ -55,9 +54,7 @@ object Command extends App with DebugEnhancedLogging {
       .getOrElse(Iterator.empty))
   val fedoraProvider = FedoraProvider(properties)
 
-  private val collectionMap = fedoraProvider
-    .map(getCollectionsMap(cfgPath))
-    .getOrElse(Map.empty)
+  private val collectionMap = getCollectionsMap(cfgPath / commandLine.target())
   val configuration = Configuration(
     version,
     dansDoiPrefixes = properties.getStringArray("dans-doi.prefixes"),
@@ -65,7 +62,7 @@ object Command extends App with DebugEnhancedLogging {
     bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
     bagSequence = commandLine.bagSequence(),
     ddmTransformer = new DdmTransformer(cfgPath, collectionMap),
-    amdTransformer = new AmdTransformer(cfgPath),
+    amdTransformer = new AmdTransformer(cfgPath / commandLine.target() / "account-substitutes.csv"),
     fedoraProvider = fedoraProvider,
     maybePreStagedProvider = if (commandLine.preStaged())
                                Some(PreStagedProvider(new URI(properties.getString("migration-info.url"))))

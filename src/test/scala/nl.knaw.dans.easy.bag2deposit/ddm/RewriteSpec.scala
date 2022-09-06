@@ -33,7 +33,7 @@ import scala.xml.Utility
 class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Matchers with DdmSupport with FileSystemSupport {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
   private val ddmTransformer: DdmTransformer = new DdmTransformer(cfgDir, Map.empty)
-  private val amdTransformer = new AmdTransformer(cfgDir)
+  private val amdTransformer = new AmdTransformer(cfgDir / "archaeology" / "account-substitutes.csv")
 
   override val schema = "https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"
 

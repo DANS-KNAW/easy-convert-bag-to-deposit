@@ -329,7 +329,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
         ).toString()
     )
 
-    val transformer = new AmdTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
+    val transformer = new AmdTransformer(csvFile = File("src/main/assembly/dist/cfg/archaeology/account-substitutes.csv"))
     val amdIn = XML.loadFile((testDir / "amd.xml").toJava)
     val created = <ddm:created>2016-12-31</ddm:created>
     val amdOut = transformer.transform(amdIn, created).getOrElse(fail("could not transform"))
@@ -404,7 +404,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     )
 
     val (amdIn, _, _) = loadXml(testDir / "amd.xml").getOrElse(fail("could not load AMD"))
-    val amdOut = new AmdTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
+    val amdOut = new AmdTransformer(csvFile = File("src/main/assembly/dist/cfg/archaeology/account-substitutes.csv"))
       .transform(amdIn, <ddm:created>2016-12-31</ddm:created>)
       .getOrElse(fail("could not transform"))
 
