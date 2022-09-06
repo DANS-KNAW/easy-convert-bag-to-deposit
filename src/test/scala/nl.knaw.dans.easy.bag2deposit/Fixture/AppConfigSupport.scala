@@ -29,7 +29,7 @@ trait AppConfigSupport extends BagIndexSupport with FedoraProviderSupport with P
       dataverseIdAuthority = "10.80270",
       bagIndex = bagIndex,
       bagSequence = false,
-      ddmTransformer = new DdmTransformer(cfgFile),
+      ddmTransformer = new DdmTransformer(cfgFile, TargetDataStation.archaeology),
       amdTransformer = new AmdTransformer(cfgFile / TargetDataStation.archaeology.toString / "account-substitutes.csv"),
       fedoraProvider = fedoraProvider,
       maybePreStagedProvider = Some(preStagedProvider),

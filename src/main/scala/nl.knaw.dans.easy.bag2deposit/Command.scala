@@ -62,7 +62,7 @@ object Command extends App with DebugEnhancedLogging {
     dataverseIdAuthority = properties.getString("dataverse.id-authority"),
     bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
     bagSequence = commandLine.bagSequence(),
-    ddmTransformer = new DdmTransformer(cfgPath, collectionMap),
+    ddmTransformer = new DdmTransformer(cfgPath, commandLine.target(), collectionMap),
     amdTransformer = new AmdTransformer(targetCfgPath / "account-substitutes.csv"),
     fedoraProvider = fedoraProvider,
     maybePreStagedProvider = if (commandLine.preStaged())

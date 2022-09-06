@@ -31,7 +31,7 @@ import scala.xml.{ Utility, XML }
 
 class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Matchers with DdmSupport with FileSystemSupport {
   private val cfgDir: File = File("src/main/assembly/dist/cfg")
-  private val ddmTransformer: DdmTransformer = new DdmTransformer(cfgDir, Map.empty)
+  private val ddmTransformer: DdmTransformer = new DdmTransformer(cfgDir, TargetDataStation.archaeology, Map.empty)
   private val archaeologyCfgDir: File = cfgDir / TargetDataStation.archaeology.toString
   private val amdTransformer = new AmdTransformer(archaeologyCfgDir / "account-substitutes.csv")
 
@@ -213,10 +213,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           <dcterms:relation>https://rabarbera</dcterms:relation>
         </ddm:dcmiMetadata>
     )
-    val transformer = new DdmTransformer(
-      cfgDir,
-      Map.empty,
-    )
+    val transformer = new DdmTransformer(cfgDir, TargetDataStation.archaeology, Map.empty)
 
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(ddm(
@@ -497,7 +494,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       <ddm:dcmiMetadata/>
     )
     val transformer = new DdmTransformer(
-      cfgDir,
+      cfgDir, TargetDataStation.archaeology,
       Map("easy-dataset:123" -> Seq(<inCollection>mocked</inCollection>))
     )
 
@@ -525,7 +522,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       <ddm:dcmiMetadata/>
     )
     val transformer = new DdmTransformer(
-      cfgDir,
+      cfgDir, TargetDataStation.archaeology,
       Map("easy-dataset:123" -> Seq(<inCollection>mocked</inCollection>))
     )
 
@@ -552,7 +549,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:dcmiMetadata>
     )
     val transformer = new DdmTransformer(
-      cfgDir,
+      cfgDir, TargetDataStation.archaeology,
       Map("easy-dataset:123" -> Seq(<inCollection>mocked1</inCollection>, <inCollection>mocked2</inCollection>))
     )
 
@@ -582,7 +579,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:dcmiMetadata>
       </ddm:DDM>
     }
-    val transformer = new DdmTransformer(cfgDir, Map.empty)
+    val transformer = new DdmTransformer(cfgDir, TargetDataStation.archaeology, Map.empty)
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(ddmExpected))
   }
@@ -594,7 +591,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           <dct:rightsHolder>Some Body</dct:rightsHolder>
         </ddm:dcmiMetadata>
     )
-    val transformer = new DdmTransformer(cfgDir, Map.empty)
+    val transformer = new DdmTransformer(cfgDir, TargetDataStation.archaeology, Map.empty)
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(ddmIn))
   }
@@ -611,7 +608,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           </dcx-dai:contributorDetails>
         </ddm:dcmiMetadata>
     )
-    val transformer = new DdmTransformer(cfgDir, Map.empty)
+    val transformer = new DdmTransformer(cfgDir, TargetDataStation.archaeology, Map.empty)
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(ddmIn))
   }
@@ -627,7 +624,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           <dct:identifier xsi:type="id-type:ARCHIS-ONDERZOEK">443456; 789; </dct:identifier>
         </ddm:dcmiMetadata>
     )
-    val transformer = new DdmTransformer(cfgDir, Map.empty)
+    val transformer = new DdmTransformer(cfgDir, TargetDataStation.archaeology, Map.empty)
 
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
       ddm(title = "blabla", audience = "D37000", dcmi =
@@ -659,7 +656,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       )))
   }
   it should "create type-id from archis description" in {
-    val transformer = new DdmTransformer(cfgDir, Map.empty)
+    val transformer = new DdmTransformer(cfgDir, TargetDataStation.archaeology, Map.empty)
     val archisIds = File("src/test/resources/possibleArchaeologyIdentifiers.txt")
       .lines(Charset.forName("UTF-8"))
       .filter(_.toLowerCase.contains("archis"))
@@ -674,7 +671,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     strings.filter(_.matches(".*[^0-9].*")) shouldBe Seq("10HZ-18 (Objectcode Archis)", "36141 (ARCHIS rapportnummer)", " 405800 (Archis nummers)", "http://livelink.archis.nl/Livelink/livelink.exe?func=ll&objId=4835986&objAction=browse (URI)", "66510 (Archisnummer)", "ARCHIS2: 63389", "Onderzoeksnaam Archis: 4042 Den Haag", "Objectnummer Archis: 1121031", "Archis2 nummer 65495", "3736 (RAAP) (Archis art. 41)", "6663 (ADC) (Archis art. 41)", "2866 (RAAP) (Archis art. 41)", "7104 (ADC) (Archis art. 41)", "16065 (BeVdG) (Archis art. 41)", "Archis2: CIS-code: 25499 (Tjeppenboer) en 25500 (Hilaard)")
   }
   it should "add dans license" in {
-    val transformer = new DdmTransformer(cfgDir, Map.empty)
+    val transformer = new DdmTransformer(cfgDir, TargetDataStation.archaeology, Map.empty)
     val ddmIn = ddm(
       <ddm:profile><ddm:accessRights>REQUEST_PERMISSION</ddm:accessRights></ddm:profile>
           <ddm:dcmiMetadata/>
@@ -690,7 +687,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
   it should "replace funder role" in {
     val ddmIn = XML.loadFile("src/test/resources/funder/ddm-in.xml")
     val expectedDDM = XML.loadFile("src/test/resources/funder/ddm-out.xml")
-    val triedDdm = new DdmTransformer(File("src/main/assembly/dist/cfg"), Map.empty)
+    val triedDdm = new DdmTransformer(File("src/main/assembly/dist/cfg"), TargetDataStation.archaeology, Map.empty)
       .transform(ddmIn, "easy-dataset:123")
     triedDdm.map(normalized) shouldBe Success(normalized(expectedDDM))
     assume(schemaIsAvailable)
@@ -711,7 +708,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     }
   }
   it should "keep the original license" in {
-    val transformer = new DdmTransformer(cfgDir, Map.empty)
+    val transformer = new DdmTransformer(cfgDir, TargetDataStation.archaeology, Map.empty)
     val ddmIn = ddm(
       <ddm:profile><ddm:accessRights>OPEN_ACCESS_FOR_REGISTERED_USERS</ddm:accessRights></ddm:profile>
           <ddm:dcmiMetadata><dcterms:license xsi:type="dcterms:URI">http://does.not.exist.dans.knaw.nl</dcterms:license></ddm:dcmiMetadata>
@@ -751,10 +748,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
     )
-    val transformer = new DdmTransformer(
-      cfgDir,
-      Map.empty,
-    )
+    val transformer = new DdmTransformer(cfgDir, TargetDataStation.archaeology, Map.empty)
 
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(ddm(

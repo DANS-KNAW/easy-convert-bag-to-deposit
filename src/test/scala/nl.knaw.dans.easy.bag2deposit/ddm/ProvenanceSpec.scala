@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ FileSystemSupport, FixedCurrentDateTimeSupport, SchemaSupport, XmlSupport }
-import nl.knaw.dans.easy.bag2deposit.{ AmdTransformer, loadXml }
+import nl.knaw.dans.easy.bag2deposit.{ AmdTransformer, TargetDataStation, loadXml }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -32,7 +32,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
   private val schemaLocation = s"http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ $schema"
   private val ddmSchema = "http://easy.dans.knaw.nl/schemas/md/ddm/"
   private val amdSchema = "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/"
-  private val transformer = new DdmTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
+  private val transformer = new DdmTransformer(cfgDir = File("src/main/assembly/dist/cfg"), TargetDataStation.archaeology)
 
   // FixedCurrentDateTimeSupport is not effective for a val
   private def provenanceBuilder = Provenance("EasyConvertBagToDepositApp", "1.0.5", schemaRoot)

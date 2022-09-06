@@ -16,6 +16,7 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
+import nl.knaw.dans.easy.bag2deposit.TargetDataStation.TargetDataStation
 import nl.knaw.dans.easy.bag2deposit.{ InvalidBagException, TargetDataStation }
 import nl.knaw.dans.easy.bag2deposit.ddm.DistinctTitlesRewriteRule.distinctTitles
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
@@ -27,7 +28,7 @@ import scala.util.{ Failure, Success, Try }
 import scala.xml._
 import scala.xml.transform.{ RewriteRule, RuleTransformer }
 
-class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.empty) extends DebugEnhancedLogging {
+class DdmTransformer(cfgDir: File, target: TargetDataStation, collectionsMap: Map[String, Seq[Elem]] = Map.empty) extends DebugEnhancedLogging {
   trace(())
   private val archaeologyCfgDir: File = cfgDir / TargetDataStation.archaeology.toString
   lazy val reportRewriteRule: ReportRewriteRule = ReportRewriteRule(archaeologyCfgDir)
@@ -134,8 +135,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
 
     val profile = ddmIn \ "profile"
 
-    if (!(profile \ "audience").text.contains("D37000")) {
-      // not archaeological
+    if (target != TargetDataStation.archaeology) {
       val transformer = standardRuleTransformer(newDcmiNodes, (profile \ "title").text)
       Success(transformer(ddmIn))
     }
