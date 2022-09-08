@@ -19,7 +19,7 @@ import better.files.File
 import nl.knaw.dans.easy.bag2deposit.BagSource._
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, FileSystemSupport, SchemaSupport, XmlSupport }
 import nl.knaw.dans.easy.bag2deposit.IdType._
-import nl.knaw.dans.easy.bag2deposit.TargetDataStation.archaeology
+import nl.knaw.dans.easy.bag2deposit.TargetDataStation.{ SSH, archaeology }
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import scalaj.http.HttpResponse
@@ -118,7 +118,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     validate(XML.loadString(xmlString))
   }
 
-  "addPropsToBags" should "move valid exports and skip previous bag in sequence" in {
+  it should "move valid exports and skip previous bag in sequence" in {
     val delegate = mock[MockBagIndex]
     val noBaseBagUUID = "87151a3a-12ed-426a-94f2-97313c7ae1f2"
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
@@ -276,7 +276,6 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     outputDir.list shouldBe empty
   }
 
-
   it should "search migration-info with seq nr 2" in {
 
     val bagIndex = {
@@ -286,6 +285,34 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
       delegatingBagIndex(delegateBagIndex)
     }
     val appConfig = testConfig(archaeology, bagIndex, null)
+
+    val depositDir = testDir / "exports" / validUUID
+    (resourceBags / validUUID).copyTo(depositDir)
+    val bagInfoFile = depositDir / "bag-revision-1" / "bag-info.txt"
+
+    // note that the number 2 reappears in sampleJson, the mocked result of the migration-info service
+    bagInfoFile.write(bagInfoFile.contentAsString + "Bag-Sequence-Number: 2\n")
+
+    new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
+      (testDir / "exports").children,
+      maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
+      DepositPropertiesFactory(appConfig, DOI, VAULT)
+    ) shouldBe Success("No fatal errors")
+
+    val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
+    (movedBag / "data").list.toSeq.map(_.name) shouldBe Seq("easy-migration", "foo.txt")
+    (movedBag / "manifest-sha1.txt").contentAsString should include("foo.txt")
+  }
+
+  it should "search migration-info with seq nr 2 for SSH" in {
+
+    val bagIndex = {
+      val delegateBagIndex = mock[MockBagIndex]
+      (delegateBagIndex.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
+        new HttpResponse[String]("123", 200, Map.empty)
+      delegatingBagIndex(delegateBagIndex)
+    }
+    val appConfig = testConfig(SSH, bagIndex, null)
 
     val depositDir = testDir / "exports" / validUUID
     (resourceBags / validUUID).copyTo(depositDir)

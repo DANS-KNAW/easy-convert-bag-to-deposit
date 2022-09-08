@@ -30,37 +30,36 @@ import scala.language.reflectiveCalls
 object Command extends App with DebugEnhancedLogging {
   type FeedBackMessage = String
   private val home = File(System.getProperty("app.home"))
-  val cfgPath = Seq(
+  private val cfgPath = Seq(
     root / "etc" / "opt" / "dans.knaw.nl" / "easy-convert-bag-to-deposit",
     home / "cfg")
     .find(_.exists)
     .getOrElse { throw new IllegalStateException("No configuration directory found") }
-  val properties = {
+  private val properties = {
     new PropertiesConfiguration() {
       setDelimiterParsingDisabled(true)
       load((cfgPath / "application.properties").toJava)
     }
   }
-  val version = (home / "bin" / "version").contentAsString.stripLineEnd
-  val agent = properties.getString("http.agent", s"easy-convert-bag-to-deposit/$version")
+  private val version = (home / "bin" / "version").contentAsString.stripLineEnd
+  private val agent = properties.getString("http.agent", s"easy-convert-bag-to-deposit/$version")
   logger.info(s"setting http.agent to $agent")
   System.setProperty("http.agent", agent)
 
-  val commandLine: CommandLineOptions = new CommandLineOptions(args, version) {
+  private val commandLine: CommandLineOptions = new CommandLineOptions(args, version) {
     verify()
   }
   private val bagParentDirs = commandLine.bagParentDir.map(Iterator(_))
     .getOrElse(commandLine.bagGrandParentDir.map(_.children)
       .getOrElse(Iterator.empty))
-  val fedoraProvider = FedoraProvider(properties)
 
-  val configuration = Configuration(
+  private val configuration = Configuration(
     version,
     dansDoiPrefixes = properties.getStringArray("dans-doi.prefixes"),
     dataverseIdAuthority = properties.getString("dataverse.id-authority"),
     bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
     bagSequence = commandLine.bagSequence(),
-    maybeFedoraProvider = fedoraProvider,
+    maybeFedoraProvider = FedoraProvider(properties),
     cfgPath,
     commandLine.target(),
   )
