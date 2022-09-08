@@ -54,22 +54,18 @@ object Command extends App with DebugEnhancedLogging {
       .getOrElse(Iterator.empty))
   val fedoraProvider = FedoraProvider(properties)
 
-  private val targetDataStation = commandLine.target()
-  private val targetCfgPath = cfgPath / targetDataStation.toString
-  private val collectionMap = getCollectionsMap(targetCfgPath)
   val configuration = Configuration(
     version,
     dansDoiPrefixes = properties.getStringArray("dans-doi.prefixes"),
     dataverseIdAuthority = properties.getString("dataverse.id-authority"),
     bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
     bagSequence = commandLine.bagSequence(),
-    ddmTransformer = new DdmTransformer(cfgPath, targetDataStation, collectionMap),
-    amdTransformer = new AmdTransformer(targetCfgPath / "account-substitutes.csv"),
-    fedoraProvider = fedoraProvider,
+    maybeFedoraProvider = fedoraProvider,
     maybePreStagedProvider = if (commandLine.preStaged())
                                Some(PreStagedProvider(new URI(properties.getString("migration-info.url"))))
                              else None,
-    agreementsPath = cfgPath / "agreements",
+    cfgPath,
+    commandLine.target(),
   )
   trace(configuration.maybePreStagedProvider)
   private val propertiesFactory = DepositPropertiesFactory(

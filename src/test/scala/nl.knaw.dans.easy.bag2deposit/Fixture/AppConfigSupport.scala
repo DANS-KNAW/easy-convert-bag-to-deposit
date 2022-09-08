@@ -16,12 +16,15 @@
 package nl.knaw.dans.easy.bag2deposit.Fixture
 
 import better.files.File
+import nl.knaw.dans.easy.bag2deposit.TargetDataStation.TargetDataStation
 import nl.knaw.dans.easy.bag2deposit.collections.FedoraProvider
-import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer
-import nl.knaw.dans.easy.bag2deposit.{ AmdTransformer, BagIndex, Configuration, PreStagedProvider, TargetDataStation }
+import nl.knaw.dans.easy.bag2deposit.{ BagIndex, Configuration, PreStagedProvider }
 
 trait AppConfigSupport extends BagIndexSupport with FedoraProviderSupport with PreStagedSupport {
-  def testConfig(bagIndex: BagIndex, fedoraProvider: Option[FedoraProvider], preStagedProvider: PreStagedProvider = mock[PreStagedProvider]): Configuration = {
+  def testConfig(targetDataStation: TargetDataStation,bagIndex: BagIndex,
+                 fedoraProvider: Option[FedoraProvider],
+                 preStagedProvider: PreStagedProvider = mock[PreStagedProvider],
+                ): Configuration = {
     val cfgFile = File("src/main/assembly/dist/cfg")
     Configuration(
       version = "testVersion",
@@ -29,11 +32,10 @@ trait AppConfigSupport extends BagIndexSupport with FedoraProviderSupport with P
       dataverseIdAuthority = "10.80270",
       bagIndex = bagIndex,
       bagSequence = false,
-      ddmTransformer = new DdmTransformer(cfgFile, TargetDataStation.archaeology),
-      amdTransformer = new AmdTransformer(cfgFile / TargetDataStation.archaeology.toString / "account-substitutes.csv"),
-      fedoraProvider = fedoraProvider,
+      maybeFedoraProvider = fedoraProvider,
       maybePreStagedProvider = Some(preStagedProvider),
-      agreementsPath = cfgFile / "agreements"
+      cfgFile,
+      targetDataStation,
     )
   }
 }

@@ -149,7 +149,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     if (amdFile.exists)
       loadXml(amdFile).map(_._1)
     else {
-      configuration.fedoraProvider.map { provider =>
+      configuration.maybeFedoraProvider.map { provider =>
         provider.loadFoXml(datasetId).flatMap(getAmd)
       }.getOrElse(Failure(new IllegalStateException(s"no AMD for $datasetId and no fedora configured")))
     }
