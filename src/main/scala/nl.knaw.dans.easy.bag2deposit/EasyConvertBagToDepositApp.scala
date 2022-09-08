@@ -92,20 +92,18 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       ))
       _ = trace(bagInfo)
       doi = depositProps.getString("identifier.doi")
-      preStaged <- getPreStaged(bag, bagDir, doi, bagInfo.bagSeqNr)
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = depositProps.setProperty("depositor.userId", (amdOut \ "depositorId").text)
       // so far collecting changes
       _ = depositProps.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = amdFile.writeText(amdOut.serialize)
-      _ = if (preStaged.nonEmpty) PreStaged.write(preStaged, metadata)
       _ = (metadata / "provenance.xml").writeText(provenanceXml.serialize)
       _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
       _ = trace("updating payload manifest")
       _ <- copyMigrationFiles(metadata, migration, fromVault)
-      _ <- BagFacade.updatePayloadManifests(bag, Paths.get("data/easy-migration"), preStaged)
+      _ <- BagFacade.updatePayloadManifests(bag, Paths.get("data/easy-migration"))
       _ = trace("writing payload manifests")
       _ <- BagFacade.writePayloadManifests(bag)
       _ = trace("updating tag manifest")
@@ -125,24 +123,6 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     case e: Throwable =>
       logger.error(s"${ bagParentDir.name } failed with not expected error: ${ e.getClass.getSimpleName } ${ e.getMessage }", e)
       Failure(e)
-  }
-
-  private def getPreStaged(bag: Bag, bagDir: File, doi: String, version: Int = 1): Try[Seq[PreStaged]] = {
-    configuration.maybePreStagedProvider.map { provider =>
-      val shaToPath = sha1Manifest(bag.getPayLoadManifests).asScala
-        .map { case (path, sha) => sha -> bagDir.relativize(File(path)) }.toMap
-      trace(doi)
-      for {
-        migratedPayloadFiles <- provider.get(doi, version) // paths from migration info
-        existingMigratedFiles = migratedPayloadFiles.filter(p => shaToPath.keySet.contains(p.checksumValue))
-        _ = if (migratedPayloadFiles.size != existingMigratedFiles.size)
-              logger.warn(s"no longer found previously migrated files: ${ migratedPayloadFiles.diff(existingMigratedFiles) }")
-        _ = trace(shaToPath)
-        _ = trace(existingMigratedFiles)
-        preStaged = existingMigratedFiles // resulting in paths from manifest
-          .map(r => r.copy(path = shaToPath(r.checksumValue)))
-      } yield preStaged
-    }.getOrElse(Success(Seq.empty))
   }
 
   private def getAmdXml(datasetId: String, amdFile: File): Try[Node] = {

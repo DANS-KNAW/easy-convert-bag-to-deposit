@@ -27,7 +27,6 @@ case class Configuration(version: String,
                          bagIndex: BagIndex,
                          bagSequence: Boolean,
                          maybeFedoraProvider: Option[FedoraProvider],
-                         maybePreStagedProvider: Option[PreStagedProvider],
                          cfgPath: File,
                          targetDataStation: TargetDataStation,
                         )

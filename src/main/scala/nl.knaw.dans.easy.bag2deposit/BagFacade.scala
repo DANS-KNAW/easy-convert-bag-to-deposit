@@ -24,8 +24,7 @@ import gov.loc.repository.bagit.hash.{ Hasher, StandardSupportedAlgorithms }
 import gov.loc.repository.bagit.reader.BagReader
 import gov.loc.repository.bagit.writer.{ ManifestWriter, MetadataWriter }
 
-import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.{ FileVisitResult, Files, Path }
+import java.nio.file.{ Files, Path }
 import java.security.MessageDigest
 import java.util
 import scala.collection.JavaConverters._
@@ -67,10 +66,9 @@ object BagFacade {
    *
    * @param bag            changed bag
    * @param payloadEntries directory or file relatieve to the root of the bag
-   * @param preStageds     files to be removed from the bag and the payload manifests
    * @return
    */
-  def updatePayloadManifests(bag: Bag, payloadEntries: Path, preStageds: Seq[PreStaged]): Try[Unit] = Try {
+  def updatePayloadManifests(bag: Bag, payloadEntries: Path): Try[Unit] = Try {
     trace(bag.getRootDir)
     if (!payloadEntries.toString.startsWith("data/")) {
       throw new IllegalArgumentException(s"path must start with data, found $payloadEntries")
@@ -90,16 +88,6 @@ object BagFacade {
       .groupBy(identity)
       .collect { case (x, List(_, _, _*)) => x }
       .toList
-    val preStagedShas = preStageds
-      .withFilter(p => !duplicateShasInManifest.contains(p.checksumValue))
-      .map(p => p.checksumValue)
-    val preStagedPaths = fileToChecksumMap.asScala
-      .withFilter { case (_, checksum) => preStagedShas.contains(checksum) }
-      .map { case (path, _) => path }
-    preStagedPaths.foreach { path =>
-      path.delete()
-      fileToChecksumMap.remove(path)
-    }
   }
 
   def sha1Manifest(payloadManifests: util.Set[domain.Manifest]): util.Map[Path, String] = {

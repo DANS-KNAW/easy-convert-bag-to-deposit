@@ -61,13 +61,9 @@ object Command extends App with DebugEnhancedLogging {
     bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
     bagSequence = commandLine.bagSequence(),
     maybeFedoraProvider = fedoraProvider,
-    maybePreStagedProvider = if (commandLine.preStaged())
-                               Some(PreStagedProvider(new URI(properties.getString("migration-info.url"))))
-                             else None,
     cfgPath,
     commandLine.target(),
   )
-  trace(configuration.maybePreStagedProvider)
   private val propertiesFactory = DepositPropertiesFactory(
     configuration,
     commandLine.idType(),
