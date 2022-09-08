@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ DdmSupport, FileSystemSupport, SchemaSupport, XmlSupport }
-import nl.knaw.dans.easy.bag2deposit.TargetDataStation.HSS
+import nl.knaw.dans.easy.bag2deposit.TargetDataStation.SSH
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
 import nl.knaw.dans.easy.bag2deposit.{ AmdTransformer, BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, TargetDataStation, loadXml, parseCsv }
 import org.apache.commons.csv.CSVRecord
@@ -117,25 +117,10 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:dcmiMetadata>
     )
 
-    val app = new EasyConvertBagToDepositApp(Configuration(
-      "test version",
-      dansDoiPrefixes = "10.17026/,10.5072/".split(","),
-      dataverseIdAuthority = "10.80270",
-      bagIndex = BagIndex(new URI("http://localhost:20120/")),
-      bagSequence = false,
-      ddmTransformer = ddmTransformer,
-      amdTransformer = amdTransformer,
-      fedoraProvider = None,
-      maybePreStagedProvider = None,
-      agreementsPath = cfgDir / "agreements"
-    ))
-
     // a few steps of EasyConvertBagToDepositApp.addPropsToBags
     val datasetId = "easy-dataset:123"
     ddmTransformer.transform(ddmIn, datasetId).map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
-    app.registerMatchedReports(datasetId, expectedDDM \\ "reportNumber")
-    app.logMatchedReports() // once for all datasets
 
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())
@@ -731,8 +716,8 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
 
 
     // a few steps of EasyConvertBagToDepositApp.addProps
-    val transformer = new DdmTransformer(cfgDir, HSS, Map.empty)
-    val amdTransformer = new AmdTransformer(cfgDir / HSS.toString / "account-substitutes.csv")
+    val transformer = new DdmTransformer(cfgDir, SSH, Map.empty)
+    val amdTransformer = new AmdTransformer(cfgDir / SSH.toString / "account-substitutes.csv")
     val ddmOut = transformer.transform(ddmIn, "easy-dataset:123")
       .getOrElse(fail("no DDM returned"))
     val amdOut = amdTransformer.transform(amdIn, ddmOut \\ "created")

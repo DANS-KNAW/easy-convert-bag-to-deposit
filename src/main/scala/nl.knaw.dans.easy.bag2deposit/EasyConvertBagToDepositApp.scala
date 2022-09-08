@@ -25,12 +25,11 @@ import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.compare
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
-import java.io.{FileNotFoundException, IOException}
+import java.io.{ FileNotFoundException, IOException }
 import java.nio.charset.Charset
 import java.nio.file.Paths
 import scala.collection.JavaConverters._
-import scala.collection.mutable.ListBuffer
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 import scala.xml._
 
 class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnhancedLogging {
@@ -45,33 +44,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       .map(addProps(properties, maybeOutputDir))
       .collectFirst { case Failure(e) => Failure(e) }
       .getOrElse(Success(s"No fatal errors")) // TODO show number of false/true values
-    logMatchedReports()
     triedString
-  }
-
-  private val reportMatches = configuration.ddmTransformer.reportRewriteRule.reportMap.map(reportCfg =>
-    reportCfg.uuid -> new ListBuffer[String]()
-  ).toMap
-
-  def registerMatchedReports(urn: String, reports: NodeSeq): Unit = {
-    trace(urn)
-    reports.foreach { node =>
-      val reportUuid = (node \@ "valueURI").replaceAll(".*/", "")
-      Try(reportMatches(reportUuid) += s"\t$urn\t${ node.text }")
-        .getOrElse(logger.error(s"Could not register matched report $urn $reportUuid ${ node.text }"))
-    }
-  }
-
-  def logMatchedReports(): Unit = {
-    val uuidToReportLabel = configuration.ddmTransformer.reportRewriteRule.reportMap
-      .map(r => r.uuid -> r.label).toMap
-    reportMatches.foreach { case (reportUuid, foundReports) =>
-      val reports = foundReports.toList
-      if (reports.nonEmpty) {
-        val label = uuidToReportLabel.getOrElse(reportUuid, reportUuid)
-        logger.info(s"$label\n${ reports.mkString("\n") }")
-      }
-    }
   }
 
   private val provenance = new Provenance(
@@ -102,7 +75,6 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       depositProps <- depositPropertiesFactory.create(bagInfo, ddmIn)
       datasetId = depositProps.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
-      _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
       oldDcmi = (ddmIn \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       amdFile = metadata / "amd.xml"

@@ -19,5 +19,5 @@ object TargetDataStation extends Enumeration {
   type TargetDataStation = Value
 
   val archaeology: TargetDataStation = Value("archaeology")
-  val HSS: TargetDataStation = Value("HSS")
+  val SSH: TargetDataStation = Value("SSH")
 }

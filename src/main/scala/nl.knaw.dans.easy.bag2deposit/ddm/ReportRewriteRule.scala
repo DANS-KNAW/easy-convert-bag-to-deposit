@@ -27,6 +27,7 @@ case class ReportRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhance
 
   case class ReportCfg(uuid: String, label: String, regexpWithNr: String, regexp: String)
 
+  /** public for unit tests */
   val reportMap: Seq[ReportCfg] = parseCsv(cfgDir / "ABR-reports.csv", 0)
     .map(r => ReportCfg(
       uuid = r.get(0),
