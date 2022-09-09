@@ -19,7 +19,6 @@ import better.files.File
 import nl.knaw.dans.easy.bag2deposit.BagSource._
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, FileSystemSupport, SchemaSupport, XmlSupport }
 import nl.knaw.dans.easy.bag2deposit.IdType._
-import nl.knaw.dans.easy.bag2deposit.TargetDataStation.{ SSH, archaeology }
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import scalaj.http.HttpResponse
@@ -38,6 +37,8 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
   private val resourceBags: File = File("src/test/resources/bags/01")
   private val validUUID = "04e638eb-3af1-44fb-985d-36af12fccb2d"
   private val vaultUUID = "87151a3a-12ed-426a-94f2-97313c7ae1f2"
+
+  private val archaeology = "archaeology"
 
   "addPropsToBags" should "move valid exports" in {
     val delegate = mock[MockBagIndex]
@@ -312,7 +313,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
         new HttpResponse[String]("123", 200, Map.empty)
       delegatingBagIndex(delegateBagIndex)
     }
-    val appConfig = testConfig(SSH, bagIndex, null)
+    val appConfig = testConfig("SSH", bagIndex, null)
 
     val depositDir = testDir / "exports" / validUUID
     (resourceBags / validUUID).copyTo(depositDir)

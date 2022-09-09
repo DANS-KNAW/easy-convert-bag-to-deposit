@@ -17,7 +17,6 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, BagIndexSupport, BagSupport }
-import nl.knaw.dans.easy.bag2deposit.TargetDataStation.archaeology
 import nl.knaw.dans.lib.error._
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.scalamock.scalatest.MockFactory
@@ -39,7 +38,7 @@ class DepositPropertiesFactorySpec extends AnyFlatSpec with Matchers with AppCon
     val delegate = mock[MockBagIndex]
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$uuid" returning
       new HttpResponse[String](body = "123", code = 200, Map.empty)
-    val cfg = testConfig(archaeology, delegatingBagIndex(delegate), null)
+    val cfg = testConfig("archaeology", delegatingBagIndex(delegate), null)
 
     DepositPropertiesFactory(cfg, IdType.DOI, BagSource.VAULT)
       .create(
@@ -95,7 +94,7 @@ class DepositPropertiesFactorySpec extends AnyFlatSpec with Matchers with AppCon
       new HttpResponse[String](body = bagIndexBody, code = 200, Map.empty)
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$bagUUID" returning
       new HttpResponse[String](body = "123", code = 200, Map.empty)
-    val cfg = testConfig(archaeology, delegatingBagIndex(delegate), null)
+    val cfg = testConfig("archaeology", delegatingBagIndex(delegate), null)
       .copy(bagSequence = true)
 
     DepositPropertiesFactory(cfg, IdType.URN, BagSource.VAULT)
@@ -134,7 +133,7 @@ class DepositPropertiesFactorySpec extends AnyFlatSpec with Matchers with AppCon
                 </ddm:dcmiMetadata>
               </ddm:DDM>
 
-    val cfg = testConfig(archaeology, delegatingBagIndex(mock[MockBagIndex]), null)
+    val cfg = testConfig("archaeology", delegatingBagIndex(mock[MockBagIndex]), null)
       .copy(bagSequence = false)
 
     DepositPropertiesFactory(cfg, IdType.URN, BagSource.FEDORA)
@@ -170,7 +169,7 @@ class DepositPropertiesFactorySpec extends AnyFlatSpec with Matchers with AppCon
     val delegate = mock[MockBagIndex]
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$bagUUID" returning
       new HttpResponse[String](body = "123", code = 200, Map.empty)
-    val cfg = testConfig(archaeology, delegatingBagIndex(delegate), null)
+    val cfg = testConfig("archaeology", delegatingBagIndex(delegate), null)
 
     DepositPropertiesFactory(cfg, IdType.URN, BagSource.VAULT)
       .create(bagInfo, ddm)

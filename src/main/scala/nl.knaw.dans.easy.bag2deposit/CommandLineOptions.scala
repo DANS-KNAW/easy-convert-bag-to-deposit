@@ -18,7 +18,6 @@ package nl.knaw.dans.easy.bag2deposit
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.BagSource.BagSource
 import nl.knaw.dans.easy.bag2deposit.IdType.IdType
-import nl.knaw.dans.easy.bag2deposit.TargetDataStation.TargetDataStation
 import org.rogach.scallop.{ ScallopConf, ScallopOption, ValueConverter, singleArgConverter }
 
 import java.nio.file.Path
@@ -49,7 +48,6 @@ class CommandLineOptions(args: Array[String], version: String) extends ScallopCo
   implicit val fileConverter: ValueConverter[File] = singleArgConverter(File(_))
   implicit val idTypeConverter: ValueConverter[IdType] = singleArgConverter(IdType.withName)
   implicit val bagSourceConverter: ValueConverter[BagSource] = singleArgConverter(BagSource.withName)
-  implicit val targetConverter: ValueConverter[TargetDataStation] = singleArgConverter(TargetDataStation.withName)
 
   val bagGrandParentDir: ScallopOption[File] = opt[Path]("dir", short = 'd',
     descr = "directory with the deposits. These deposit-dirs each MUST have the uuid of the bag as directory name, and have one bag-dir each").map(File(_))
@@ -63,7 +61,7 @@ class CommandLineOptions(args: Array[String], version: String) extends ScallopCo
     descr = "Optional. Directory that will receive completed deposits with atomic moves.")
   val bagSequence: ScallopOption[Boolean] = opt(name = "bag-sequence", default = Some(false), short = 'b', required = false,
     descr = s"Retrieve previous versions from the vault")
-  val target: ScallopOption[TargetDataStation] = opt[TargetDataStation](name = "target", noshort = true, required = true,
+  val target: ScallopOption[String] = opt[String](name = "target", noshort = true, required = true,
     descr = s"Specifies a data-station alias a subdirectory in the cfg directory.")
 
   requireOne(bagParentDir, bagGrandParentDir)

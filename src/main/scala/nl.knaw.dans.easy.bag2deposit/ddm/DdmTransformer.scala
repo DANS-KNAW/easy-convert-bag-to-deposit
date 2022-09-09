@@ -16,11 +16,10 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.TargetDataStation.TargetDataStation
+import nl.knaw.dans.easy.bag2deposit.InvalidBagException
 import nl.knaw.dans.easy.bag2deposit.ddm.DistinctTitlesRewriteRule.distinctTitles
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
 import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.logBriefRapportTitles
-import nl.knaw.dans.easy.bag2deposit.{ InvalidBagException, TargetDataStation }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.lang.StringUtils.{ isBlank, isNotBlank }
 
@@ -28,9 +27,9 @@ import scala.util.{ Failure, Success, Try }
 import scala.xml._
 import scala.xml.transform.{ RewriteRule, RuleTransformer }
 
-class DdmTransformer(cfgDir: File, target: TargetDataStation, collectionsMap: Map[String, Seq[Elem]] = Map.empty) extends DebugEnhancedLogging {
+class DdmTransformer(cfgDir: File, target: String, collectionsMap: Map[String, Seq[Elem]] = Map.empty) extends DebugEnhancedLogging {
   trace(())
-  private val archaeologyCfgDir: File = cfgDir / TargetDataStation.archaeology.toString
+  private val archaeologyCfgDir: File = cfgDir / "archaeology"
   lazy val reportRewriteRule: ReportRewriteRule = ReportRewriteRule(archaeologyCfgDir)
   private lazy val acquisitionRewriteRule = AcquisitionRewriteRule(archaeologyCfgDir)
   private val relationRewriteRule = RelationRewriteRule(cfgDir)
@@ -135,7 +134,7 @@ class DdmTransformer(cfgDir: File, target: TargetDataStation, collectionsMap: Ma
 
     val profile = ddmIn \ "profile"
 
-    if (target != TargetDataStation.archaeology) {
+    if (target != "archaeology") {
       val transformer = standardRuleTransformer(newDcmiNodes, (profile \ "title").text)
       Success(transformer(ddmIn))
     }

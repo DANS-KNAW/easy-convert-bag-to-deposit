@@ -16,7 +16,6 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.TargetDataStation.TargetDataStation
 import nl.knaw.dans.easy.bag2deposit.collections.Collection.getCollectionsMap
 import nl.knaw.dans.easy.bag2deposit.collections.FedoraProvider
 import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer
@@ -28,10 +27,10 @@ case class Configuration(version: String,
                          bagSequence: Boolean,
                          maybeFedoraProvider: Option[FedoraProvider],
                          cfgPath: File,
-                         targetDataStation: TargetDataStation,
+                         targetDataStation: String,
                         )
 {
-  private val targetCfgPath = cfgPath / targetDataStation.toString
+  private val targetCfgPath = cfgPath / targetDataStation
   val agreementsPath: File = cfgPath / "agreements"
   val ddmTransformer = new DdmTransformer(cfgPath, targetDataStation, getCollectionsMap(targetCfgPath))
   val amdTransformer = new AmdTransformer(targetCfgPath / "account-substitutes.csv")
