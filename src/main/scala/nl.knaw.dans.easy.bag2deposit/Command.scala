@@ -17,9 +17,7 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import better.files.File.root
-import nl.knaw.dans.easy.bag2deposit.collections.Collection.getCollectionsMap
 import nl.knaw.dans.easy.bag2deposit.collections.FedoraProvider
-import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer
 import nl.knaw.dans.lib.error.TryExtensions
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration

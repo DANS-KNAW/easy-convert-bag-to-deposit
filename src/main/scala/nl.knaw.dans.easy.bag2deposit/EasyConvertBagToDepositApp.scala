@@ -17,8 +17,6 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import better.files.File.CopyOptions
-import gov.loc.repository.bagit.domain.Bag
-import nl.knaw.dans.easy.bag2deposit.BagFacade.sha1Manifest
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
 import nl.knaw.dans.easy.bag2deposit.FoXml.getAmd
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
@@ -28,7 +26,6 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import java.io.{ FileNotFoundException, IOException }
 import java.nio.charset.Charset
 import java.nio.file.Paths
-import scala.collection.JavaConverters._
 import scala.util.{ Failure, Success, Try }
 import scala.xml._
 

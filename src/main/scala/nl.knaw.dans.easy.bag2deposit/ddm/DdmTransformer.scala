@@ -17,10 +17,10 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.TargetDataStation.TargetDataStation
-import nl.knaw.dans.easy.bag2deposit.{ InvalidBagException, TargetDataStation }
 import nl.knaw.dans.easy.bag2deposit.ddm.DistinctTitlesRewriteRule.distinctTitles
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
 import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.logBriefRapportTitles
+import nl.knaw.dans.easy.bag2deposit.{ InvalidBagException, TargetDataStation }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.lang.StringUtils.{ isBlank, isNotBlank }
 

@@ -19,12 +19,11 @@ import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ DdmSupport, FileSystemSupport, SchemaSupport, XmlSupport }
 import nl.knaw.dans.easy.bag2deposit.TargetDataStation.SSH
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
-import nl.knaw.dans.easy.bag2deposit.{ AmdTransformer, BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, TargetDataStation, loadXml, parseCsv }
+import nl.knaw.dans.easy.bag2deposit.{ AmdTransformer, InvalidBagException, TargetDataStation, loadXml, parseCsv }
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.net.URI
 import java.nio.charset.Charset
 import java.util.UUID
 import scala.util.{ Failure, Success, Try }

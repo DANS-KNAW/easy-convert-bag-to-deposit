@@ -15,8 +15,6 @@
  */
 package nl.knaw.dans.easy.bag2deposit
 
-import java.io.{ StringWriter, Writer }
-import java.util.UUID
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, BagIndexSupport, BagSupport }
 import nl.knaw.dans.easy.bag2deposit.TargetDataStation.archaeology
@@ -27,6 +25,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import scalaj.http.HttpResponse
 
+import java.io.{ StringWriter, Writer }
+import java.util.UUID
 import scala.util.Success
 import scala.xml.XML
 
