@@ -16,39 +16,36 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.Fixture.{DdmSupport, FileSystemSupport, SchemaSupport, XmlSupport}
+import nl.knaw.dans.easy.bag2deposit.Fixture._
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
-import nl.knaw.dans.easy.bag2deposit.{AmdTransformer, BagIndex, Configuration, EasyConvertBagToDepositApp, InvalidBagException, loadXml, parseCsv}
+import nl.knaw.dans.easy.bag2deposit.{ InvalidBagException, loadXml, parseCsv }
 import org.apache.commons.csv.CSVRecord
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.net.URI
 import java.nio.charset.Charset
 import java.util.UUID
-import scala.util.{Failure, Success, Try}
-import scala.xml.XML
-import scala.xml.Utility
+import scala.util.{ Failure, Success, Try }
+import scala.xml.{ Utility, XML }
 
-class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Matchers with DdmSupport with FileSystemSupport {
-  private val cfgDir: File = File("src/main/assembly/dist/cfg")
-  private val ddmTransformer: DdmTransformer = new DdmTransformer(cfgDir, Map.empty)
-  private val amdTransformer = new AmdTransformer(cfgDir / "archaeology" / "account-substitutes.csv")
+class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Matchers with DdmSupport with FileSystemSupport with AppConfigSupport {
+  private val cfgDir = File("src/main/assembly/dist/cfg")
+  private val archaeologyCfgDir: File = cfgDir / "archaeology"
 
   override val schema = "https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"
 
   "ABR-complex" should "be valid" in {
-    val records = parseCsv(cfgDir / "ABR-complex.csv", AbrRewriteRule.nrOfHeaderLines)
+    val records = parseCsv(archaeologyCfgDir / "ABR-complex.csv", AbrRewriteRule.nrOfHeaderLines)
     records.map(tryUuid).filter(_.isFailure) shouldBe empty
     getDuplicates(records) shouldBe empty
-    records.size shouldBe AbrRewriteRule.subjectRewriteRule(cfgDir).map.size
+    records.size shouldBe AbrRewriteRule.subjectRewriteRule(archaeologyCfgDir).map.size
   }
 
   "ABR-period" should "be valid" in {
-    val records = parseCsv(cfgDir / "ABR-period.csv", AbrRewriteRule.nrOfHeaderLines)
+    val records = parseCsv(archaeologyCfgDir / "ABR-period.csv", AbrRewriteRule.nrOfHeaderLines)
     getDuplicates(records) shouldBe empty
     records.map(tryUuid).filter(_.isFailure) shouldBe empty
-    records.size shouldBe AbrRewriteRule.temporalRewriteRule(cfgDir).map.size
+    records.size shouldBe AbrRewriteRule.temporalRewriteRule(archaeologyCfgDir).map.size
   }
 
   private def tryUuid(r: CSVRecord) = Try(UUID.fromString(r.get(2)))
@@ -116,25 +113,10 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:dcmiMetadata>
     )
 
-    val app = new EasyConvertBagToDepositApp(Configuration(
-      "test version",
-      dansDoiPrefixes = "10.17026/,10.5072/".split(","),
-      dataverseIdAuthority = "10.80270",
-      bagIndex = BagIndex(new URI("http://localhost:20120/")),
-      bagSequence = false,
-      ddmTransformer = ddmTransformer,
-      amdTransformer = amdTransformer,
-      fedoraProvider = None,
-      maybePreStagedProvider = None,
-      agreementsPath = cfgDir / "agreements"
-    ))
-
     // a few steps of EasyConvertBagToDepositApp.addPropsToBags
     val datasetId = "easy-dataset:123"
-    ddmTransformer.transform(ddmIn, datasetId).map(normalized)
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, datasetId).map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
-    app.registerMatchedReports(datasetId, expectedDDM \\ "reportNumber")
-    app.logMatchedReports() // once for all datasets
 
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())
@@ -148,7 +130,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:dcmiMetadata>
     )
 
-    ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Failure(InvalidBagException("temporal rabarbera not found; subject barbapappa not found"))
   }
 
@@ -197,7 +179,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:dcmiMetadata>
     )
     val datasetId = "easy-dataset:123"
-    ddmTransformer.transform(ddmIn, datasetId).map(normalized)
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, datasetId).map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
 
     assume(schemaIsAvailable)
@@ -213,12 +195,8 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           <dcterms:relation>https://rabarbera</dcterms:relation>
         </ddm:dcmiMetadata>
     )
-    val transformer = new DdmTransformer(
-      cfgDir,
-      Map.empty,
-    )
 
-    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(ddm(
         title = "blabla",
         audience = "D37000",
@@ -260,7 +238,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:dcmiMetadata>
     )
     val datasetId = "eas-dataset:123"
-    ddmTransformer.transform(ddmIn, datasetId).map(normalized)
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, datasetId).map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
 
     // TODO manually check logging of not mapped language fields
@@ -287,7 +265,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())
 
-    ddmTransformer.transform(ddmIn, "eas-dataset:123").map(normalized)
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "eas-dataset:123").map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
   }
 
@@ -307,7 +285,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
     )
-    ddmTransformer.transform(ddmIn, "eas-dataset:123").map(normalized)
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "eas-dataset:123").map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
   }
 
@@ -323,7 +301,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
     )
-    ddmTransformer.transform(ddmIn, "eas-dataset:123").map(normalized)
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "eas-dataset:123").map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
   }
 
@@ -339,7 +317,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
     )
-    ddmTransformer.transform(ddmIn, "eas-dataset:123").map(normalized)
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "eas-dataset:123").map(normalized)
       .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
   }
 
@@ -354,7 +332,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:dcmiMetadata>
     )
 
-    ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddmExpected))
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddmExpected))
     // TODO manually check logging of briefrapport
   }
 
@@ -375,7 +353,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:dcmiMetadata>
     )
 
-    ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(expectedDdm))
   }
 
@@ -408,7 +386,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:dcmiMetadata>
     )
     // TODO these titles don't show up in target/test/TitlesSpec/matches-per-rce.txt
-    ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(expectedDdm))
   }
 
@@ -439,7 +417,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:dcmiMetadata>
     )
 
-    ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(expectedDdm))
   }
 
@@ -464,7 +442,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:dcmiMetadata>
     )
 
-    ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(expectedDdm))
   }
 
@@ -486,7 +464,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:dcmiMetadata>
     )
 
-    ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(expectedDdm))
   }
 
@@ -496,10 +474,8 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       <ddm:profile>{ profile }</ddm:profile>
       <ddm:dcmiMetadata/>
     )
-    val transformer = new DdmTransformer(
-      cfgDir,
-      Map("easy-dataset:123" -> Seq(<inCollection>mocked</inCollection>))
-    )
+    val inOneCollection = Map("easy-dataset:123" -> Seq(<inCollection>mocked</inCollection>))
+    val transformer = new DdmTransformer(cfgDir, "archaeology", inOneCollection)
 
     transformer.transform(ddmIn, "easy-dataset:456").map(normalized) shouldBe Success(normalized(ddm(
       <ddm:profile>{ profile }</ddm:profile>
@@ -524,10 +500,8 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       <ddm:profile>{ profile }</ddm:profile>
       <ddm:dcmiMetadata/>
     )
-    val transformer = new DdmTransformer(
-      cfgDir,
-      Map("easy-dataset:123" -> Seq(<inCollection>mocked</inCollection>))
-    )
+    val inOneCollection = Map("easy-dataset:123" -> Seq(<inCollection>mocked</inCollection>))
+    val transformer = new DdmTransformer(cfgDir, "archaeology", inOneCollection)
 
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
       ddm(
@@ -551,10 +525,8 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           <dct:alternative>blabla rabarbera ratjetoe</dct:alternative>
         </ddm:dcmiMetadata>
     )
-    val transformer = new DdmTransformer(
-      cfgDir,
-      Map("easy-dataset:123" -> Seq(<inCollection>mocked1</inCollection>, <inCollection>mocked2</inCollection>))
-    )
+    val inTwoCollections = Map("easy-dataset:123" -> Seq(<inCollection>mocked1</inCollection>, <inCollection>mocked2</inCollection>))
+    val transformer = new DdmTransformer(cfgDir, "archaeology", inTwoCollections)
 
     transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
       ddm(
@@ -582,8 +554,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:dcmiMetadata>
       </ddm:DDM>
     }
-    val transformer = new DdmTransformer(cfgDir, Map.empty)
-    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(ddmExpected))
   }
   it should "recognize rightsHolder" in {
@@ -594,8 +565,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           <dct:rightsHolder>Some Body</dct:rightsHolder>
         </ddm:dcmiMetadata>
     )
-    val transformer = new DdmTransformer(cfgDir, Map.empty)
-    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(ddmIn))
   }
   it should "recognize rightsHolder in a role" in {
@@ -611,8 +581,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           </dcx-dai:contributorDetails>
         </ddm:dcmiMetadata>
     )
-    val transformer = new DdmTransformer(cfgDir, Map.empty)
-    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(ddmIn))
   }
   it should "split archis nrs" in {
@@ -627,9 +596,8 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           <dct:identifier xsi:type="id-type:ARCHIS-ONDERZOEK">443456; 789; </dct:identifier>
         </ddm:dcmiMetadata>
     )
-    val transformer = new DdmTransformer(cfgDir, Map.empty)
 
-    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(
       ddm(title = "blabla", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
           <dct:identifier xsi:type="id-type:ARCHIS-VONDSTMELDING" scheme="blabla">411047</dct:identifier>
@@ -659,7 +627,6 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       )))
   }
   it should "create type-id from archis description" in {
-    val transformer = new DdmTransformer(cfgDir, Map.empty)
     val archisIds = File("src/test/resources/possibleArchaeologyIdentifiers.txt")
       .lines(Charset.forName("UTF-8"))
       .filter(_.toLowerCase.contains("archis"))
@@ -667,19 +634,18 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     val ddmIn = ddm(title = "blabla", audience = "D37000", dcmi =
           <ddm:dcmiMetadata>{ archisIds }</ddm:dcmiMetadata>
     )
-    val triedNode = transformer.transform(ddmIn, "easy-dataset:123")
+    val triedNode = testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123")
     val ddmOut = triedNode.getOrElse(fail("not expecting a conversion failure"))
     val strings = (ddmOut \\ "identifier").map(_.text)
     archisIds.size shouldNot be(strings.size)
     strings.filter(_.matches(".*[^0-9].*")) shouldBe Seq("10HZ-18 (Objectcode Archis)", "36141 (ARCHIS rapportnummer)", " 405800 (Archis nummers)", "http://livelink.archis.nl/Livelink/livelink.exe?func=ll&objId=4835986&objAction=browse (URI)", "66510 (Archisnummer)", "ARCHIS2: 63389", "Onderzoeksnaam Archis: 4042 Den Haag", "Objectnummer Archis: 1121031", "Archis2 nummer 65495", "3736 (RAAP) (Archis art. 41)", "6663 (ADC) (Archis art. 41)", "2866 (RAAP) (Archis art. 41)", "7104 (ADC) (Archis art. 41)", "16065 (BeVdG) (Archis art. 41)", "Archis2: CIS-code: 25499 (Tjeppenboer) en 25500 (Hilaard)")
   }
   it should "add dans license" in {
-    val transformer = new DdmTransformer(cfgDir, Map.empty)
     val ddmIn = ddm(
       <ddm:profile><ddm:accessRights>REQUEST_PERMISSION</ddm:accessRights></ddm:profile>
           <ddm:dcmiMetadata/>
     )
-    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddm(
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddm(
       <ddm:profile><ddm:accessRights>REQUEST_PERMISSION</ddm:accessRights></ddm:profile>
           <ddm:dcmiMetadata>
             <dcterms:license xsi:type="dcterms:URI">http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSLicence.pdf</dcterms:license>
@@ -690,8 +656,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
   it should "replace funder role" in {
     val ddmIn = XML.loadFile("src/test/resources/funder/ddm-in.xml")
     val expectedDDM = XML.loadFile("src/test/resources/funder/ddm-out.xml")
-    val triedDdm = new DdmTransformer(File("src/main/assembly/dist/cfg"), Map.empty)
-      .transform(ddmIn, "easy-dataset:123")
+    val triedDdm = testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123")
     triedDdm.map(normalized) shouldBe Success(normalized(expectedDDM))
     assume(schemaIsAvailable)
     validate(ddmIn) should matchPattern {
@@ -710,13 +675,26 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       if e.getMessage.endsWith("The content of elements must consist of well-formed character data or markup.") =>
     }
   }
-  it should "keep the original license" in {
-    val transformer = new DdmTransformer(cfgDir, Map.empty)
+  it should "keep the original license for archaeology" in {
     val ddmIn = ddm(
       <ddm:profile><ddm:accessRights>OPEN_ACCESS_FOR_REGISTERED_USERS</ddm:accessRights></ddm:profile>
           <ddm:dcmiMetadata><dcterms:license xsi:type="dcterms:URI">http://does.not.exist.dans.knaw.nl</dcterms:license></ddm:dcmiMetadata>
     )
-    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddm(
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddm(
+      <ddm:profile><ddm:accessRights>OPEN_ACCESS_FOR_REGISTERED_USERS</ddm:accessRights></ddm:profile>
+          <ddm:dcmiMetadata>
+            <dcterms:license xsi:type="dcterms:URI">http://does.not.exist.dans.knaw.nl</dcterms:license>
+            <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+          </ddm:dcmiMetadata>
+    )))
+  }
+
+  it should "keep the original license for SSH" in {
+    val ddmIn = ddm(
+      <ddm:profile><ddm:accessRights>OPEN_ACCESS_FOR_REGISTERED_USERS</ddm:accessRights></ddm:profile>
+          <ddm:dcmiMetadata><dcterms:license xsi:type="dcterms:URI">http://does.not.exist.dans.knaw.nl</dcterms:license></ddm:dcmiMetadata>
+    )
+    testConfig("SSH").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddm(
       <ddm:profile><ddm:accessRights>OPEN_ACCESS_FOR_REGISTERED_USERS</ddm:accessRights></ddm:profile>
           <ddm:dcmiMetadata>
             <dcterms:license xsi:type="dcterms:URI">http://does.not.exist.dans.knaw.nl</dcterms:license>
@@ -731,10 +709,11 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     val (amdIn, _, _) = loadXml(File("src/test/resources/DD-857/amd.xml"))
       .getOrElse(fail("could not load test data"))
 
+
     // a few steps of EasyConvertBagToDepositApp.addProps
-    val ddmOut = ddmTransformer.transform(ddmIn, "easy-dataset:123")
+    val ddmOut = testConfig("SSH").ddmTransformer.transform(ddmIn, "easy-dataset:123")
       .getOrElse(fail("no DDM returned"))
-    val amdOut = amdTransformer.transform(amdIn, ddmOut \\ "created")
+    val amdOut = testConfig("SSH").amdTransformer.transform(amdIn, ddmOut \\ "created")
       .getOrElse(fail("no AMD returned"))
 
     normalized(amdIn) shouldBe normalized(amdOut)
@@ -751,12 +730,8 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
           <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
     )
-    val transformer = new DdmTransformer(
-      cfgDir,
-      Map.empty,
-    )
 
-    transformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe
       Success(normalized(ddm(
         title = "blabla",
         audience = "D37000",

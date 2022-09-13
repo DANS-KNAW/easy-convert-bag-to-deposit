@@ -21,21 +21,22 @@ import nl.knaw.dans.easy.bag2deposit.ddm.DistinctTitlesRewriteRule.distinctTitle
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
 import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.logBriefRapportTitles
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.apache.commons.lang.StringUtils.{isBlank, isNotBlank}
+import org.apache.commons.lang.StringUtils.{ isBlank, isNotBlank }
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 import scala.xml._
-import scala.xml.transform.{RewriteRule, RuleTransformer}
+import scala.xml.transform.{ RewriteRule, RuleTransformer }
 
-class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.empty) extends DebugEnhancedLogging {
+class DdmTransformer(cfgDir: File, target: String, collectionsMap: Map[String, Seq[Elem]] = Map.empty) extends DebugEnhancedLogging {
   trace(())
-  val reportRewriteRule: ReportRewriteRule = ReportRewriteRule(cfgDir)
-  private val acquisitionRewriteRule = AcquisitionRewriteRule(cfgDir)
+  private val archaeologyCfgDir: File = cfgDir / "archaeology"
+  lazy val reportRewriteRule: ReportRewriteRule = ReportRewriteRule(archaeologyCfgDir)
+  private lazy val acquisitionRewriteRule = AcquisitionRewriteRule(archaeologyCfgDir)
   private val relationRewriteRule = RelationRewriteRule(cfgDir)
   private val languageRewriteRule = LanguageRewriteRule(cfgDir / "languages.csv")
 
   // produces additional content for DCMI
-  private val archaeologyProfileRuleTransformer = new RuleTransformer(
+  private lazy val archaeologyProfileRuleTransformer = new RuleTransformer(
     acquisitionRewriteRule,
     reportRewriteRule,
     relationRewriteRule,
@@ -45,8 +46,8 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
     SplitNrRewriteRule,
     acquisitionRewriteRule,
     reportRewriteRule,
-    AbrRewriteRule.temporalRewriteRule(cfgDir),
-    AbrRewriteRule.subjectRewriteRule(cfgDir),
+    AbrRewriteRule.temporalRewriteRule(archaeologyCfgDir),
+    AbrRewriteRule.subjectRewriteRule(archaeologyCfgDir),
     ZeroPosRewriteRule,
     DatesOfCollectionRewriteRule(newDcmiNodes),
     languageRewriteRule,
@@ -133,8 +134,7 @@ class DdmTransformer(cfgDir: File, collectionsMap: Map[String, Seq[Elem]] = Map.
 
     val profile = ddmIn \ "profile"
 
-    if (!(profile \ "audience").text.contains("D37000")) {
-      // not archaeological
+    if (target != "archaeology") {
       val transformer = standardRuleTransformer(newDcmiNodes, (profile \ "title").text)
       Success(transformer(ddmIn))
     }

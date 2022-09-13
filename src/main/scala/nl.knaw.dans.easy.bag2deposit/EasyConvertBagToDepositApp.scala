@@ -17,20 +17,16 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import better.files.File.CopyOptions
-import gov.loc.repository.bagit.domain.Bag
-import nl.knaw.dans.easy.bag2deposit.BagFacade.sha1Manifest
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
 import nl.knaw.dans.easy.bag2deposit.FoXml.getAmd
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.compare
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
-import java.io.{FileNotFoundException, IOException}
+import java.io.{ FileNotFoundException, IOException }
 import java.nio.charset.Charset
 import java.nio.file.Paths
-import scala.collection.JavaConverters._
-import scala.collection.mutable.ListBuffer
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 import scala.xml._
 
 class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnhancedLogging {
@@ -45,33 +41,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       .map(addProps(properties, maybeOutputDir))
       .collectFirst { case Failure(e) => Failure(e) }
       .getOrElse(Success(s"No fatal errors")) // TODO show number of false/true values
-    logMatchedReports()
     triedString
-  }
-
-  private val reportMatches = configuration.ddmTransformer.reportRewriteRule.reportMap.map(reportCfg =>
-    reportCfg.uuid -> new ListBuffer[String]()
-  ).toMap
-
-  def registerMatchedReports(urn: String, reports: NodeSeq): Unit = {
-    trace(urn)
-    reports.foreach { node =>
-      val reportUuid = (node \@ "valueURI").replaceAll(".*/", "")
-      Try(reportMatches(reportUuid) += s"\t$urn\t${ node.text }")
-        .getOrElse(logger.error(s"Could not register matched report $urn $reportUuid ${ node.text }"))
-    }
-  }
-
-  def logMatchedReports(): Unit = {
-    val uuidToReportLabel = configuration.ddmTransformer.reportRewriteRule.reportMap
-      .map(r => r.uuid -> r.label).toMap
-    reportMatches.foreach { case (reportUuid, foundReports) =>
-      val reports = foundReports.toList
-      if (reports.nonEmpty) {
-        val label = uuidToReportLabel.getOrElse(reportUuid, reportUuid)
-        logger.info(s"$label\n${ reports.mkString("\n") }")
-      }
-    }
   }
 
   private val provenance = new Provenance(
@@ -102,7 +72,6 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       depositProps <- depositPropertiesFactory.create(bagInfo, ddmIn)
       datasetId = depositProps.getString("identifier.fedora", "")
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
-      _ = registerMatchedReports(datasetId, ddmOut \\ "reportNumber")
       oldDcmi = (ddmIn \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       amdFile = metadata / "amd.xml"
@@ -120,20 +89,18 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       ))
       _ = trace(bagInfo)
       doi = depositProps.getString("identifier.doi")
-      preStaged <- getPreStaged(bag, bagDir, doi, bagInfo.bagSeqNr)
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = depositProps.setProperty("depositor.userId", (amdOut \ "depositorId").text)
       // so far collecting changes
       _ = depositProps.save((bagParentDir / "deposit.properties").toJava) // N.B. the first write action
       _ = ddmFile.writeText(ddmOut.serialize)
       _ = amdFile.writeText(amdOut.serialize)
-      _ = if (preStaged.nonEmpty) PreStaged.write(preStaged, metadata)
       _ = (metadata / "provenance.xml").writeText(provenanceXml.serialize)
       _ = trace("updating metadata")
       _ <- BagFacade.updateMetadata(bag)
       _ = trace("updating payload manifest")
       _ <- copyMigrationFiles(metadata, migration, fromVault)
-      _ <- BagFacade.updatePayloadManifests(bag, Paths.get("data/easy-migration"), preStaged)
+      _ <- BagFacade.updatePayloadManifests(bag, Paths.get("data/easy-migration"))
       _ = trace("writing payload manifests")
       _ <- BagFacade.writePayloadManifests(bag)
       _ = trace("updating tag manifest")
@@ -155,29 +122,11 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       Failure(e)
   }
 
-  private def getPreStaged(bag: Bag, bagDir: File, doi: String, version: Int = 1): Try[Seq[PreStaged]] = {
-    configuration.maybePreStagedProvider.map { provider =>
-      val shaToPath = sha1Manifest(bag.getPayLoadManifests).asScala
-        .map { case (path, sha) => sha -> bagDir.relativize(File(path)) }.toMap
-      trace(doi)
-      for {
-        migratedPayloadFiles <- provider.get(doi, version) // paths from migration info
-        existingMigratedFiles = migratedPayloadFiles.filter(p => shaToPath.keySet.contains(p.checksumValue))
-        _ = if (migratedPayloadFiles.size != existingMigratedFiles.size)
-              logger.warn(s"no longer found previously migrated files: ${ migratedPayloadFiles.diff(existingMigratedFiles) }")
-        _ = trace(shaToPath)
-        _ = trace(existingMigratedFiles)
-        preStaged = existingMigratedFiles // resulting in paths from manifest
-          .map(r => r.copy(path = shaToPath(r.checksumValue)))
-      } yield preStaged
-    }.getOrElse(Success(Seq.empty))
-  }
-
   private def getAmdXml(datasetId: String, amdFile: File): Try[Node] = {
     if (amdFile.exists)
       loadXml(amdFile).map(_._1)
     else {
-      configuration.fedoraProvider.map { provider =>
+      configuration.maybeFedoraProvider.map { provider =>
         provider.loadFoXml(datasetId).flatMap(getAmd)
       }.getOrElse(Failure(new IllegalStateException(s"no AMD for $datasetId and no fedora configured")))
     }

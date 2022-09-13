@@ -16,23 +16,22 @@
 package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
-import better.files.File.root
 import nl.knaw.dans.easy.bag2deposit.collections.Collection.getCollectionsMap
 import nl.knaw.dans.easy.bag2deposit.collections.FedoraProvider
 import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer
-import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.apache.commons.configuration.PropertiesConfiguration
-
-import java.net.URI
 
 case class Configuration(version: String,
                          dansDoiPrefixes: Seq[String],
                          dataverseIdAuthority: String,
                          bagIndex: BagIndex,
                          bagSequence: Boolean,
-                         ddmTransformer: DdmTransformer,
-                         amdTransformer: AmdTransformer,
-                         fedoraProvider: Option[FedoraProvider],
-                         maybePreStagedProvider: Option[PreStagedProvider],
-                         agreementsPath: File,
+                         maybeFedoraProvider: Option[FedoraProvider],
+                         cfgPath: File,
+                         targetDataStation: String,
                         )
+{
+  private val targetCfgPath = cfgPath / targetDataStation
+  val agreementsPath: File = cfgPath / "agreements"
+  val ddmTransformer = new DdmTransformer(cfgPath, targetDataStation, getCollectionsMap(targetCfgPath))
+  val amdTransformer = new AmdTransformer(targetCfgPath / "account-substitutes.csv")
+}

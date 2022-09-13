@@ -17,9 +17,7 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import better.files.File.root
-import nl.knaw.dans.easy.bag2deposit.collections.Collection.getCollectionsMap
 import nl.knaw.dans.easy.bag2deposit.collections.FedoraProvider
-import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer
 import nl.knaw.dans.lib.error.TryExtensions
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration
@@ -30,46 +28,44 @@ import scala.language.reflectiveCalls
 object Command extends App with DebugEnhancedLogging {
   type FeedBackMessage = String
   private val home = File(System.getProperty("app.home"))
-  val cfgPath = Seq(
+  private val cfgPath = Seq(
     root / "etc" / "opt" / "dans.knaw.nl" / "easy-convert-bag-to-deposit",
     home / "cfg")
     .find(_.exists)
     .getOrElse { throw new IllegalStateException("No configuration directory found") }
-  val properties = {
+  private val properties = {
     new PropertiesConfiguration() {
       setDelimiterParsingDisabled(true)
       load((cfgPath / "application.properties").toJava)
     }
   }
-  val version = (home / "bin" / "version").contentAsString.stripLineEnd
-  val agent = properties.getString("http.agent", s"easy-convert-bag-to-deposit/$version")
+  private val version = (home / "bin" / "version").contentAsString.stripLineEnd
+  private val agent = properties.getString("http.agent", s"easy-convert-bag-to-deposit/$version")
   logger.info(s"setting http.agent to $agent")
   System.setProperty("http.agent", agent)
 
-  val commandLine: CommandLineOptions = new CommandLineOptions(args, version) {
+  private val commandLine: CommandLineOptions = new CommandLineOptions(args, version) {
     verify()
+  }
+  {
+    val dir = cfgPath / commandLine.target()
+    if (!dir.isDirectory)
+      throw new IllegalArgumentException(s"$dir should be an existing directory: ${ commandLine.target.name }")
   }
   private val bagParentDirs = commandLine.bagParentDir.map(Iterator(_))
     .getOrElse(commandLine.bagGrandParentDir.map(_.children)
       .getOrElse(Iterator.empty))
-  val fedoraProvider = FedoraProvider(properties)
 
-  private val collectionMap = getCollectionsMap(cfgPath / commandLine.target())
-  val configuration = Configuration(
+  private val configuration = Configuration(
     version,
     dansDoiPrefixes = properties.getStringArray("dans-doi.prefixes"),
     dataverseIdAuthority = properties.getString("dataverse.id-authority"),
     bagIndex = BagIndex(new URI(properties.getString("bag-index.url"))),
     bagSequence = commandLine.bagSequence(),
-    ddmTransformer = new DdmTransformer(cfgPath, collectionMap),
-    amdTransformer = new AmdTransformer(cfgPath / commandLine.target() / "account-substitutes.csv"),
-    fedoraProvider = fedoraProvider,
-    maybePreStagedProvider = if (commandLine.preStaged())
-                               Some(PreStagedProvider(new URI(properties.getString("migration-info.url"))))
-                             else None,
-    agreementsPath = cfgPath / "agreements"
+    maybeFedoraProvider = FedoraProvider(properties),
+    cfgPath,
+    commandLine.target(),
   )
-  trace(configuration.maybePreStagedProvider)
   private val propertiesFactory = DepositPropertiesFactory(
     configuration,
     commandLine.idType(),

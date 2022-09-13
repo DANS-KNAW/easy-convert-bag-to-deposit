@@ -16,7 +16,7 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
-import nl.knaw.dans.easy.bag2deposit.Fixture.{ FileSystemSupport, FixedCurrentDateTimeSupport, SchemaSupport, XmlSupport }
+import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, FileSystemSupport, FixedCurrentDateTimeSupport, SchemaSupport, XmlSupport }
 import nl.knaw.dans.easy.bag2deposit.{ AmdTransformer, loadXml }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalatest.flatspec.AnyFlatSpec
@@ -25,14 +25,13 @@ import org.scalatest.matchers.should.Matchers
 import scala.util.{ Failure, Success }
 import scala.xml.{ Utility, XML }
 
-class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport {
+class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport with AppConfigSupport {
   // use the raw github location while upgraded schema is not yet published, your own fork if not yet merged.
   private val schemaRoot = "https://easy.dans.knaw.nl/schemas"
   override val schema: String = schemaRoot + "/bag/metadata/prov/provenance.xsd"
   private val schemaLocation = s"http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ $schema"
   private val ddmSchema = "http://easy.dans.knaw.nl/schemas/md/ddm/"
   private val amdSchema = "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/"
-  private val transformer = new DdmTransformer(cfgDir = File("src/main/assembly/dist/cfg"))
 
   // FixedCurrentDateTimeSupport is not effective for a val
   private def provenanceBuilder = Provenance("EasyConvertBagToDepositApp", "1.0.5", schemaRoot)
@@ -263,7 +262,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       .getOrElse(fail("could not load test data"))
 
     // a few steps of EasyConvertBagToDepositApp.addProps
-    val ddmOut = transformer.transform(ddmIn, "easy-dataset:123")
+    val ddmOut = testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123")
       .getOrElse(fail("no DDM returned"))
 
     Provenance.compare(

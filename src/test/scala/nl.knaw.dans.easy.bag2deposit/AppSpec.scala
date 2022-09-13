@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.BagSource._
-import nl.knaw.dans.easy.bag2deposit.Fixture.{AppConfigSupport, FileSystemSupport, SchemaSupport, XmlSupport}
+import nl.knaw.dans.easy.bag2deposit.Fixture.{ AppConfigSupport, FileSystemSupport, SchemaSupport, XmlSupport }
 import nl.knaw.dans.easy.bag2deposit.IdType._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -25,7 +25,7 @@ import scalaj.http.HttpResponse
 
 import java.nio.charset.Charset
 import scala.language.postfixOps
-import scala.util.{Success, Try}
+import scala.util.{ Success, Try }
 import scala.xml.XML
 
 class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSupport with FileSystemSupport with SchemaSupport {
@@ -38,6 +38,8 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
   private val validUUID = "04e638eb-3af1-44fb-985d-36af12fccb2d"
   private val vaultUUID = "87151a3a-12ed-426a-94f2-97313c7ae1f2"
 
+  private val archaeology = "archaeology"
+
   "addPropsToBags" should "move valid exports" in {
     val delegate = mock[MockBagIndex]
     val noBaseBagUUID = "87151a3a-12ed-426a-94f2-97313c7ae1f2"
@@ -47,10 +49,8 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
       new HttpResponse[String]("123", 200, Map.empty)
     (delegate.execute(_: String)) expects s"bags/4722d09d-e431-4899-904c-0733cd773034" returning
       new HttpResponse[String]("<result><bag-info><urn>urn:nbn:nl:ui:13-z4-f8cm</urn><doi>10.5072/dans-2xg-umq8</doi></bag-info></result>", 200, Map.empty)
-    val appConfig = testConfig(delegatingBagIndex(delegate), None)
+    val appConfig = testConfig(archaeology, delegatingBagIndex(delegate), None)
       .copy(bagSequence = true)
-    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty)
-    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 2) returning Success(Seq.empty)
 
     resourceBags.copyTo(testDir / "exports")
 
@@ -115,18 +115,17 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     assume(schemaIsAvailable)
     val xmlString = File("src/test/resources/encoding/provenance.xml")
       .contentAsString(Charset.forName("UTF-8"))
-//      .replaceAll(" " + defaultLocation, " " + actualLocation)
+    //      .replaceAll(" " + defaultLocation, " " + actualLocation)
     validate(XML.loadString(xmlString))
   }
 
-  "addPropsToBags" should "move valid exports and skip previous bag in sequence" in {
+  it should "move valid exports and skip previous bag in sequence" in {
     val delegate = mock[MockBagIndex]
     val noBaseBagUUID = "87151a3a-12ed-426a-94f2-97313c7ae1f2"
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
       new HttpResponse[String]("123", 200, Map.empty)
-    val appConfig = testConfig(delegatingBagIndex(delegate), None)
+    val appConfig = testConfig(archaeology, delegatingBagIndex(delegate), None)
       .copy(bagSequence = false)
-    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty)
 
     resourceBags.copyTo(testDir / "exports")
 
@@ -191,7 +190,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     assume(schemaIsAvailable)
     val xmlString = File("src/test/resources/encoding/provenance.xml")
       .contentAsString(Charset.forName("UTF-8"))
-//      .replaceAll(" " + defaultLocation, " " + actualLocation)
+    //      .replaceAll(" " + defaultLocation, " " + actualLocation)
     validate(XML.loadString(xmlString))
   }
 
@@ -241,8 +240,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
 
     val fedoraProvider = mock[MockFedoraProvider]
     (fedoraProvider.loadFoXml _).expects("easy-dataset:162288").returning(Try(loadFoXmlResult)).once()
-    val appConfig = testConfig(delegatingBagIndex(delegate), Some(fedoraProvider))
-    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty)
+    val appConfig = testConfig(archaeology, delegatingBagIndex(delegate), Some(fedoraProvider))
 
     (resourceBags / validUUID).copyTo(testDir / "exports" / validUUID)
     (testDir / "exports" / validUUID / "bag-revision-1" / "metadata" / "amd.xml")
@@ -263,7 +261,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
       new HttpResponse[String]("123", 200, Map.empty)
 
-    val appConfig = testConfig(delegatingBagIndex(delegate), Some(mock[MockFedoraProvider]))
+    val appConfig = testConfig(archaeology, delegatingBagIndex(delegate), Some(mock[MockFedoraProvider]))
 
     val bagDir = (resourceBags / validUUID).copyTo(testDir / "exports" / validUUID)
       .children.toList.head
@@ -279,86 +277,15 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     outputDir.list shouldBe empty
   }
 
-  it should "remove pre-staged files" in {
-
-    val preStagedProvider = {
-      val sampleJson: String =
-        """[
-          |  {
-          |    "label": "stringABC",
-          |    "directoryLabel": "data",
-          |    "versionSequenceNumber": 1,
-          |    "prestagedFile": {
-          |      "storageIdentifier": "123",
-          |      "fileName": "foo.txt",
-          |      "mimeType": "text/plain",
-          |      "checksum": {
-          |        "@type": "sha1",
-          |        "@value": "62cdb7020ff920e5aa642c3d4066950dd1f01f4d"
-          |      },
-          |    }
-          |  }
-          |]""".stripMargin
-      val delegatePreStagedProvider = mock[PreStagedProvider]
-      (delegatePreStagedProvider.execute(_: String)
-        ) expects "/datasets/:persistentId/seq/1/basic-file-metas?persistentId=doi:10.5072/dans-2xg-umq8" returning
-        HttpResponse(sampleJson, 200, Map.empty)
-      delegatingPreStagedProvider(delegatePreStagedProvider)
-    }
-    val bagIndex = {
-      val delegateBagIndex = mock[MockBagIndex]
-      (delegateBagIndex.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
-        new HttpResponse[String]("123", 200, Map.empty)
-      delegatingBagIndex(delegateBagIndex)
-    }
-    val appConfig = testConfig(bagIndex, null, preStagedProvider)
-
-    (resourceBags / validUUID).copyTo(testDir / "exports" / validUUID)
-
-    new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
-      (testDir / "exports").children,
-      maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
-      DepositPropertiesFactory(appConfig, DOI, VAULT)
-    ) shouldBe Success("No fatal errors")
-
-    val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
-    (movedBag / "data").list.toSeq.map(_.name) shouldBe Seq("easy-migration") // and no real payload
-    (movedBag / "manifest-sha1.txt").contentAsString shouldNot include("foo.txt")
-  }
-
   it should "search migration-info with seq nr 2" in {
 
-    val preStagedProvider = {
-      val sampleJson: String =
-        """[
-          |  {
-          |    "label": "stringABC",
-          |    "directoryLabel": "data",
-          |    "versionSequenceNumber": 2,
-          |    "prestagedFile": {
-          |      "storageIdentifier": "123",
-          |      "fileName": "foo.txt",
-          |      "mimeType": "text/plain",
-          |      "checksum": {
-          |        "@type": "sha1",
-          |        "@value": "62cdb7020ff920e5aa642c3d4066950dd1f01f4d"
-          |      },
-          |    }
-          |  }
-          |]""".stripMargin
-      val delegatePreStagedProvider = mock[PreStagedProvider]
-      (delegatePreStagedProvider.execute(_: String)
-        ) expects "/datasets/:persistentId/seq/2/basic-file-metas?persistentId=doi:10.5072/dans-2xg-umq8" returning
-        HttpResponse(sampleJson, 200, Map.empty)
-      delegatingPreStagedProvider(delegatePreStagedProvider)
-    }
     val bagIndex = {
       val delegateBagIndex = mock[MockBagIndex]
       (delegateBagIndex.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
         new HttpResponse[String]("123", 200, Map.empty)
       delegatingBagIndex(delegateBagIndex)
     }
-    val appConfig = testConfig(bagIndex, null, preStagedProvider)
+    val appConfig = testConfig(archaeology, bagIndex, null)
 
     val depositDir = testDir / "exports" / validUUID
     (resourceBags / validUUID).copyTo(depositDir)
@@ -374,16 +301,43 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     ) shouldBe Success("No fatal errors")
 
     val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
-    (movedBag / "data").list.toSeq.map(_.name) shouldBe Seq("easy-migration") // and no real payload
-    (movedBag / "manifest-sha1.txt").contentAsString shouldNot include("foo.txt")
+    (movedBag / "data").list.toSeq.map(_.name) shouldBe Seq("easy-migration", "foo.txt")
+    (movedBag / "manifest-sha1.txt").contentAsString should include("foo.txt")
+  }
+
+  it should "search migration-info with seq nr 2 for SSH" in {
+
+    val bagIndex = {
+      val delegateBagIndex = mock[MockBagIndex]
+      (delegateBagIndex.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
+        new HttpResponse[String]("123", 200, Map.empty)
+      delegatingBagIndex(delegateBagIndex)
+    }
+    val appConfig = testConfig("SSH", bagIndex, null)
+
+    val depositDir = testDir / "exports" / validUUID
+    (resourceBags / validUUID).copyTo(depositDir)
+    val bagInfoFile = depositDir / "bag-revision-1" / "bag-info.txt"
+
+    // note that the number 2 reappears in sampleJson, the mocked result of the migration-info service
+    bagInfoFile.write(bagInfoFile.contentAsString + "Bag-Sequence-Number: 2\n")
+
+    new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
+      (testDir / "exports").children,
+      maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
+      DepositPropertiesFactory(appConfig, DOI, VAULT)
+    ) shouldBe Success("No fatal errors")
+
+    val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
+    (movedBag / "data").list.toSeq.map(_.name) shouldBe Seq("easy-migration", "foo.txt")
+    (movedBag / "manifest-sha1.txt").contentAsString should include("foo.txt")
   }
 
   it should "not add the emd to data/easy-migration in VAULT datasets" in {
     val delegate = mock[MockBagIndex]
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$validUUID" returning
       new HttpResponse[String]("123", 200, Map.empty)
-    val appConfig = testConfig(delegatingBagIndex(delegate), null)
-    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty)
+    val appConfig = testConfig(archaeology, delegatingBagIndex(delegate), null)
 
     val originalFilesXml =
       <files xmlns:dcterms="http://purl.org/dc/terms/" xmlns="http://easy.dans.knaw.nl/schemas/bag/metadata/files/">
@@ -430,9 +384,8 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
 
   it should "add the new data/easy-migration files into metadata/files.xml for FEDORA datasets" in {
     val delegate = mock[MockBagIndex]
-    val appConfig = testConfig(delegatingBagIndex(delegate), null)
+    val appConfig = testConfig(archaeology, delegatingBagIndex(delegate), null)
       .copy(bagSequence = true)
-    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty)
     val originalFilesXml =
       <files xmlns:dcterms="http://purl.org/dc/terms/" xmlns="http://easy.dans.knaw.nl/schemas/bag/metadata/files/">
         <file filepath="data/leeg.txt">
@@ -487,9 +440,8 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
       new HttpResponse[String]("123", 200, Map.empty)
     (delegate.execute(_: String)) expects s"bags/4722d09d-e431-4899-904c-0733cd773034" returning
       new HttpResponse[String]("<result><bag-info><urn>urn:nbn:nl:ui:13-z4-f8cm</urn><doi>10.5072/dans-2xg-umq8</doi></bag-info></result>", 200, Map.empty)
-    val appConfig = testConfig(delegatingBagIndex(delegate), null)
+    val appConfig = testConfig(archaeology, delegatingBagIndex(delegate), null)
       .copy(bagSequence = true)
-    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 2) returning Success(Seq.empty)
 
 
     (resourceBags / vaultUUID).copyTo(testDir / "exports" / vaultUUID)
@@ -508,8 +460,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
 
   it should "produce proper prefix in new files.xml elements AND apply preferred user ID" in {
     val delegate = mock[MockBagIndex]
-    val appConfig = testConfig(delegatingBagIndex(delegate), null)
-    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty)
+    val appConfig = testConfig(archaeology, delegatingBagIndex(delegate), null)
 
     val originalFilesXml =
       <files xmlns:dc="http://purl.org/dc/terms/" xmlns="http://easy.dans.knaw.nl/schemas/bag/metadata/files/">
@@ -568,8 +519,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
 
   it should "add default namespace for files.xml" in {
     val delegate = mock[MockBagIndex]
-    val appConfig = testConfig(delegatingBagIndex(delegate), null)
-    (appConfig.maybePreStagedProvider.get.get(_: String, _: Int)) expects(*, 1) returning Success(Seq.empty)
+    val appConfig = testConfig(archaeology, delegatingBagIndex(delegate), null)
 
     val originalFilesXml =
       <files xmlns:dc="http://purl.org/dc/terms/">
