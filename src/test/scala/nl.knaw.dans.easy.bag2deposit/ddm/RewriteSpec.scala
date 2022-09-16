@@ -26,7 +26,7 @@ import org.scalatest.matchers.should.Matchers
 import java.nio.charset.Charset
 import java.util.UUID
 import scala.util.{ Failure, Success, Try }
-import scala.xml.{ Utility, XML }
+import scala.xml.{ NodeBuffer, Utility, XML }
 
 class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Matchers with DdmSupport with FileSystemSupport with AppConfigSupport {
   private val cfgDir = File("src/main/assembly/dist/cfg")
@@ -246,6 +246,42 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
 
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())
+  }
+
+  "dates" should "should only extend in the profile in both transformers" in {
+    def profile (dates: NodeBuffer) = <dc:title>RAMA 10</dc:title><dct:description/> +: creator +: dates +: <ddm:audience>D11200</ddm:audience> +: openAccess
+    val inputProfile = profile(<ddm:created>2013</ddm:created><ddm:available>2017-03</ddm:available>)
+    val expectedProfile = profile(<ddm:created>2013-01-01</ddm:created><ddm:available>2017-03-01</ddm:available>)
+    val inputDDM = ddm(
+      <ddm:profile>{ inputProfile }</ddm:profile>
+      <ddm:dcmiMetadata>
+        <ddm:created>2012</ddm:created>
+      </ddm:dcmiMetadata>
+    )
+    val expectedStandardDDM = ddm(
+      <ddm:profile>{ expectedProfile }</ddm:profile>
+      <ddm:dcmiMetadata>
+        <ddm:created>2012</ddm:created>
+        <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+      </ddm:dcmiMetadata>
+    )
+    val expectedArchaeologyDDM = ddm(
+      <ddm:profile>{ expectedProfile }</ddm:profile>
+      <ddm:dcmiMetadata>
+        <ddm:created>2012</ddm:created>
+        <ddm:reportNumber schemeURI="https://data.cultureelerfgoed.nl/term/id/abr/7a99aaba-c1e7-49a4-9dd8-d295dbcc870e"
+                          valueURI="https://data.cultureelerfgoed.nl/term/id/abr/05c754af-7944-4971-8280-9e1b4e474a8d"
+                          subjectScheme="ABR Rapporten" reportNo="10">
+          RAMA 10
+        </ddm:reportNumber>
+        <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+      </ddm:dcmiMetadata>
+    )
+
+    testConfig("SSH").ddmTransformer.transform(inputDDM, "eas-dataset:123").map(normalized)
+      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedStandardDDM)
+    testConfig("archaeology").ddmTransformer.transform(inputDDM, "eas-dataset:123").map(normalized)
+      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedArchaeologyDDM)
   }
 
   "datesOfCollection" should "convert a proper dates pair" in {
