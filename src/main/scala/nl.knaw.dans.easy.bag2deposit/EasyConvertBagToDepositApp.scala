@@ -79,7 +79,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ = if (bagDir.isHidden && (amdIn \\ "datasetState").text != "DELETED")
         throw InvalidBagException(s"Inactive bag does not have state DELETED: $amdFile")
       fromVault = depositProps.getString("deposit.origin") == "VAULT"
-      amdOut <- configuration.amdTransformer.transform(amdIn, ddmOut \\ "created")
+      amdOut <- configuration.amdTransformer.transform(amdIn, ddmOut \ "profile" \ "created")
       agreementsFile = metadata / "depositor-info" / "agreements.xml"
       _ = checkAgreementsXml((amdOut \ "depositorId").text, agreementsFile)
       provenanceXml = provenance.collectChangesInXmls(Seq(
