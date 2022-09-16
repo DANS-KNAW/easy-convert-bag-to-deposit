@@ -59,8 +59,9 @@ class AmdTransformer(csvFile: File) {
   def transform(xmlIn: Node, ddmCreated: NodeSeq): Try[Node] = {
     if (ddmCreated.isEmpty)
       return Failure(InvalidBagException("no date created found in DDM"))
-    val yearCreated = yearOf(ddmCreated.text)
-    val dateTimeCreated =new DateTime(ddmCreated.text)
+    val ddmCreatedString = ddmCreated.head.text
+    val yearCreated = yearOf(ddmCreatedString)
+    val dateTimeCreated =new DateTime(ddmCreatedString)
       .toString(ISODateTimeFormat.dateTime())
     val changedToPublished = (xmlIn \\ "stateChangeDate")
       .filter(n => (n \ "toState").text.trim == "PUBLISHED")
