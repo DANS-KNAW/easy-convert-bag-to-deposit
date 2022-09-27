@@ -77,7 +77,7 @@ object Collection extends DebugEnhancedLogging {
     .withAutoFlush(true)
 
   private def parseSkosRecord(r: CSVRecord) = {
-    r.get("definition") ->
+    r.get("prefLabel") ->
         <ddm:inCollection
            schemeURI="https://vocabularies.dans.knaw.nl/collections"
            valueURI={ r.get("URI") }
