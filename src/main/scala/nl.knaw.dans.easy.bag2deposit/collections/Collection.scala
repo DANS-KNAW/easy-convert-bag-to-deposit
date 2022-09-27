@@ -111,6 +111,8 @@ object Collection extends DebugEnhancedLogging {
       {s"$name not found in collections skos"}
     </notImplemented>
     val elem = skosMap.getOrElse(name, default)
+    if (elem.toString().contains("not found"))
+      logger.error(s"$name not found in collections skos")
     collection.members.map(id => id -> elem)
   }
 
