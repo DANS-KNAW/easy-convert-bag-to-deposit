@@ -286,16 +286,21 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       ddmSchema
     )))
 
-    normalized((provenance \\ "file").head) shouldBe normalized(expected)
+    normalized((provenance \\ "file").head) shouldBe normalized((expected \\ "file").head)
 
     val actual = Utility.trim(provenance)
     actual.text shouldBe expected.text
-    closingTags(actual) shouldBe closingTags(<prov:provenance><prov:migration>{ expected }</prov:migration></prov:provenance>)
+    closingTags(actual) shouldBe closingTags(expected)
+
+    println(printer.format(Utility.trim(actual)))
 
     assume(schemaIsAvailable)
     // see PR #78 issue DD-806 claims it are only one or two datasets
     parseError(Utility.serialize(actual).toString()) shouldBe
-      """org.xml.sax.SAXParseException; lineNumber: 1; columnNumber: 1376; cvc-enumeration-valid: Value 'Funder' is not facet-valid with respect to enumeration '[ContactPerson, DataCollector, DataCurator, DataManager, Distributor, Editor, HostingInstitution, Other, Producer, ProjectLeader, ProjectManager, ProjectMember, RegistrationAgency, RegistrationAuthority, RelatedPerson, ResearchGroup, RightsHolder, Researcher, Sponsor, Supervisor, WorkPackageLeader]'. It must be a value from the enumeration."""
+    """org.xml.sax.SAXParseException; lineNumber: 1; columnNumber: 1376; cvc-enumeration-valid: Value 'Funder' is not facet-valid with respect to enumeration '[ContactPerson, DataCollector, DataCurator, DataManager, Distributor, Editor, HostingInstitution, Other, Producer, ProjectLeader, ProjectManager, ProjectMember, RegistrationAgency, RegistrationAuthority, RelatedPerson, ResearchGroup, RightsHolder, Researcher, Sponsor, Supervisor, WorkPackageLeader]'. It must be a value from the enumeration."""
+
+    parseError(Utility.serialize(expected).toString()) shouldBe
+      """org.xml.sax.SAXParseException; lineNumber: 1; columnNumber: 1057; cvc-enumeration-valid: Value 'Funder' is not facet-valid with respect to enumeration '[ContactPerson, DataCollector, DataCurator, DataManager, Distributor, Editor, HostingInstitution, Other, Producer, ProjectLeader, ProjectManager, ProjectMember, RegistrationAgency, RegistrationAuthority, RelatedPerson, ResearchGroup, RightsHolder, Researcher, Sponsor, Supervisor, WorkPackageLeader]'. It must be a value from the enumeration."""
   }
 
   it should "show amd diff" in {
