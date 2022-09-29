@@ -62,18 +62,14 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
         Provenance.compare((ddmIn \ "profile").head, (ddmOut \ "profile").head, ddmSchema),
         Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, ddmSchema),
       ))
-
-    val actual = Utility.trim(provenance)
     val expected = Utility.trim(XML.loadFile("src/test/resources/encoding/provenance.xml"))
-    actual.text shouldBe expected.text
-//    closingTags(actual) shouldBe closingTags(expected)
 
-    Seq(ddmIn.scope) shouldNot be(empty)
-    (provenance \\ "file").map(_.scope).mkString("") shouldBe ddmIn.scope.toString()
+    // CDATA is turned into escaped strings when comparing the full XML
+    // trick does not work for funder test, perhaps because here we have multiple CDATA elements
+    (provenance \\ "migration").map(Utility.trim) shouldBe (expected \\ "migration").map(Utility.trim)
 
     assume(schemaIsAvailable)
-    validate(provenance)
-    validate(XML.loadFile("src/test/resources/encoding/provenance.xml")) shouldBe a[Success[_]]
+    validate(provenance) shouldBe a[Success[_]]
   }
   it should "show ddm diff" in {
     val ddmIn = {
@@ -262,8 +258,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
 
     (Utility.trim(actual) \\ "old").text.replaceAll("\n","").replaceAll("><","> <") shouldBe
       (Utility.trim(expected) \\ "old").text // might break when attributes are serialized in different order
-    normalized((actual \\ "new").head) shouldBe
-      normalized((expected \\ "new").head)
+    normalized((actual \\ "new").head) shouldBe normalized((expected \\ "new").head)
     assume(schemaIsAvailable)
     validate(actual) shouldBe a[Success[_]]
   }
@@ -392,10 +387,8 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       Provenance.compare(amdIn, amdOut, amdSchema),
     ))
 
-    (provenance \\ "old").text shouldBe
-      (expected \\ "old").text // might break when attributes are serialized in different order
-    normalized((provenance \\ "new").head) shouldBe
-      normalized((expected \\ "new").head)
+    (provenance \\ "old").text shouldBe (expected \\ "old").text // might break when attributes are serialized in different order
+    normalized((provenance \\ "new").head) shouldBe normalized((expected \\ "new").head)
     val actual = Utility.trim(provenance)
     actual.text shouldBe expected.text
     closingTags(actual) shouldBe closingTags(expected)
