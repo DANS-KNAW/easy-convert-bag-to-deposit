@@ -22,12 +22,14 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.util
 import scala.util.{ Failure, Success }
 import scala.xml.{ Utility, XML }
 
 class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport with AppConfigSupport {
   // use the raw github location while upgraded schema is not yet published, your own fork if not yet merged.
-  private val schemaRoot = "https://easy.dans.knaw.nl/schemas"
+  private val schemaRoot = "https://raw.githubusercontent.com/DANS-KNAW-jp/easy-schema/valid-provenance/lib/src/main/resources"
+//  private val schemaRoot = "https://easy.dans.knaw.nl/schemas"
   override val schema: String = schemaRoot + "/bag/metadata/prov/provenance.xsd"
   private val schemaLocation = s"http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ $schema"
   private val ddmSchema = "http://easy.dans.knaw.nl/schemas/md/ddm/"
@@ -278,29 +280,20 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     // compare the DDM files manually for finer details than in the provenance
     val ddmIn = XML.loadFile("src/test/resources/funder/ddm-in.xml")
     val ddmOut = XML.loadFile("src/test/resources/funder/ddm-out.xml")
-    val expected = Utility.trim(XML.loadFile("src/test/resources/funder/provenance.xml"))
+    val expected = XML.loadFile("src/test/resources/funder/provenance.xml")
 
-    val provenance = provenanceBuilder.collectChangesInXmls(List(Provenance.compare(
+    val actual = provenanceBuilder.collectChangesInXmls(List(Provenance.compare(
       (ddmIn \ "dcmiMetadata").head,
       (ddmOut \ "dcmiMetadata").head,
       ddmSchema
     )))
 
-    normalized((provenance \\ "file").head) shouldBe normalized((expected \\ "file").head)
-
-    val actual = Utility.trim(provenance)
-    actual.text shouldBe expected.text
-    closingTags(actual) shouldBe closingTags(expected)
-
-    println(printer.format(Utility.trim(actual)))
-
+    (Utility.trim(actual) \\ "old").text.replaceAll("\n","").replaceAll("><","> <") shouldBe
+      (Utility.trim(expected) \\ "old").text // might break when attributes are serialized in different order
+    normalized((actual \\ "new").head) shouldBe
+      normalized((expected \\ "new").head)
     assume(schemaIsAvailable)
-    // see PR #78 issue DD-806 claims it are only one or two datasets
-    parseError(Utility.serialize(actual).toString()) shouldBe
-    """org.xml.sax.SAXParseException; lineNumber: 1; columnNumber: 1376; cvc-enumeration-valid: Value 'Funder' is not facet-valid with respect to enumeration '[ContactPerson, DataCollector, DataCurator, DataManager, Distributor, Editor, HostingInstitution, Other, Producer, ProjectLeader, ProjectManager, ProjectMember, RegistrationAgency, RegistrationAuthority, RelatedPerson, ResearchGroup, RightsHolder, Researcher, Sponsor, Supervisor, WorkPackageLeader]'. It must be a value from the enumeration."""
-
-    parseError(Utility.serialize(expected).toString()) shouldBe
-      """org.xml.sax.SAXParseException; lineNumber: 1; columnNumber: 1057; cvc-enumeration-valid: Value 'Funder' is not facet-valid with respect to enumeration '[ContactPerson, DataCollector, DataCurator, DataManager, Distributor, Editor, HostingInstitution, Other, Producer, ProjectLeader, ProjectManager, ProjectMember, RegistrationAgency, RegistrationAuthority, RelatedPerson, ResearchGroup, RightsHolder, Researcher, Sponsor, Supervisor, WorkPackageLeader]'. It must be a value from the enumeration."""
+    validate(actual) shouldBe a[Success[_]]
   }
 
   it should "show amd diff" in {
