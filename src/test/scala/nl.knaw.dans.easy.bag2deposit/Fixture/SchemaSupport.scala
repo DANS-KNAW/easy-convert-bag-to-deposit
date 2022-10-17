@@ -55,7 +55,7 @@ trait SchemaSupport {
 
   def validate(xml: Node): Try[Unit] = {
     val serialized = Utility.serialize(xml).toString()
-    triedSchema.getOrElse(fail("Please prefix the test with 'assume(schemaIsAvailable)' to ignore a failure due to not reachable schema's"))
+    triedSchema.getOrElse(fail(s"Please prefix the test with 'assume(schemaIsAvailable)' to ignore a failure due to not reachable schema's ${triedSchema.toEither.left.get}"))
     triedSchema.flatMap { schema =>
       val source = new StreamSource(serialized.inputStream)
       Try(schema.newValidator().validate(source))

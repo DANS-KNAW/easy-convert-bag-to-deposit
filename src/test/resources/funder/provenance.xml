@@ -1,5 +1,10 @@
+<prov:provenance
+        xsi:schemaLocation="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/">
+    <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
         <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">
-            <prov:old>
+            <prov:old><![CDATA[
                 <dcx-dai:contributorDetails
                         xmlns:id-type="http://easy.dans.knaw.nl/schemas/vocab/identifier-type/" xmlns:dcx-dai="http://easy.dans.knaw.nl/schemas/dcx/dai/" xmlns:dct="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
                     <dcx-dai:author>
@@ -32,7 +37,7 @@
                         <dcx-dai:role>Funder</dcx-dai:role>
                     </dcx-dai:organization>
                 </dcx-dai:contributorDetails>
-            </prov:old>
+            ]]></prov:old>
             <prov:new>
                 <dcx-dai:contributorDetails
                         xmlns:id-type="http://easy.dans.knaw.nl/schemas/vocab/identifier-type/" xmlns:dcx-dai="http://easy.dans.knaw.nl/schemas/dcx/dai/" xmlns:dct="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
@@ -77,3 +82,5 @@
                 </ddm:funding>
             </prov:new>
         </prov:file>
+    </prov:migration>
+</prov:provenance>

@@ -61,7 +61,7 @@ object Provenance extends DebugEnhancedLogging {
     if (onlyInOld.isEmpty && onlyInNew.isEmpty) None
     else Some(
       <prov:file scheme={ scheme }>
-        <prov:old>{ onlyInOld }</prov:old>
+        <prov:old>{ PCData(onlyInOld.mkString("\n")) }</prov:old>
         <prov:new>{ onlyInNew }</prov:new>
       </prov:file>.copy(scope = oldXml.scope) // TODO in case of ddm perhaps also dc[t[erms]] and dcx-gml?
     )

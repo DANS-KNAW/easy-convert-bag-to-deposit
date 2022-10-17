@@ -13,13 +13,7 @@
             </prov:new>
         </prov:file>
         <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/">
-            <prov:old>
-                <dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/28992" xmlns:dcx-gml="http://easy.dans.knaw.nl/schemas/dcx/gml/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
-                    <Point xmlns="http://www.opengis.net/gml">
-                        <pos>0 0</pos>
-                    </Point>
-                </dcx-gml:spatial>
-            </prov:old>
+            <prov:old><![CDATA[<dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/28992" xmlns:dcx-gml="http://easy.dans.knaw.nl/schemas/dcx/gml/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"><Point xmlns="http://www.opengis.net/gml"><pos>0 0</pos></Point></dcx-gml:spatial>]]></prov:old>
             <prov:new>
             </prov:new>
         </prov:file>
