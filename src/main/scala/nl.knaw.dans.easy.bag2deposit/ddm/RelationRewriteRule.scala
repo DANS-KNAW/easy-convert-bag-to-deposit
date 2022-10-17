@@ -27,6 +27,10 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
 
   private val easyRef = "https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:"
   private val urnRef = "urn:nbn:nl:ui:13"
+
+  private def isUrnRef(s: String) = {
+    (s.contains(urnRef) && s.contains("persistent-identifier.nl")) || s.startsWith(urnRef)
+  }
   private val relations = List(
     "relation",
     "conformsTo",
@@ -52,8 +56,8 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
       val href = node.attribute("href").toSeq.flatten.text.trim
       val doi = if (href.startsWith(easyRef)) replaceEasyRefWithDoi(href)
                 else if (txt.startsWith(easyRef)) replaceEasyRefWithDoi(txt)
-                     else if (href.contains(urnRef)) replaceUrnNbnRefWithDoi(href)
-                          else if (txt.contains(urnRef)) replaceUrnNbnRefWithDoi(txt)
+                     else if (isUrnRef(href)) replaceUrnNbnRefWithDoi(href)
+                          else if (isUrnRef(txt)) replaceUrnNbnRefWithDoi(txt)
                                else ""
       lazy val otherAttributes = node.attributes.remove("href").remove("scheme")
       lazy val doiAttributes = {
