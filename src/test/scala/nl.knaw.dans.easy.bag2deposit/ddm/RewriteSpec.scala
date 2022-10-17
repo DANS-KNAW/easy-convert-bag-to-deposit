@@ -185,6 +185,59 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     assume(schemaIsAvailable)
     validate(expectedDDM) shouldBe Success(())
   }
+  it should "only convert links to the landing page (DD-1127)" in {
+    //
+    val ddmIn = ddm(title = "relation test", audience = "D37000", dcmi =
+      <ddm:dcmiMetadata>
+        <ddm:references
+          href="https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:48786">
+          Plangebied Harinxmaland, gemeente Sneek. Archeologisch vooronderzoek: een inventariserend veldonderzoek (waarderend onderzoek)
+        </ddm:references>
+        <ddm:isReferencedBy
+          href="https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:56023">
+        </ddm:isReferencedBy>
+        <ddm:references>https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:48515</ddm:references>
+        <dcterms:references>https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:56024</dcterms:references>
+        <dcterms:references>persistent-identifier.nl/?identifier=urn:nbn:nl:ui:13-08dh-73</dcterms:references>
+        <dcterms:references>http://datareviews.dans.knaw.nl/details.php?pid=urn:nbn:nl:ui:13-l9l-0gx</dcterms:references>
+        <ddm:references href="urn:nbn:nl:ui:13-04r-39p">rabarbera</ddm:references>
+      </ddm:dcmiMetadata>
+    )
+    val expectedDDM = ddm(title = "relation test", audience = "D37000", dcmi =
+        <ddm:dcmiMetadata>
+          <ddm:references
+            scheme="id-type:DOI"
+            href="https://doi.org/10.17026/dans-zwe-6qtu">
+            Plangebied Harinxmaland, gemeente Sneek. Archeologisch vooronderzoek: een inventariserend veldonderzoek (waarderend onderzoek)
+          </ddm:references>
+          <ddm:isReferencedBy
+            scheme="id-type:DOI"
+            href="https://doi.org/10.17026/dans-267-2y8q">
+            https://doi.org/10.17026/dans-267-2y8q
+          </ddm:isReferencedBy>
+          <ddm:references
+            scheme="id-type:DOI"
+            href="https://doi.org/10.17026/dans-xc4-vj4h">
+            https://doi.org/10.17026/dans-xc4-vj4h
+          </ddm:references>
+          <dcterms:references>https://doi.org/10.17026/dans-xpg-j2f6</dcterms:references>
+          <dcterms:references>https://doi.org/10.17026/dans-z2s-vnu8</dcterms:references>
+          <dcterms:references>http://datareviews.dans.knaw.nl/details.php?pid=urn:nbn:nl:ui:13-l9l-0gx</dcterms:references>
+          <ddm:references
+            scheme="id-type:DOI"
+            href="https://doi.org/10.17026/dans-x7e-9m6k">
+            rabarbera
+          </ddm:references>
+          <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
+        </ddm:dcmiMetadata>
+    )
+    val datasetId = "easy-dataset:123"
+    testConfig("archaeology").ddmTransformer.transform(ddmIn, datasetId).map(normalized)
+      .getOrElse(fail("no DDM returned")) shouldBe normalized(expectedDDM)
+
+    assume(schemaIsAvailable)
+    validate(expectedDDM) shouldBe Success(())
+  }
   it should "drop empty relation" in {
     val ddmIn = ddm(title = "blabla", audience = "D37000", dcmi =
         <ddm:dcmiMetadata>
