@@ -77,7 +77,7 @@ object Collection extends DebugEnhancedLogging {
     .withAutoFlush(true)
 
   private def parseSkosRecord(r: CSVRecord) = {
-    r.get("definition") ->
+    r.get("prefLabel") ->
         <ddm:inCollection
            schemeURI="https://vocabularies.dans.knaw.nl/collections"
            valueURI={ r.get("URI") }
@@ -111,6 +111,8 @@ object Collection extends DebugEnhancedLogging {
       {s"$name not found in collections skos"}
     </notImplemented>
     val elem = skosMap.getOrElse(name, default)
+    if (elem.toString().contains("not found"))
+      logger.error(s"$name not found in collections skos")
     collection.members.map(id => id -> elem)
   }
 

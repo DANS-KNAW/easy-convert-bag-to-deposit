@@ -128,7 +128,8 @@ class DdmTransformer(cfgDir: File, target: String, collectionsMap: Map[String, S
 
     if (target != "archaeology") {
       val transformer = standardRuleTransformer(newDcmiNodes, (originalProfile \ "title").text)
-      Success(transformer(ddmIn))
+      val ddmOut = transformer(ddmIn)
+      FailOnNotImplemented(ddmOut)
     }
     else {
       // a title in the profile will not change but may produce something for dcmiMetadata
@@ -148,12 +149,16 @@ class DdmTransformer(cfgDir: File, target: String, collectionsMap: Map[String, S
       val notConvertedTitles = (ddmOut \ "dcmiMetadata" \ "title") ++ notConvertedFirstTitle
       logBriefRapportTitles(notConvertedTitles, ddmOut, datasetId)
 
-      if ((ddmOut \\ "notImplemented").isEmpty) Success(ddmOut)
-      else Failure(InvalidBagException((ddmOut \\ "notImplemented").map(_.text).mkString("; ")))
+      FailOnNotImplemented(ddmOut)
     }
   }.map { ddm =>
     logNotMappedLanguages(ddm, datasetId)
     ddm
+  }
+
+  private def FailOnNotImplemented(ddmOut: Node) = {
+    if ((ddmOut \\ "notImplemented").isEmpty) Success(ddmOut)
+    else Failure(InvalidBagException((ddmOut \\ "notImplemented").map(_.text).mkString("; ")))
   }
 
   private def missingLicense(ddm: Node): Seq[Node] = {

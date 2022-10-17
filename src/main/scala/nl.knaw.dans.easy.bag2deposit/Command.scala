@@ -50,7 +50,7 @@ object Command extends App with DebugEnhancedLogging {
   {
     val dir = cfgPath / commandLine.target()
     if (!dir.isDirectory)
-      throw new IllegalArgumentException(s"$dir should be an existing directory: ${ commandLine.target.name }")
+      throw new IllegalArgumentException(s"$dir should be an existing directory, command line argument '${ commandLine.target.name }''")
   }
   private val bagParentDirs = commandLine.bagParentDir.map(Iterator(_))
     .getOrElse(commandLine.bagGrandParentDir.map(_.children)
