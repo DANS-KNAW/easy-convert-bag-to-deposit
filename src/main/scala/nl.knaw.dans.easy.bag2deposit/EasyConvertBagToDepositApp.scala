@@ -70,15 +70,16 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       ddmFile = metadata / "dataset.xml"
       (ddmIn, oldDdmChars, newDdmChars) <- loadXml(ddmFile)
       depositProps <- depositPropertiesFactory.create(bagInfo, ddmIn)
+      fromVault = depositProps.getString("deposit.origin") == "VAULT"
       datasetId = depositProps.getString("identifier.fedora", "")
-      ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId)
+      remarks <- configuration.remarksConverter.additionDcmi(metadata / "emd.xml", datasetId, fromVault)
+      ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId, remarks)
       oldDcmi = (ddmIn \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       amdFile = metadata / "amd.xml"
       amdIn <- getAmdXml(datasetId, amdFile)
       _ = if (bagDir.isHidden && (amdIn \\ "datasetState").text != "DELETED")
         throw InvalidBagException(s"Inactive bag does not have state DELETED: $amdFile")
-      fromVault = depositProps.getString("deposit.origin") == "VAULT"
       amdOut <- configuration.amdTransformer.transform(amdIn, ddmOut \ "profile" \ "created")
       agreementsFile = metadata / "depositor-info" / "agreements.xml"
       _ = checkAgreementsXml((amdOut \ "depositorId").text, agreementsFile)
@@ -88,7 +89,6 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
         Provenance.fixedDdmEncoding(oldDdmChars, newDdmChars),
       ))
       _ = trace(bagInfo)
-      doi = depositProps.getString("identifier.doi")
       _ = bagInfoKeysToRemove.foreach(mutableBagMetadata.remove)
       _ = depositProps.setProperty("depositor.userId", (amdOut \ "depositorId").text)
       // so far collecting changes
