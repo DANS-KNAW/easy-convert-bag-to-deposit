@@ -105,7 +105,7 @@ class RemarksConverterSpec extends AnyFlatSpec with XmlSupport with Matchers wit
       ("collectiondate", "<dc:date>"),
     )
     forAll(table) { (category: String, expected: String) =>
-
+      // once a row fails, the rest is not executed
       writeRemarksMappingCSV(category)
       val ddmOut = convert(ddmTransformer)
       ddmOut.serialize should include(expected + "Just some remark for testing purposes</")
