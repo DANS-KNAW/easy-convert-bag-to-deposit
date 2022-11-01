@@ -33,13 +33,16 @@ class RemarksConverter(cfgDir: File) extends DebugEnhancedLogging {
         nrOfHeaderLines = 1,
         format = RFC4180.withHeader("dataset_id", "category"),
       ).map(r =>
-        r.get("dataset_id") -> RemarksCategory.withName(r.get("category"))
+        r.get("dataset_id") -> Try(RemarksCategory.withName(r.get("category"))).getOrElse {
+          logger.warn(s"${ r.get("dataset_id") } has an invalid remarks category, using a plain description")
+          RemarksCategory.description
+        }
       ).toMap
   }
 
-  def additionDcmi(emd: File, datasetId: String, fromVault: Boolean): Try[NodeSeq] = {
+  def additionalDcmi(emd: File, datasetId: String, fromVault: Boolean): Try[NodeSeq] = {
     val cat = remarksMap.getOrElse(datasetId, {
-      if (!fromVault) logger.warn(s"$datasetId has a remarks field but no mapping")
+      if (!fromVault) logger.warn(s"$datasetId has a remarks field but no mapping, using a plain description")
       RemarksCategory.description
     })
 
@@ -50,7 +53,7 @@ class RemarksConverter(cfgDir: File) extends DebugEnhancedLogging {
         case RemarksCategory.contact => <dc:contributor type="ContactPerson">{ remarks.text }</dc:contributor>
         case RemarksCategory.copyright => <dct:rightsHolder>{ remarks.text }</dct:rightsHolder>
         case RemarksCategory.description => <dct:description>{ remarks.text }</dct:description>
-        case RemarksCategory.files => <dct:description type="TechnicalInfo">{ remarks.text }</dct:description>
+        case RemarksCategory.files => <ddm:description descriptionType="TechnicalInfo">{ remarks.text }</ddm:description>
         case RemarksCategory.ignore => NodeSeq.Empty
         case RemarksCategory.funder => <ddm:funder>{ remarks.text }</ddm:funder>
         case RemarksCategory.provenance => <dct:provenance>{ remarks.text }</dct:provenance>

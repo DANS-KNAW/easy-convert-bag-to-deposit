@@ -72,7 +72,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       depositProps <- depositPropertiesFactory.create(bagInfo, ddmIn)
       fromVault = depositProps.getString("deposit.origin") == "VAULT"
       datasetId = depositProps.getString("identifier.fedora", "")
-      remarks <- configuration.remarksConverter.additionDcmi(metadata / "emd.xml", datasetId, fromVault)
+      remarks <- configuration.remarksConverter.additionalDcmi(metadata / "emd.xml", datasetId, fromVault)
       ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId, remarks)
       oldDcmi = (ddmIn \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
