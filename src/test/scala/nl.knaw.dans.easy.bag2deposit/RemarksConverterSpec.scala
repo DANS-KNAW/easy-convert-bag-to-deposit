@@ -82,12 +82,6 @@ class RemarksConverterSpec extends AnyFlatSpec with XmlSupport with Matchers wit
     assume(schemaIsAvailable)
     validate(ddmOut) shouldBe a[Success[_]]
   }
-  it should "apply the default description for an invalid mapping" in {
-    val ddmTransformer = configureDdmTransformer()
-    writeRemarksMappingCSV("negeren")
-    convert(ddmTransformer).serialize should
-      include("""<dct:description>Just some remark for testing purposes</""")
-  }
   it should "not add the remark to the DDM" in {
     val ddmTransformer = configureDdmTransformer()
     writeRemarksMappingCSV("ignore")
@@ -104,7 +98,7 @@ class RemarksConverterSpec extends AnyFlatSpec with XmlSupport with Matchers wit
       ("copyright", "<dct:rightsHolder>"),
       ("description", "<dct:description>"),
       ("files", """<ddm:description descriptionType="TechnicalInfo">"""),
-      ("negeren", "<dct:description>"),
+      ("negeren", "<dct:description>"),// logs dataset-id for this invalid category
       ("funder", "<ddm:funding><ddm:funderName>"),
       ("provenance", "<dct:provenance>"),
       ("relation", "<dc:relation>"),
