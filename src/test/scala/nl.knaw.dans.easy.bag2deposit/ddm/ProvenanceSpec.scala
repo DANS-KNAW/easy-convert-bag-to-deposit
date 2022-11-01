@@ -23,7 +23,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.util.{ Failure, Success }
-import scala.xml.{ NodeSeq, Utility, XML }
+import scala.xml.{ Utility, XML }
 
 class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport with AppConfigSupport {
   // use the raw github location while upgraded schema is not yet published, your own fork if not yet merged.
