@@ -435,25 +435,6 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     normalized(XML.loadFile(filesXml.toJava)) shouldBe normalized(expectedFilesXml)
   }
 
-  it should "add the SSH remarks from EMD to DDM" in {
-    val appConfig = testConfig("SSH", delegatingBagIndex(mock[MockBagIndex]), null)
-      .copy(bagSequence = true)
-    (resourceBags / validUUID).copyTo(testDir / "exports" / validUUID)
-    val ddmFileIn = testDir / "exports" / validUUID / "bag-revision-1" / "metadata" / "dataset.xml"
-    ddmFileIn.writeText(
-      ddmFileIn.contentAsString.replace("easy-dataset:162288","easy-dataset:109793")
-    )
-
-    new EasyConvertBagToDepositApp(appConfig).addPropsToBags(
-      (testDir / "exports").children,
-      maybeOutputDir = Some((testDir / "ingest-dir").createDirectories()),
-      DepositPropertiesFactory(appConfig, DOI, FEDORA)
-    ) shouldBe Success("No fatal errors")
-
-    val ddmFileOut = testDir / "ingest-dir" / validUUID / "bag-revision-1" / "metadata" / "dataset.xml"
-    ddmFileOut.contentAsString should include("""<dc:contributor type="ContactPerson">Just some remark for testing purposes""")
-  }
-
   it should "add agreements.xml file to VAULT datasets" in {
     val delegate = mock[MockBagIndex]
     (delegate.execute(_: String)) expects s"bag-sequence?contains=$vaultUUID" returning
