@@ -24,8 +24,8 @@ import scala.util.{ Success, Try }
 import scala.xml.{ NodeSeq, XML }
 
 class RemarksConverter(cfgDir: File) extends DebugEnhancedLogging {
-  private val file: File = cfgDir / "remarks-mapping.csv"
   private val remarksMap: Map[String, RemarksCategory] = {
+    val file: File = cfgDir / "remarks-mapping.csv"
     if (!file.exists)
       Map.empty
     else parseCsv(
