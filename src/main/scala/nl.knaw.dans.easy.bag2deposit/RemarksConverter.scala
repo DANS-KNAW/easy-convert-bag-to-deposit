@@ -50,13 +50,13 @@ class RemarksConverter(cfgDir: File) extends DebugEnhancedLogging {
       cat match {
         case RemarksCategory.access => <dct:accessRights>{ remarks.text }</dct:accessRights>
         case RemarksCategory.citation => <dct:bibliographicCitation>{ remarks.text }</dct:bibliographicCitation>
-        case RemarksCategory.contact => <ddm:description descriptionType="Other">{ remarks.text }</ddm:description>
-        case RemarksCategory.contributor => <ddm:description descriptionType="Other">{ remarks.text }</ddm:description>
+        case RemarksCategory.contact |
+             RemarksCategory.contributor |
+             RemarksCategory.funder => <ddm:description descriptionType="Other">{ remarks.text }</ddm:description>
         case RemarksCategory.copyright => <dct:rightsHolder>{ remarks.text }</dct:rightsHolder>
         case RemarksCategory.description => <dct:description>{ remarks.text }</dct:description>
         case RemarksCategory.files => <ddm:description descriptionType="TechnicalInfo">{ remarks.text }</ddm:description>
         case RemarksCategory.ignore => NodeSeq.Empty
-        case RemarksCategory.funder => <ddm:funding><ddm:funderName>{ remarks.text }</ddm:funderName></ddm:funding>
         case RemarksCategory.provenance => <dct:provenance>{ remarks.text }</dct:provenance>
         case RemarksCategory.relation => <dc:relation>{ remarks.text }</dc:relation>
         case RemarksCategory.collectiondate => <dc:date>{ remarks.text }</dc:date>

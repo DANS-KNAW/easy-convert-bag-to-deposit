@@ -106,16 +106,17 @@ class RemarksConverterSpec extends AnyFlatSpec with XmlSupport with Matchers wit
   it should "produce valid mappings" in {
     assume(schemaIsAvailable)
     val ddmTransformer = configureDdmTransformer()
+    val otherDescription = """<ddm:description descriptionType="Other">"""
     val table = Table(("category", "expected"),
       ("access", "<dct:accessRights>"),
       ("citation", "<dct:bibliographicCitation>"),
-      ("contact", """<ddm:description descriptionType="Other">"""),
-      ("contributor", """<ddm:description descriptionType="Other">"""),
+      ("contact", otherDescription),
+      ("contributor", otherDescription),
       ("copyright", "<dct:rightsHolder>"),
       ("description", "<dct:description>"),
       ("files", """<ddm:description descriptionType="TechnicalInfo">"""),
       ("negeren", "<dct:description>"),// logs dataset-id for this invalid category
-      ("funder", "<ddm:funding><ddm:funderName>"),
+      ("funder", otherDescription),
       ("provenance", "<dct:provenance>"),
       ("relation", "<dc:relation>"),
       ("collectiondate", "<dc:date>"),
