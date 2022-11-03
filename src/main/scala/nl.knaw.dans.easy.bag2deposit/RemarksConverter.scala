@@ -51,6 +51,7 @@ class RemarksConverter(cfgDir: File) extends DebugEnhancedLogging {
         case RemarksCategory.access => <dct:accessRights>{ remarks.text }</dct:accessRights>
         case RemarksCategory.citation => <dct:bibliographicCitation>{ remarks.text }</dct:bibliographicCitation>
         case RemarksCategory.contact => <ddm:description descriptionType="Other">{ remarks.text }</ddm:description>
+        case RemarksCategory.contributor => <ddm:description descriptionType="Other">{ remarks.text }</ddm:description>
         case RemarksCategory.copyright => <dct:rightsHolder>{ remarks.text }</dct:rightsHolder>
         case RemarksCategory.description => <dct:description>{ remarks.text }</dct:description>
         case RemarksCategory.files => <ddm:description descriptionType="TechnicalInfo">{ remarks.text }</ddm:description>
@@ -72,5 +73,5 @@ class RemarksConverter(cfgDir: File) extends DebugEnhancedLogging {
 }
 protected object RemarksCategory extends Enumeration {
   type RemarksCategory = Value
-  val access, citation, contact, copyright, description, files, funder, ignore, provenance, relation, collectiondate = Value
+  val access, citation, contact, contributor, copyright, description, files, funder, ignore, provenance, relation, collectiondate = Value
 }
