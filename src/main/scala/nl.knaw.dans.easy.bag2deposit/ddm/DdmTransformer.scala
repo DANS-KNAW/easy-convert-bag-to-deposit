@@ -116,13 +116,14 @@ class DdmTransformer(cfgDir: File, target: String, collectionsMap: Map[String, S
       .copy(prefix = ddm.scope.getPrefix("http://purl.org/dc/terms/"))
   }
 
-  def transform(ddmIn: Node, datasetId: String): Try[Node] = {
+  def transform(ddmIn: Node, datasetId: String, remarks: NodeSeq = NodeSeq.Empty): Try[Node] = {
     trace(datasetId)
     val newDcmiNodes = missingLicense(ddmIn) ++
       datesOfCollection(ddmIn) ++
       collectionsMap.get(datasetId).toSeq.flatten ++
       unknownRightsHolder(ddmIn) ++
-      funders(ddmIn)
+      funders(ddmIn) ++
+      remarks
 
     val originalProfile = ddmIn \ "profile"
 

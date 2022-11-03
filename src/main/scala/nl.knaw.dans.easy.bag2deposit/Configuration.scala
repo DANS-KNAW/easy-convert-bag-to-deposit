@@ -34,4 +34,5 @@ case class Configuration(version: String,
   val agreementsPath: File = cfgPath / "agreements"
   val ddmTransformer = new DdmTransformer(cfgPath, targetDataStation, getCollectionsMap(targetCfgPath))
   val amdTransformer = new AmdTransformer(targetCfgPath / "account-substitutes.csv")
+  val remarksConverter = new RemarksConverter(targetCfgPath)
 }
