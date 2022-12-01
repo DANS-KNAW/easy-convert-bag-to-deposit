@@ -41,10 +41,7 @@ class RemarksConverter(cfgDir: File) extends DebugEnhancedLogging {
   }
 
   def additionalDcmi(emd: File, datasetId: String, fromVault: Boolean): Try[NodeSeq] = {
-    val cat = remarksMap.getOrElse(datasetId, {
-      if (!fromVault) logger.warn(s"$datasetId has a remarks field but no mapping, using a plain description")
-      RemarksCategory.description
-    })
+    val cat = remarksMap.getOrElse(datasetId, RemarksCategory.description)
 
     def convert(remarks: NodeSeq): NodeSeq = {
       cat match {
@@ -67,7 +64,9 @@ class RemarksConverter(cfgDir: File) extends DebugEnhancedLogging {
       Success(NodeSeq.Empty)
     else for {
       emd <- Try(XML.loadFile(emd.toJava))
-      remarks = emd \ "remarks"
+      remarks = emd \ "remark"
+      _ = if(remarks.nonEmpty && ! remarksMap.contains(datasetId))
+        logger.warn(s"$datasetId has a remarks field but no mapping, using a plain description")
     } yield convert(remarks)
   }
 }
