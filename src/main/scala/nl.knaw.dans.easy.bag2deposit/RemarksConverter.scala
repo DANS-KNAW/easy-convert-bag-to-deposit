@@ -34,7 +34,7 @@ class RemarksConverter(cfgDir: File) extends DebugEnhancedLogging {
         format = RFC4180.withHeader("dataset_id", "category"),
       ).map(r =>
         r.get("dataset_id") -> Try(RemarksCategory.withName(r.get("category"))).getOrElse {
-          logger.warn(s"${ r.get("dataset_id") } has an invalid remarks category, using a plain description")
+          logger.warn(s"${ r.get("dataset_id") } has an invalid remark category, using a plain description")
           RemarksCategory.description
         }
       ).toMap
@@ -64,10 +64,10 @@ class RemarksConverter(cfgDir: File) extends DebugEnhancedLogging {
       Success(NodeSeq.Empty)
     else for {
       emd <- Try(XML.loadFile(emd.toJava))
-      remarks = emd \ "remark"
-      _ = if(remarks.nonEmpty && ! remarksMap.contains(datasetId))
-        logger.warn(s"$datasetId has a remarks field but no mapping, using a plain description")
-    } yield convert(remarks)
+      remark = emd \ "remark"
+      _ = if(remark.nonEmpty && ! remarksMap.contains(datasetId))
+        logger.warn(s"$datasetId has a remark field but no mapping, using a plain description")
+    } yield convert(remark)
   }
 }
 protected object RemarksCategory extends Enumeration {
