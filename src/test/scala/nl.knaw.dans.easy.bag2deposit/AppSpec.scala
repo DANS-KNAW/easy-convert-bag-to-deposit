@@ -431,7 +431,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
 
     val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
     val filesXml = movedBag / "metadata" / "files.xml"
-    (movedBag / "metadata" / "dataset.xml").contentAsString should include("<dct:description>Just some remark for testing purposes")
+    (movedBag / "metadata" / "dataset.xml").contentAsString should include("<dct:description>Just some remark for testing purposes and stuff")
     normalized(XML.loadFile(filesXml.toJava)) shouldBe normalized(expectedFilesXml)
   }
 

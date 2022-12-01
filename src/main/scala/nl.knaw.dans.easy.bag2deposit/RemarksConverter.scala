@@ -34,32 +34,29 @@ class RemarksConverter(cfgDir: File) extends DebugEnhancedLogging {
         format = RFC4180.withHeader("dataset_id", "category"),
       ).map(r =>
         r.get("dataset_id") -> Try(RemarksCategory.withName(r.get("category"))).getOrElse {
-          logger.warn(s"${ r.get("dataset_id") } has an invalid remarks category, using a plain description")
+          logger.warn(s"${ r.get("dataset_id") } has an invalid remark category, using a plain description")
           RemarksCategory.description
         }
       ).toMap
   }
 
   def additionalDcmi(emd: File, datasetId: String, fromVault: Boolean): Try[NodeSeq] = {
-    val cat = remarksMap.getOrElse(datasetId, {
-      if (!fromVault) logger.warn(s"$datasetId has a remarks field but no mapping, using a plain description")
-      RemarksCategory.description
-    })
+    val cat = remarksMap.getOrElse(datasetId, RemarksCategory.description)
 
-    def convert(remarks: NodeSeq): NodeSeq = {
+    def convert(remark: NodeSeq): NodeSeq = {
       cat match {
-        case RemarksCategory.access => <dct:accessRights>{ remarks.text }</dct:accessRights>
-        case RemarksCategory.citation => <dct:bibliographicCitation>{ remarks.text }</dct:bibliographicCitation>
+        case RemarksCategory.access => <dct:accessRights>{ remark.text }</dct:accessRights>
+        case RemarksCategory.citation => <dct:bibliographicCitation>{ remark.text }</dct:bibliographicCitation>
         case RemarksCategory.contact |
              RemarksCategory.contributor |
-             RemarksCategory.funder => <ddm:description descriptionType="Other">{ remarks.text }</ddm:description>
-        case RemarksCategory.copyright => <dct:rightsHolder>{ remarks.text }</dct:rightsHolder>
-        case RemarksCategory.description => <dct:description>{ remarks.text }</dct:description>
-        case RemarksCategory.files => <ddm:description descriptionType="TechnicalInfo">{ remarks.text }</ddm:description>
+             RemarksCategory.funder => <ddm:description descriptionType="Other">{ remark.text }</ddm:description>
+        case RemarksCategory.copyright => <dct:rightsHolder>{ remark.text }</dct:rightsHolder>
+        case RemarksCategory.description => <dct:description>{ remark.text }</dct:description>
+        case RemarksCategory.files => <ddm:description descriptionType="TechnicalInfo">{ remark.text }</ddm:description>
         case RemarksCategory.ignore => NodeSeq.Empty
-        case RemarksCategory.provenance => <dct:provenance>{ remarks.text }</dct:provenance>
-        case RemarksCategory.relation => <dc:relation>{ remarks.text }</dc:relation>
-        case RemarksCategory.collectiondate => <dc:date>{ remarks.text }</dc:date>
+        case RemarksCategory.provenance => <dct:provenance>{ remark.text }</dct:provenance>
+        case RemarksCategory.relation => <dc:relation>{ remark.text }</dc:relation>
+        case RemarksCategory.collectiondate => <dc:date>{ remark.text }</dc:date>
       }
     }
 
@@ -67,8 +64,10 @@ class RemarksConverter(cfgDir: File) extends DebugEnhancedLogging {
       Success(NodeSeq.Empty)
     else for {
       emd <- Try(XML.loadFile(emd.toJava))
-      remarks = emd \ "remarks"
-    } yield convert(remarks)
+      remark = emd \\ "remark"
+      _ = if(remark.nonEmpty && ! remarksMap.contains(datasetId))
+        logger.warn(s"$datasetId has a remark field but no mapping, using a plain description")
+    } yield convert(remark)
   }
 }
 protected object RemarksCategory extends Enumeration {

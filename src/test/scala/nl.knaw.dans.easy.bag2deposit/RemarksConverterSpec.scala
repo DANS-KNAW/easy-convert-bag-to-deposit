@@ -74,7 +74,7 @@ class RemarksConverterSpec extends AnyFlatSpec with XmlSupport with Matchers wit
 
   private def convert(ddmTransformer: DdmTransformer,
                       remarksConverter: RemarksConverter = new RemarksConverter(cfgDir / "SSH"),
-                      emdContent: String = "<emd><remarks>Just some remark for testing purposes</remarks></emd>",
+                      emdContent: String = "<emd><eas:remark>Just some remark for testing purposes</eas:remark></emd>",
                      ) = {
     val emdFile = testDir / "emd.xml"
     emdFile.writeText(emdContent)

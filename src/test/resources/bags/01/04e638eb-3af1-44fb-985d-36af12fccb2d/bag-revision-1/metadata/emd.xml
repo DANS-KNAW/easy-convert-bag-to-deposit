@@ -1,3 +1,83 @@
-<emd>
-    <remarks>Just some remark for testing purposes</remarks>
-</emd>
+<?xml version='1.0' encoding='UTF-8'?>
+<emd:easymetadata emd:version="0.1"
+                  xmlns:emd="http://easy.dans.knaw.nl/easy/easymetadata/"
+                  xmlns:eas="http://easy.dans.knaw.nl/easy/easymetadata/eas/"
+                  xmlns:dct="http://purl.org/dc/terms/"
+                  xmlns:dc="http://purl.org/dc/elements/1.1/"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:foxml="info:fedora/fedora-system:def/foxml#">
+    <emd:title>
+        <dc:title>Studentenonderzoek 2017</dc:title>
+    </emd:title>
+    <emd:creator>
+        <eas:creator>
+            <eas:initials>Q.</eas:initials>
+            <eas:surname>Peter</eas:surname>
+            <eas:organization>Nibud</eas:organization>
+            <eas:entityId eas:scheme="DAI"/>
+            <eas:role eas:scheme="DATACITE"/>
+        </eas:creator>
+    </emd:creator>
+    <emd:subject>
+        <dc:subject>Studenten</dc:subject>
+        <dc:subject>Opleiding</dc:subject>
+        <dc:subject>Studiefinanciering</dc:subject>
+        <dc:subject>Inkomsten</dc:subject>
+        <dc:subject>Lening</dc:subject>
+    </emd:subject>
+    <emd:description>
+        <dc:description>Dit onderzoek is uitgevoerd onder 1383 studenten in de leeftijd van 16 tot 30 jaar, in het voltijds hoger onderwijs (hbo en wo). Van 15 mei tot en met 29 juni 2017 konden de respondenten de vragenlijst online invullen.
+            De respondenten die hebben deelgenomen aan dit onderzoek zijn geworven via de website en nieuwsbrief van Studenten.net en de social media-kanalen van Nibud en DUO. Daarnaast zijn circa 300 respondenten afkomstig uit het panel van Opiniel
+            and van Survey Sampling International. De resultaten zijn gewogen op geslacht, leeftijd en opleidingsniveau. Het onderzoek is mogelijk gemaakt door het ministerie van Onderwijs, Cultuur en Wetenschap en ING Nederland. Het Nibud houdt sind
+            s 2009 de portemonnee van studenten in de gaten, dit is het vierde studentenonderzoek dat het Nibud heeft gedaan.</dc:description>
+    </emd:description>
+    <emd:publisher/>
+    <emd:contributor/>
+    <emd:date>
+        <eas:created eas:scheme="W3CDTF" eas:format="DAY">2017-09-01T00:00:00.000+02:00</eas:created>
+        <eas:available eas:scheme="W3CDTF" eas:format="DAY">2017-12-01T00:00:00.000+01:00</eas:available>
+    </emd:date>
+    <emd:type>
+        <dc:type eas:schemeId="common.dc.type" eas:scheme="DCMI">Dataset</dc:type>
+    </emd:type>
+    <emd:format>
+        <dc:format>SAV</dc:format>
+        <dc:format>PDF</dc:format>
+        <dc:format>DOCX</dc:format>
+    </emd:format>
+    <emd:identifier>
+        <dc:identifier eas:scheme="PID" eas:identification-system="http://www.persistent-identifier.nl">urn:nbn:nl:ui:13-7h-ta01</dc:identifier>
+        <dc:identifier eas:scheme="DOI" eas:identification-system="https://doi.org">10.17026/dans-xph-jdnu</dc:identifier>
+        <dc:identifier eas:scheme="DMO_ID">easy-dataset:76298</dc:identifier>
+    </emd:identifier>
+    <emd:source/>
+    <emd:language>
+        <dc:language eas:schemeId="common.dc.language" eas:scheme="ISO 639">dut/nld</dc:language>
+    </emd:language>
+    <emd:relation>
+        <eas:relation>
+            <eas:subject-title>Webpagina Nibud Studenten Onderzoek 2017</eas:subject-title>
+            <eas:subject-link>https://www.nibud.nl/beroepsmatig/nibud-studentenonderzoek-2017/</eas:subject-link>
+        </eas:relation>
+    </emd:relation>
+    <emd:coverage>
+        <dct:spatial>Nederland</dct:spatial>
+        <dct:temporal>2017</dct:temporal>
+    </emd:coverage>
+    <emd:rights>
+        <dct:accessRights eas:schemeId="common.dcterms.accessrights">REQUEST_PERMISSION</dct:accessRights>
+        <dct:license>accept</dct:license>
+    </emd:rights>
+    <emd:audience>
+        <dct:audience eas:schemeId="custom.disciplines">easy-discipline:51</dct:audience>
+        <dct:audience eas:schemeId="custom.disciplines">easy-discipline:45</dct:audience>
+    </emd:audience>
+    <emd:other>
+        <eas:remark>Just some remark for testing purposes and stuff</eas:remark>
+        <eas:application-specific>
+            <eas:metadataformat>ANY_DISCIPLINE</eas:metadataformat>
+            <eas:pakbon-status>NOT_IMPORTED</eas:pakbon-status>
+        </eas:application-specific>
+        <eas:etc/>
+    </emd:other>
+</emd:easymetadata>
