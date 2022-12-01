@@ -64,7 +64,7 @@ class RemarksConverter(cfgDir: File) extends DebugEnhancedLogging {
       Success(NodeSeq.Empty)
     else for {
       emd <- Try(XML.loadFile(emd.toJava))
-      remark = emd \ "remark"
+      remark = emd \\ "remark"
       _ = if(remark.nonEmpty && ! remarksMap.contains(datasetId))
         logger.warn(s"$datasetId has a remark field but no mapping, using a plain description")
     } yield convert(remark)
