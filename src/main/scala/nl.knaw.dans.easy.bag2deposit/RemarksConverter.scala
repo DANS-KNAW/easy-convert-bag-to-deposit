@@ -43,20 +43,20 @@ class RemarksConverter(cfgDir: File) extends DebugEnhancedLogging {
   def additionalDcmi(emd: File, datasetId: String, fromVault: Boolean): Try[NodeSeq] = {
     val cat = remarksMap.getOrElse(datasetId, RemarksCategory.description)
 
-    def convert(remarks: NodeSeq): NodeSeq = {
+    def convert(remark: NodeSeq): NodeSeq = {
       cat match {
-        case RemarksCategory.access => <dct:accessRights>{ remarks.text }</dct:accessRights>
-        case RemarksCategory.citation => <dct:bibliographicCitation>{ remarks.text }</dct:bibliographicCitation>
+        case RemarksCategory.access => <dct:accessRights>{ remark.text }</dct:accessRights>
+        case RemarksCategory.citation => <dct:bibliographicCitation>{ remark.text }</dct:bibliographicCitation>
         case RemarksCategory.contact |
              RemarksCategory.contributor |
-             RemarksCategory.funder => <ddm:description descriptionType="Other">{ remarks.text }</ddm:description>
-        case RemarksCategory.copyright => <dct:rightsHolder>{ remarks.text }</dct:rightsHolder>
-        case RemarksCategory.description => <dct:description>{ remarks.text }</dct:description>
-        case RemarksCategory.files => <ddm:description descriptionType="TechnicalInfo">{ remarks.text }</ddm:description>
+             RemarksCategory.funder => <ddm:description descriptionType="Other">{ remark.text }</ddm:description>
+        case RemarksCategory.copyright => <dct:rightsHolder>{ remark.text }</dct:rightsHolder>
+        case RemarksCategory.description => <dct:description>{ remark.text }</dct:description>
+        case RemarksCategory.files => <ddm:description descriptionType="TechnicalInfo">{ remark.text }</ddm:description>
         case RemarksCategory.ignore => NodeSeq.Empty
-        case RemarksCategory.provenance => <dct:provenance>{ remarks.text }</dct:provenance>
-        case RemarksCategory.relation => <dc:relation>{ remarks.text }</dc:relation>
-        case RemarksCategory.collectiondate => <dc:date>{ remarks.text }</dc:date>
+        case RemarksCategory.provenance => <dct:provenance>{ remark.text }</dct:provenance>
+        case RemarksCategory.relation => <dc:relation>{ remark.text }</dc:relation>
+        case RemarksCategory.collectiondate => <dc:date>{ remark.text }</dc:date>
       }
     }
 
