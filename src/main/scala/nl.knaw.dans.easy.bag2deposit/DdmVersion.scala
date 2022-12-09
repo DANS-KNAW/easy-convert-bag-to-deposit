@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.bag2deposit.ddm
+package nl.knaw.dans.easy.bag2deposit
 
-import scala.xml.transform.RewriteRule
-import scala.xml.{ Elem, Node, NodeSeq, Text }
+object DdmVersion extends Enumeration {
+  type DdmVersion = Value
 
-case class ProfileRewriteRule(newNodes: NodeSeq) extends RewriteRule {
-  override def transform(node: Node): Seq[Node] = {
-    if (node.label == "profile")
-      <profile>
-        { node.nonEmptyChildren.flatMap(ShortDateRewriteRule) }
-        { newNodes }
-      </profile>.copy(prefix = node.prefix, attributes = node.attributes, scope = node.scope)
-    else node
-  }
+  val V1: DdmVersion = Value("ddm-v1")
+  val V2: DdmVersion = Value("ddm-v2")
 }

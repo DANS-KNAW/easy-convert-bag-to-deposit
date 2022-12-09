@@ -19,7 +19,8 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.joda.time.DateTime.now
 import org.joda.time.format.DateTimeFormat
 
-import scala.xml.{ Elem, Node, PCData, Utility }
+import scala.xml.Utility.trim
+import scala.xml.{ Elem, NamespaceBinding, Node, PCData }
 
 case class Provenance(app: String, version: String, schemaRoot: String = "https://easy.dans.knaw.nl/schemas") extends DebugEnhancedLogging {
   private val schemaLocation = s"http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ $schemaRoot/bag/metadata/prov/provenance.xsd"
@@ -45,26 +46,39 @@ object Provenance extends DebugEnhancedLogging {
    *         when large/complex elements (like for example authors or polygons) have minor changes
    *         both versions of the complete element is returned
    */
-  def compare(oldXml: Node, newXml: Node, scheme: String): Option[Elem] = {
-    // TODO poor mans solution to call with ddm/dcmiMetadata respective root of amd
-    val oldRootNodes = Utility.trim(oldXml).flatMap(_.nonEmptyChildren)
-    val newRootNodes = Utility.trim(newXml).flatMap(_.nonEmptyChildren)
-    val oldStateNodes = oldRootNodes.find(_.label == "stateChangeDates").toSeq.flatten.flatMap(_.nonEmptyChildren)
-    val newStateNodes = newRootNodes.find(_.label == "stateChangeDates").toSeq.flatten.flatMap(_.nonEmptyChildren)
-    val newSimpleNodes = newRootNodes.filterNot(_.label == "stateChangeDates")
-    val oldSimpleNodes = oldRootNodes.filterNot(_.label == "stateChangeDates")
-    val newNodes = newSimpleNodes.theSeq ++ newStateNodes.theSeq
-    val oldNodes = oldSimpleNodes.theSeq ++ oldStateNodes.theSeq
+  def compareAMD(oldXml: Node, newXml: Node): Option[Elem] = {
+    compareNodeSeq(amdGrandChildren(trim(oldXml)), ddmGrandChildren(trim(newXml)), oldXml.scope, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/")
+  }
+
+  def compareDDM(oldXml: Node, newXml: Node): Option[Elem] = {
+    compareNodeSeq(ddmGrandChildren(trim(oldXml)), ddmGrandChildren(trim(newXml)), oldXml.scope, "http://easy.dans.knaw.nl/schemas/md/ddm/")
+  }
+
+  private def amdGrandChildren(xml: Node) = {
+    // we don't want all children of stateChangeDates when one of them changed
+    // but we do want the siblings of stateChangeDates when changed
+    xml.nonEmptyChildren.theSeq.filter(_.label != "stateChangeDates") ++
+    (xml \ "stateChangeDates").flatMap(_.nonEmptyChildren).theSeq
+  }
+
+  private def ddmGrandChildren(xml: Node) = {
+    // we don't want all grandchildren when one of them changed
+    (xml \ "profile").flatMap(_.nonEmptyChildren).theSeq ++
+      (xml \ "dcmiMetadata").flatMap(_.nonEmptyChildren).theSeq
+  }
+
+  private def compareNodeSeq(oldNodes: Seq[Node], newNodes: Seq[Node], scope: NamespaceBinding, scheme: String) = {
     val onlyInOld = oldNodes.diff(newNodes).filter(_.nonEmpty)
     val onlyInNew = newNodes.diff(oldNodes).filter(_.nonEmpty)
-
     if (onlyInOld.isEmpty && onlyInNew.isEmpty) None
-    else Some(
-      <prov:file scheme={ scheme }>
+    else {
+      Some(
+        <prov:file scheme={ scheme }>
         <prov:old>{ PCData(onlyInOld.mkString("\n")) }</prov:old>
         <prov:new>{ onlyInNew }</prov:new>
-      </prov:file>.copy(scope = oldXml.scope) // TODO in case of ddm perhaps also dc[t[erms]] and dcx-gml?
-    )
+      </prov:file>.copy(scope = scope) // TODO in case of ddm perhaps also dc[t[erms]] and dcx-gml?
+      )
+    }
   }
 
   def fixedDdmEncoding(oldEncoding: Seq[String], newEncoding: Seq[String]): Option[Elem] = {

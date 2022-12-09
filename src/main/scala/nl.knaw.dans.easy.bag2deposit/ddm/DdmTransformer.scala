@@ -16,6 +16,7 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
+import nl.knaw.dans.easy.bag2deposit.DdmVersion.{ DdmVersion, V1 }
 import nl.knaw.dans.easy.bag2deposit.InvalidBagException
 import nl.knaw.dans.easy.bag2deposit.ddm.DistinctTitlesRewriteRule.distinctTitles
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
@@ -27,7 +28,11 @@ import scala.util.{ Failure, Success, Try }
 import scala.xml._
 import scala.xml.transform.{ RewriteRule, RuleTransformer }
 
-class DdmTransformer(cfgDir: File, target: String, collectionsMap: Map[String, Seq[Elem]] = Map.empty) extends DebugEnhancedLogging {
+class DdmTransformer(cfgDir: File,
+                     target: String,
+                     collectionsMap: Map[String, Seq[Elem]] = Map.empty,
+                     ddmVersion:DdmVersion = V1,
+                    ) extends DebugEnhancedLogging {
   trace(())
   private val archaeologyCfgDir: File = cfgDir / "archaeology"
   lazy val reportRewriteRule: ReportRewriteRule = ReportRewriteRule(archaeologyCfgDir)
@@ -53,7 +58,7 @@ class DdmTransformer(cfgDir: File, target: String, collectionsMap: Map[String, S
     relationRewriteRule,
   )
 
-  private def standardRuleTransformer(newDcmiNodes: NodeSeq, profileTitle: String) = new RuleTransformer(
+  private def standardRuleTransformer(newDcmiNodes: NodeSeq, profileTitle: String, newProfileNodes: NodeSeq) = new RuleTransformer(
     NewDcmiNodesRewriteRule(newDcmiNodes),
     DistinctTitlesRewriteRule(profileTitle),
     relationRewriteRule,
@@ -61,18 +66,18 @@ class DdmTransformer(cfgDir: File, target: String, collectionsMap: Map[String, S
     DatesOfCollectionRewriteRule(newDcmiNodes),
     languageRewriteRule,
     DropFunderRoleRewriteRule,
-    ProfileRewriteRule,
+    ProfileRewriteRule(newProfileNodes),
   )
 
-  private case class ArchaeologyRewriteRule(profileTitle: String, additionalDcmiNodes: NodeSeq) extends RewriteRule {
+  private case class ArchaeologyRewriteRule(profileTitle: String, newDcmiNodes: NodeSeq, newProfileNodes: NodeSeq) extends RewriteRule {
     // defined local to have all creators of RuleTransformer next to one another
     override def transform(node: Node): Seq[Node] = {
       node.label match {
-        case "profile" => ProfileRewriteRule(node)
+        case "profile" => ProfileRewriteRule(newProfileNodes)(node)
         case "dcmiMetadata" =>
           <dcmiMetadata>
-              { distinctTitles(profileTitle, archaeologyDcmiRuleTransformer(additionalDcmiNodes)(node).nonEmptyChildren) }
-              { additionalDcmiNodes }
+              { distinctTitles(profileTitle, archaeologyDcmiRuleTransformer(newDcmiNodes)(node).nonEmptyChildren) }
+              { newDcmiNodes }
           </dcmiMetadata>.copy(prefix = node.prefix, attributes = node.attributes, scope = node.scope)
         case _ => node
       }
@@ -116,7 +121,7 @@ class DdmTransformer(cfgDir: File, target: String, collectionsMap: Map[String, S
       .copy(prefix = ddm.scope.getPrefix("http://purl.org/dc/terms/"))
   }
 
-  def transform(ddmIn: Node, datasetId: String, remarks: NodeSeq = NodeSeq.Empty): Try[Node] = {
+  def transform(ddmIn: Node, datasetId: String, remarks: NodeSeq = NodeSeq.Empty, containsPrivacySensitiveData: String = ""): Try[Node] = {
     trace(datasetId)
     val newDcmiNodes = missingLicense(ddmIn) ++
       datesOfCollection(ddmIn) ++
@@ -126,9 +131,18 @@ class DdmTransformer(cfgDir: File, target: String, collectionsMap: Map[String, S
       remarks
 
     val originalProfile = ddmIn \ "profile"
+    val newProfileNodes: NodeSeq = {
+      if (ddmVersion == V1)
+        Seq.empty
+      else containsPrivacySensitiveData match {
+        case "true" => <ddm:personalData present="Yes" />
+        case "false" => <ddm:personalData present="No" />
+        case _ => <ddm:personalData present="unknown" />
+      }
+    }
 
     if (target != "archaeology") {
-      val transformer = standardRuleTransformer(newDcmiNodes, (originalProfile \ "title").text)
+      val transformer = standardRuleTransformer(newDcmiNodes, (originalProfile \ "title").text, newProfileNodes)
       val ddmOut = transformer(ddmIn)
       FailOnNotImplemented(ddmOut)
     }
@@ -142,7 +156,8 @@ class DdmTransformer(cfgDir: File, target: String, collectionsMap: Map[String, S
       // the transformation
       val ddmRuleTransformer = new RuleTransformer(ArchaeologyRewriteRule(
         profileTitle = (originalProfile \ "title").text,
-        additionalDcmiNodes = newTitlesForDcmi ++ newDcmiNodes
+        newDcmiNodes = newTitlesForDcmi ++ newDcmiNodes,
+        newProfileNodes = newProfileNodes,
       ))
       val ddmOut = ddmRuleTransformer(ddmIn)
 
@@ -154,7 +169,9 @@ class DdmTransformer(cfgDir: File, target: String, collectionsMap: Map[String, S
     }
   }.map { ddm =>
     logNotMappedLanguages(ddm, datasetId)
-    ddm
+    if (ddmVersion == V1) ddm
+    else ddm.asInstanceOf[Elem]
+      .copy(scope = NamespaceBinding("ddm", "http://schemas.dans.knaw.nl/dataset/ddm-v2/", ddm.scope))
   }
 
   private def FailOnNotImplemented(ddmOut: Node) = {
