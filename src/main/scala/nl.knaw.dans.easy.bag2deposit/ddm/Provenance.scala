@@ -20,7 +20,7 @@ import org.joda.time.DateTime.now
 import org.joda.time.format.DateTimeFormat
 
 import scala.xml.Utility.trim
-import scala.xml.{ Elem, NamespaceBinding, Node, PCData }
+import scala.xml._
 
 case class Provenance(app: String, version: String, schemaRoot: String = "https://easy.dans.knaw.nl/schemas") extends DebugEnhancedLogging {
   private val schemaLocation = s"http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ $schemaRoot/bag/metadata/prov/provenance.xsd"
@@ -72,9 +72,11 @@ object Provenance extends DebugEnhancedLogging {
     val onlyInNew = newNodes.diff(oldNodes).filter(_.nonEmpty)
     if (onlyInOld.isEmpty && onlyInNew.isEmpty) None
     else {
+      val old = if (onlyInOld.isEmpty) Text("")
+                else PCData(onlyInOld.mkString("\n"))
       Some(
         <prov:file scheme={ scheme }>
-        <prov:old>{ PCData(onlyInOld.mkString("\n")) }</prov:old>
+        <prov:old>{ old }</prov:old>
         <prov:new>{ onlyInNew }</prov:new>
       </prov:file>.copy(scope = scope) // TODO in case of ddm perhaps also dc[t[erms]] and dcx-gml?
       )

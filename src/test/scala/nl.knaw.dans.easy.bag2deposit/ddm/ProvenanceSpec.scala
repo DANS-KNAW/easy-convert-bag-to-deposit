@@ -250,7 +250,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     }
 
     val expectedDdm = {
-      <ddm:DDM xmlns:ddm="http://easy.dans.knaw.nl/schemas/ddm-v2/"
+      <ddm:DDM xmlns:ddm="http://easy.dans.knaw.nl/dataset/ddm-v2/"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                xsi:schemaLocation=" http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd">
         <ddm:profile>
@@ -264,7 +264,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       <prov:provenance xsi:schemaLocation="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ https://easy.dans.knaw.nl/schemas/bag/metadata/prov/provenance.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/">
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
         <prov:file scheme="http://easy.dans.knaw.nl/schemas/md/ddm/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
-        <prov:old><![CDATA[]]></prov:old>
+        <prov:old/>
         <prov:new><ddm:personalData present="Yes"/></prov:new>
       </prov:file>
         </prov:migration>
