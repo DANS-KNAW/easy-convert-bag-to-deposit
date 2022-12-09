@@ -47,7 +47,7 @@ object Provenance extends DebugEnhancedLogging {
    *         both versions of the complete element is returned
    */
   def compareAMD(oldXml: Node, newXml: Node): Option[Elem] = {
-    compareNodeSeq(amdGrandChildren(trim(oldXml)), ddmGrandChildren(trim(newXml)), oldXml.scope, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/")
+    compareNodeSeq(amdGrandChildren(trim(oldXml)), amdGrandChildren(trim(newXml)), oldXml.scope, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/")
   }
 
   def compareDDM(oldXml: Node, newXml: Node): Option[Elem] = {
