@@ -39,7 +39,7 @@
     </properties>
 
     <scm>
-        <developerConnection>scm:git:https://github.com/DANS-KNAW/easy-convert-bag-to-deposit</developerConnection>
+        <developerConnection>scm:git:ssh://github.com/DANS-KNAW/easy-convert-bag-to-deposit</developerConnection>
         <tag>v1.2.2</tag>
     </scm>
 
