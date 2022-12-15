@@ -85,6 +85,9 @@ class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSuppor
     ddmOut.serialize should include(ddmV2namespace)
     actualProv.serialize should include(ddmV2namespace)
 
+    normalized(ddmOut) shouldBe normalized(expectedDdm)
+    normalized(actualProv).replaceAll(" +scheme"," scheme") shouldBe normalized(expectedProv).replaceAll(" +scheme"," scheme")
+
     SchemaFactory
       .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
       .newSchema(Array[Source](new StreamSource(new FileInputStream(schema))))
