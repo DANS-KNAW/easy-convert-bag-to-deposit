@@ -22,17 +22,23 @@ import org.joda.time.format.DateTimeFormat
 import scala.xml.Utility.trim
 import scala.xml._
 
-case class Provenance(app: String, version: String, schemaRoot: String = "https://easy.dans.knaw.nl/schemas") extends DebugEnhancedLogging {
-  private val schemaLocation = s"http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ $schemaRoot/bag/metadata/prov/provenance.xsd"
+case class Provenance(app: String, version: String, schemaRoot: String = "http://schemas.dans.knaw.nl") extends DebugEnhancedLogging {
   private val dateFormat = now().toString(DateTimeFormat.forPattern("yyyy-MM-dd"))
 
   def collectChangesInXmls(maybeChanges: Seq[Option[Elem]]): Elem = {
     trace(this.getClass)
-    <prov:provenance xmlns:prov="http://easy.dans.knaw.nl/schemas/bag/metadata/prov/"
+    val changes = maybeChanges.filter(_.nonEmpty).flatMap(_.toSeq)
+    val fileSchemes = changes.flatMap(n => (n \\ "file").flatMap(_.attribute("scheme"))).flatten
+    val schema = schemaRoot + {
+      if (fileSchemes.exists(_.toString().contains("ddm-v2")))
+        "/bag/metadata/prov/v2"
+      else "/bag/metadata/prov/v1"
+    }
+    <prov:provenance xmlns:prov={ schema }
                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                     xsi:schemaLocation={  schemaLocation }>
+                     xsi:schemaLocation={ s"$schema/ $schema/provenance.xsd" }>
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
-        { maybeChanges.filter(_.nonEmpty).flatMap(_.toSeq) }
+        { changes }
         </prov:migration>
     </prov:provenance>
   }
@@ -47,11 +53,13 @@ object Provenance extends DebugEnhancedLogging {
    *         both versions of the complete element is returned
    */
   def compareAMD(oldXml: Node, newXml: Node): Option[Elem] = {
-    compareNodeSeq(amdGrandChildren(trim(oldXml)), amdGrandChildren(trim(newXml)), oldXml.scope, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/")
+    compareNodeSeq(amdGrandChildren(trim(oldXml)), amdGrandChildren(trim(newXml)), newXml.scope, newXml.scope.getURI("amd"))
   }
 
   def compareDDM(oldXml: Node, newXml: Node): Option[Elem] = {
-    compareNodeSeq(ddmGrandChildren(trim(oldXml)), ddmGrandChildren(trim(newXml)), oldXml.scope, "http://easy.dans.knaw.nl/schemas/md/ddm/")
+    logger.debug(s"OLD SCOPE: ${oldXml.scope.getURI("ddm")}  ${oldXml.scope}")
+    logger.debug(s"NEW SCOPE: ${newXml.scope.getURI("ddm")} ${newXml.scope}")
+    compareNodeSeq(ddmGrandChildren(trim(oldXml)), ddmGrandChildren(trim(newXml)), newXml.scope, newXml.scope.getURI("ddm"))
   }
 
   private def amdGrandChildren(xml: Node) = {
@@ -67,7 +75,7 @@ object Provenance extends DebugEnhancedLogging {
       (xml \ "dcmiMetadata").flatMap(_.nonEmptyChildren).theSeq
   }
 
-  private def compareNodeSeq(oldNodes: Seq[Node], newNodes: Seq[Node], scope: NamespaceBinding, scheme: String) = {
+  private def compareNodeSeq(oldNodes: Seq[Node], newNodes: Seq[Node], newXmlScope: NamespaceBinding, scheme: String) = {
     val onlyInOld = oldNodes.diff(newNodes).filter(_.nonEmpty)
     val onlyInNew = newNodes.diff(oldNodes).filter(_.nonEmpty)
     if (onlyInOld.isEmpty && onlyInNew.isEmpty) None
@@ -76,9 +84,9 @@ object Provenance extends DebugEnhancedLogging {
                 else PCData(onlyInOld.mkString("\n"))
       Some(
         <prov:file scheme={ scheme }>
-        <prov:old>{ old }</prov:old>
-        <prov:new>{ onlyInNew }</prov:new>
-      </prov:file>.copy(scope = scope) // TODO in case of ddm perhaps also dc[t[erms]] and dcx-gml?
+          <prov:old>{ old }</prov:old>
+          <prov:new>{ onlyInNew }</prov:new>
+        </prov:file>.copy(scope = newXmlScope) // TODO in case of ddm perhaps also dc[t[erms]] and dcx-gml?
       )
     }
   }
