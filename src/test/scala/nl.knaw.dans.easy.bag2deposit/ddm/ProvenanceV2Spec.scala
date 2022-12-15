@@ -30,8 +30,6 @@ import javax.xml.transform.stream.StreamSource
 import javax.xml.validation.SchemaFactory
 
 class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport with AppConfigSupport {
-  // use the raw github location while upgraded schema is not yet published, your own fork if not yet merged.
-  // TODO download from maven into target folder
   override val schema: String = "target/dans-schema-lib/bag/metadata/prov/v2/provenance.xsd"
 
   // FixedCurrentDateTimeSupport is not effective for a val
