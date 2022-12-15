@@ -28,8 +28,7 @@ import scala.util.Success
 class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport with AppConfigSupport {
   // use the raw github location while upgraded schema is not yet published, your own fork if not yet merged.
   // TODO download from maven into target folder
-  private val schemaRoot = "https://raw.githubusercontent.com/DANS-KNAW/dans-schema/master/src/main/resources"
-  override val schema: String = schemaRoot + "/bag/metadata/prov/v2/provenance.xsd"
+  override val schema: String = "https://raw.githubusercontent.com/DANS-KNAW/dans-schema/master/src/main/resources/bag/metadata/prov/v2/provenance.xsd"
 
   // FixedCurrentDateTimeSupport is not effective for a val
   private def provenanceBuilder = Provenance("EasyConvertBagToDepositApp", "1.0.5")
@@ -62,10 +61,14 @@ class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSuppor
                        xmlns:prov="http://schemas.dans.knaw.nl/bag/metadata/prov/v2/"
       >
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
-        <prov:file scheme={ ddmV2namespace } xmlns="">
+        <prov:file scheme={ ddmV2namespace } xmlns=""
+                   xmlns:ddm={ ddmV2namespace }
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns:gml="http://www.opengis.net/gml"
+        >
         <prov:old/>
         <prov:new><ddm:personalData present="Yes"/></prov:new>
-      </prov:file>
+          </prov:file>
         </prov:migration>
       </prov:provenance>
     }
@@ -76,10 +79,11 @@ class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSuppor
       .getOrElse(fail("no DDM returned"))
     val actualProv = provenanceBuilder.collectChangesInXmls(List(Provenance.compareDDM(ddmIn, ddmOut)))
 
-    normalized(ddmOut) shouldBe normalized(expectedDdm)
     // check what was stripped by normalize to avoid random order
     ddmOut.serialize should include(ddmV2namespace)
+    actualProv.serialize should include(ddmV2namespace)
 
+    normalized(ddmOut) shouldBe normalized(expectedDdm)
     normalized(actualProv).replaceAll(" +scheme"," scheme") shouldBe normalized(expectedProv).replaceAll(" +scheme"," scheme")
     assume(schemaIsAvailable)
     validate(expectedProv) shouldBe a[Success[_]]
