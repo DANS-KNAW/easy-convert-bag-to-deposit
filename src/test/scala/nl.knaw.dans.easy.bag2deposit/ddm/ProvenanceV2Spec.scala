@@ -23,12 +23,16 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.util.Success
+import java.io.{ ByteArrayInputStream, FileInputStream }
+import javax.xml.XMLConstants
+import javax.xml.transform.Source
+import javax.xml.transform.stream.StreamSource
+import javax.xml.validation.SchemaFactory
 
 class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport with AppConfigSupport {
   // use the raw github location while upgraded schema is not yet published, your own fork if not yet merged.
   // TODO download from maven into target folder
-  override val schema: String = "https://raw.githubusercontent.com/DANS-KNAW/dans-schema/master/src/main/resources/bag/metadata/prov/v2/provenance.xsd"
+  override val schema: String = "target/dans-schema-lib/bag/metadata/prov/v2/provenance.xsd"
 
   // FixedCurrentDateTimeSupport is not effective for a val
   private def provenanceBuilder = Provenance("EasyConvertBagToDepositApp", "1.0.5")
@@ -83,9 +87,10 @@ class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSuppor
     ddmOut.serialize should include(ddmV2namespace)
     actualProv.serialize should include(ddmV2namespace)
 
-    normalized(ddmOut) shouldBe normalized(expectedDdm)
-    normalized(actualProv).replaceAll(" +scheme"," scheme") shouldBe normalized(expectedProv).replaceAll(" +scheme"," scheme")
-    assume(schemaIsAvailable)
-    validate(expectedProv) shouldBe a[Success[_]]
+    SchemaFactory
+      .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
+      .newSchema(Array[Source](new StreamSource(new FileInputStream(schema))))
+      .newValidator()
+      .validate(new StreamSource(new ByteArrayInputStream(actualProv.serialize.getBytes())))
   }
 }
