@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.DdmVersion.{ DdmVersion, V1 }
 import nl.knaw.dans.easy.bag2deposit.InvalidBagException
-import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer.{ ddmV2location, ddmV2namespace }
+import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer.ddmV2namespace
 import nl.knaw.dans.easy.bag2deposit.ddm.DistinctTitlesRewriteRule.distinctTitles
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
 import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.logBriefRapportTitles
@@ -31,7 +31,6 @@ import scala.xml.transform.{ RewriteRule, RuleTransformer }
 
 object DdmTransformer {
   val ddmV2namespace = "http://schemas.dans.knaw.nl/dataset/ddm-v2/"
-  val ddmV2location = "http://schemas.dans.knaw.nl/md/ddm/v2/ddm.xsd"
 }
 class DdmTransformer(cfgDir: File,
                      target: String,
@@ -173,21 +172,14 @@ class DdmTransformer(cfgDir: File,
       FailOnNotImplemented(ddmOut)
     }
   }.map { ddm =>
+    logger.debug("====" + ddm.attributes)
     logNotMappedLanguages(ddm, datasetId)
-    if (ddmVersion == V1)
-      ddm
-    else
-      <ddm:DDM xmlns:ddm={ ddmV2namespace }
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation={ s"$ddmV2namespace $ddmV2location"}>
-        { ddm.nonEmptyChildren }
-      </ddm:DDM>
-// TODO would prefer method below but how to change the schemalocation?
-//    ddm.asInstanceOf[Elem]
-//      .copy(
-//        scope = NamespaceBinding("ddm", "http://schemas.dans.knaw.nl/md/ddm-v2/", TopScope),
-//        attributes = ddm.attributes // TODO schemalocation
-//      )
+    if (ddmVersion == V1) ddm
+    else ddm.asInstanceOf[Elem]
+      .copy(
+        scope = NamespaceBinding("ddm", ddmV2namespace, ddm.scope),
+        attributes = ddm.attributes.remove(ddm.scope.getURI("xsi"), ddm , "schemaLocation"),
+      )
   }
 
   private def FailOnNotImplemented(ddmOut: Node) = {

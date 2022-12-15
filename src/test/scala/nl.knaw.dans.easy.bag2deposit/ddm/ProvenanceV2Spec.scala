@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 import nl.knaw.dans.easy.bag2deposit.DdmVersion.V2
 import nl.knaw.dans.easy.bag2deposit.Fixture._
 import nl.knaw.dans.easy.bag2deposit.XmlExtensions
-import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer.{ ddmV2location, ddmV2namespace }
+import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer.ddmV2namespace
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -29,7 +29,7 @@ class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSuppor
   // use the raw github location while upgraded schema is not yet published, your own fork if not yet merged.
   // TODO download from maven into target folder
   private val schemaRoot = "https://raw.githubusercontent.com/DANS-KNAW/dans-schema/master/src/main/resources"
-  override val schema: String = schemaRoot + "/provenance.xsd"
+  override val schema: String = schemaRoot + "/bag/metadata/prov/v2/provenance.xsd"
 
   // FixedCurrentDateTimeSupport is not effective for a val
   private def provenanceBuilder = Provenance("EasyConvertBagToDepositApp", "1.0.5")
@@ -38,7 +38,9 @@ class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSuppor
     val ddmIn = {
       <ddm:DDM xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-               xsi:schemaLocation=" http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd">
+               xsi:schemaLocation=" http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"
+               xmlns:gml="http://www.opengis.net/gml"
+      >
         <ddm:profile>
           <dc:title>blabla</dc:title>
         </ddm:profile>
@@ -47,7 +49,8 @@ class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSuppor
 
     val expectedDdm = <ddm:DDM xmlns:ddm={ ddmV2namespace }
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             xsi:schemaLocation={ s"$ddmV2namespace ${ddmV2location}" }>
+             xmlns:gml="http://www.opengis.net/gml"
+    >
       <ddm:profile>
         <dc:title>blabla</dc:title>
         <ddm:personalData present="Yes"/>
@@ -55,11 +58,11 @@ class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSuppor
     </ddm:DDM>
 
     val expectedProv = {
-      <prov:provenance xsi:schemaLocation={s"http://schemas.dans.knaw.nl/bag/metadata/prov/v2/ http://schemas.dans.knaw.nl/bag/metadata/prov/v2/provenance.xsd"}
-                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                       xmlns:prov="http://schemas.dans.knaw.nl/bag/metadata/prov/v2/">
+      <prov:provenance xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xmlns:prov="http://schemas.dans.knaw.nl/bag/metadata/prov/v2/"
+      >
         <prov:migration app="EasyConvertBagToDepositApp" version="1.0.5" date="2020-02-02">
-        <prov:file scheme={ ddmV2namespace }>
+        <prov:file scheme={ ddmV2namespace } xmlns="">
         <prov:old/>
         <prov:new><ddm:personalData present="Yes"/></prov:new>
       </prov:file>
@@ -75,7 +78,7 @@ class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSuppor
 
     normalized(ddmOut) shouldBe normalized(expectedDdm)
     // check what was stripped by normalize to avoid random order
-    ddmOut.serialize should include("http://schemas.dans.knaw.nl/dataset/ddm-v2/")
+    ddmOut.serialize should include(ddmV2namespace)
 
     normalized(actualProv).replaceAll(" +scheme"," scheme") shouldBe normalized(expectedProv).replaceAll(" +scheme"," scheme")
     assume(schemaIsAvailable)

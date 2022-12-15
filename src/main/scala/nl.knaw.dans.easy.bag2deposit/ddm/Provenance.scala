@@ -36,7 +36,7 @@ case class Provenance(app: String, version: String, schemaRoot: String = "http:/
     }
     <prov:provenance xmlns:prov={ schema }
                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                     xsi:schemaLocation={ s"$schema/ $schema/provenance.xsd" }>
+    >
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
         { changes }
         </prov:migration>
