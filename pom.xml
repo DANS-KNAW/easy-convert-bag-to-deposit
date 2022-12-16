@@ -36,7 +36,7 @@
 
     <properties>
         <main-class>nl.knaw.dans.easy.bag2deposit.Command</main-class>
-        <dans.schema.version>0.4.0</dans.schema.version>
+        <dans.schema.version>0.5.1-SNAPSHOT</dans.schema.version>
     </properties>
 
     <scm>

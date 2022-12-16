@@ -166,7 +166,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     (provenance \\ "old").text shouldBe expectedOld // might break when attributes are serialized in different order
 
     // replace is a hack for white space that should have been covered by normalized
-    normalized((provenance \\ "new").head).replaceAll("(?s)>[^>]*Unknown[^<]*<",">Unknown<") shouldBe normalized(expectedNew)
+    normalized((provenance \\ "new").head) shouldBe normalized(expectedNew)
 
     assume(schemaIsAvailable)
     val triedUnit = validate(provenance)

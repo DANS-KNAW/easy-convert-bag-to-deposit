@@ -28,7 +28,6 @@ import javax.xml.XMLConstants
 import javax.xml.transform.Source
 import javax.xml.transform.stream.StreamSource
 import javax.xml.validation.SchemaFactory
-import scala.collection.mutable
 import scala.xml.Elem
 
 class ProvenanceV2Spec extends AnyFlatSpec with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with AppConfigSupport {
@@ -36,7 +35,7 @@ class ProvenanceV2Spec extends AnyFlatSpec with XmlSupport with Matchers with Fi
     val xsd: String = "target/dans-schema-lib/bag/metadata/prov/v2/provenance.xsd"
     SchemaFactory
       .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
-      .newSchema(Array[Source](new StreamSource(new File(xsd))))
+      .newSchema(new StreamSource(new File(xsd)))
   }
 
   // FixedCurrentDateTimeSupport is not effective for a val

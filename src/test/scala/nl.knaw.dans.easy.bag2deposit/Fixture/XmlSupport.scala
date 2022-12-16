@@ -19,7 +19,7 @@ import scala.xml.{ Node, PrettyPrinter, Utility }
 
 trait XmlSupport {
   private val nameSpaceRegExp = """ xmlns(:[a-z-]+)?="[^"]*"""" // these attributes have a variable order
-  val printer = new PrettyPrinter(500, 2) // Utility.serialize would preserve white space, now tests are better readable
+  val printer = new PrettyPrinter(5000, 2) // Utility.serialize would preserve white space, now tests are better readable
 
   // TODO trimming and dropping namespaces affect one another
   def normalized(elem: Node): String = printer
@@ -28,7 +28,7 @@ trait XmlSupport {
     .replaceAll(" +\n?", " ")
     .replaceAll(" +srsName", " ")
     .replaceAll("\n +<", "\n<")
-    .replaceAll(" +>", ">")
+    .replaceAll(" *> *", ">")
     .trim
 
   def closingTags(actual: Node): String = {
