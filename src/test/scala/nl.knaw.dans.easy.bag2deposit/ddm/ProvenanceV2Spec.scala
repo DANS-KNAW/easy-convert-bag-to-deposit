@@ -23,14 +23,21 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.io.{ ByteArrayInputStream, File, FileInputStream }
+import java.io.{ ByteArrayInputStream, File }
 import javax.xml.XMLConstants
 import javax.xml.transform.Source
 import javax.xml.transform.stream.StreamSource
-import javax.xml.validation.{ Schema, SchemaFactory }
+import javax.xml.validation.SchemaFactory
+import scala.collection.mutable
+import scala.xml.Elem
 
-class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport with AppConfigSupport {
-  override val schema: String = "target/dans-schema-lib/bag/metadata/prov/v2/provenance.xsd"
+class ProvenanceV2Spec extends AnyFlatSpec with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with AppConfigSupport {
+  private val schema = {
+    val xsd: String = "target/dans-schema-lib/bag/metadata/prov/v2/provenance.xsd"
+    SchemaFactory
+      .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
+      .newSchema(Array[Source](new StreamSource(new File(xsd))))
+  }
 
   // FixedCurrentDateTimeSupport is not effective for a val
   private def provenanceBuilder = Provenance("EasyConvertBagToDepositApp", "1.0.5")
@@ -52,7 +59,9 @@ class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSuppor
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xmlns:gml="http://www.opengis.net/gml"
     >
-      <ddm:profile>
+      <ddm:profile xmlns:gml="http://www.opengis.net/gml"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">
         <dc:title>blabla</dc:title>
         <ddm:personalData present="Yes"/>
       </ddm:profile>
@@ -81,17 +90,22 @@ class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSuppor
       .getOrElse(fail("no DDM returned"))
     val actualProv = provenanceBuilder.collectChangesInXmls(List(Provenance.compareDDM(ddmIn, ddmOut)))
 
-    // check what was stripped by normalize to avoid random order
-    ddmOut.serialize should include(ddmV2namespace)
-    actualProv.serialize should include(ddmV2namespace)
-
+    logger.debug(ddmOut.serialize)
+    logger.debug(actualProv.serialize)
     normalized(ddmOut) shouldBe normalized(expectedDdm)
-    normalized(actualProv).replaceAll(" +scheme"," scheme") shouldBe normalized(expectedProv).replaceAll(" +scheme"," scheme")
+    normalized(actualProv) shouldBe normalized(expectedProv)
 
-    SchemaFactory
-      .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
-      .newSchema(Array[Source](new StreamSource(new File(schema))))
-      .newValidator()
-      .validate(new StreamSource(new ByteArrayInputStream(actualProv.serialize.getBytes())))
+    // check what was stripped by normalize to avoid random order TODO the leading space seems to represent the 'xmlns=""' above
+    val namespaces =s""" xmlns:ddm="$ddmV2namespace" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml""""
+        .split(" ").toSet
+    (actualProv \\ "file").head.scope.toString().split(" ").toSet shouldBe namespaces
+    ddmOut.scope.toString().split(" ").toSet shouldBe namespaces
+    (ddmOut \\ "profile").head.scope.toString().split(" ").toSet shouldBe namespaces
+
+    schema.newValidator().validate(streamSource(actualProv))
+  }
+
+  private def streamSource(actualProv: Elem) = {
+    new StreamSource(new ByteArrayInputStream(actualProv.serialize.getBytes()))
   }
 }

@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.bag2deposit.Fixture
 import scala.xml.{ Node, PrettyPrinter, Utility }
 
 trait XmlSupport {
-  private val nameSpaceRegExp = """ xmlns:[a-z-]+="[^"]*"""" // these attributes have a variable order
+  private val nameSpaceRegExp = """ xmlns(:[a-z-]+)?="[^"]*"""" // these attributes have a variable order
   val printer = new PrettyPrinter(160, 2) // Utility.serialize would preserve white space, now tests are better readable
 
   // TODO trimming and dropping namespaces affect one another

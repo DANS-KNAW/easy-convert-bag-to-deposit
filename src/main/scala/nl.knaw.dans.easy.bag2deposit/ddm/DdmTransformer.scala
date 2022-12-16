@@ -172,13 +172,13 @@ class DdmTransformer(cfgDir: File,
       FailOnNotImplemented(ddmOut)
     }
   }.map { ddm =>
-    logger.debug("====" + ddm.attributes)
     logNotMappedLanguages(ddm, datasetId)
     if (ddmVersion == V1) ddm
     else ddm.asInstanceOf[Elem]
       .copy(
         scope = NamespaceBinding("ddm", ddmV2namespace, ddm.scope),
         attributes = ddm.attributes.remove(ddm.scope.getURI("xsi"), ddm , "schemaLocation"),
+        // TODO add V2 schemaLocation? avoid old ddm namespace on <profile>
       )
   }
 

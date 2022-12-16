@@ -19,12 +19,12 @@ import better.files.StringExtensions
 import org.scalatest.Assertions.fail
 import org.xml.sax.SAXParseException
 
-import java.io.{ FileInputStream, InputStream }
+import java.io.InputStream
 import java.net.UnknownHostException
 import javax.xml.XMLConstants
 import javax.xml.transform.Source
 import javax.xml.transform.stream.StreamSource
-import javax.xml.validation.{ Schema, SchemaFactory }
+import javax.xml.validation.SchemaFactory
 import scala.util.{ Failure, Success, Try }
 import scala.xml.{ Node, PrettyPrinter, SAXParseException, Utility }
 

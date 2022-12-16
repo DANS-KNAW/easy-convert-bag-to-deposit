@@ -57,8 +57,8 @@ object Provenance extends DebugEnhancedLogging {
   }
 
   def compareDDM(oldXml: Node, newXml: Node): Option[Elem] = {
-    logger.debug(s"OLD SCOPE: ${oldXml.scope.getURI("ddm")}  ${oldXml.scope}")
-    logger.debug(s"NEW SCOPE: ${newXml.scope.getURI("ddm")} ${newXml.scope}")
+    logger.debug(s"OLD SCOPE: ${oldXml.scope.getURI("ddm")} -- ${oldXml.scope}")
+    logger.debug(s"NEW SCOPE: ${newXml.scope.getURI("ddm")} -- ${newXml.scope}")
     compareNodeSeq(ddmGrandChildren(trim(oldXml)), ddmGrandChildren(trim(newXml)), newXml.scope, newXml.scope.getURI("ddm"))
   }
 
@@ -86,7 +86,7 @@ object Provenance extends DebugEnhancedLogging {
         <prov:file scheme={ scheme }>
           <prov:old>{ old }</prov:old>
           <prov:new>{ onlyInNew }</prov:new>
-        </prov:file>.copy(scope = newXmlScope) // TODO in case of ddm perhaps also dc[t[erms]] and dcx-gml?
+        </prov:file>.copy(scope = newXmlScope)
       )
     }
   }
