@@ -23,11 +23,11 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.io.{ ByteArrayInputStream, FileInputStream }
+import java.io.{ ByteArrayInputStream, File, FileInputStream }
 import javax.xml.XMLConstants
 import javax.xml.transform.Source
 import javax.xml.transform.stream.StreamSource
-import javax.xml.validation.SchemaFactory
+import javax.xml.validation.{ Schema, SchemaFactory }
 
 class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport with AppConfigSupport {
   override val schema: String = "target/dans-schema-lib/bag/metadata/prov/v2/provenance.xsd"
@@ -90,7 +90,7 @@ class ProvenanceV2Spec extends AnyFlatSpec with FileSystemSupport with XmlSuppor
 
     SchemaFactory
       .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
-      .newSchema(Array[Source](new StreamSource(new FileInputStream(schema))))
+      .newSchema(Array[Source](new StreamSource(new File(schema))))
       .newValidator()
       .validate(new StreamSource(new ByteArrayInputStream(actualProv.serialize.getBytes())))
   }
