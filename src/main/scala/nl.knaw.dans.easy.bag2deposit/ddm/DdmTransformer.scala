@@ -17,8 +17,8 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.DdmVersion.{ DdmVersion, V1 }
-import nl.knaw.dans.easy.bag2deposit.InvalidBagException
-import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer.ddmV2namespace
+import nl.knaw.dans.easy.bag2deposit.{ InvalidBagException, XmlExtensions }
+import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer.{ ddmV2Location, ddmV2namespace }
 import nl.knaw.dans.easy.bag2deposit.ddm.DistinctTitlesRewriteRule.distinctTitles
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
 import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.logBriefRapportTitles
@@ -31,6 +31,7 @@ import scala.xml.transform.{ RewriteRule, RuleTransformer }
 
 object DdmTransformer {
   val ddmV2namespace = "http://schemas.dans.knaw.nl/dataset/ddm-v2/"
+  val ddmV2Location = "https://schemas.dans.knaw.nl/bag/metadata/prov/v2/provenance.xsd"
 }
 class DdmTransformer(cfgDir: File,
                      target: String,
@@ -174,12 +175,11 @@ class DdmTransformer(cfgDir: File,
   }.map { ddm =>
     logNotMappedLanguages(ddm, datasetId)
     if (ddmVersion == V1) ddm
-    else ddm.asInstanceOf[Elem]
-      .copy(
-        scope = NamespaceBinding("ddm", ddmV2namespace, ddm.scope),
-        attributes = ddm.attributes.remove(ddm.scope.getURI("xsi"), ddm , "schemaLocation"),
-        // TODO add V2 schemaLocation? avoid old ddm namespace on <profile>
-      )
+    else XML.loadString(
+      ddm.serialize
+        .replace("http://easy.dans.knaw.nl/schemas/md/ddm/",ddmV2namespace)
+        .replace("https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd",ddmV2Location)
+    )
   }
 
   private def FailOnNotImplemented(ddmOut: Node) = {

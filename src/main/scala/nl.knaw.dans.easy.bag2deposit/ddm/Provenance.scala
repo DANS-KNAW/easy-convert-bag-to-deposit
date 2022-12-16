@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.easy.bag2deposit.ddm
 
+import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.{ createSchemaLocation, hasDdmV2 }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.joda.time.DateTime.now
 import org.joda.time.format.DateTimeFormat
@@ -22,19 +23,15 @@ import org.joda.time.format.DateTimeFormat
 import scala.xml.Utility.trim
 import scala.xml._
 
-case class Provenance(app: String, version: String, schemaRoot: String = "http://schemas.dans.knaw.nl") extends DebugEnhancedLogging {
+case class Provenance(app: String, version: String) extends DebugEnhancedLogging {
   private val dateFormat = now().toString(DateTimeFormat.forPattern("yyyy-MM-dd"))
 
   def collectChangesInXmls(maybeChanges: Seq[Option[Elem]]): Elem = {
     trace(this.getClass)
     val changes = maybeChanges.filter(_.nonEmpty).flatMap(_.toSeq)
-    val fileSchemes = changes.flatMap(n => (n \\ "file").flatMap(_.attribute("scheme"))).flatten
-    val schema = schemaRoot + {
-      if (fileSchemes.exists(_.toString().contains("ddm-v2")))
-        "/bag/metadata/prov/v2"
-      else "/bag/metadata/prov/v1"
-    }
-    <prov:provenance xmlns:prov={ schema }
+    val schemaLocation = createSchemaLocation(hasDdmV2(changes))
+    <prov:provenance xsi:schemaLocation={ schemaLocation }
+                     xmlns:prov={ schemaLocation.split(" ").head }
                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     >
         <prov:migration app={ app } version={ version } date={ now().toString(dateFormat) }>
@@ -44,6 +41,20 @@ case class Provenance(app: String, version: String, schemaRoot: String = "http:/
   }
 }
 object Provenance extends DebugEnhancedLogging {
+
+  private def hasDdmV2(changes: Seq[Elem]) = {
+    val fileSchemes = changes.flatMap(n => (n \\ "file").flatMap(_.attribute("scheme"))).flatten
+    fileSchemes.exists(_.text.contains("ddm-v2"))
+  }
+
+  private def createSchemaLocation(hasV2: Boolean) = {
+
+    val path = "http://schemas.dans.knaw.nl/bag/metadata"
+    if (hasV2)
+      s"$path/prov-v2/ $path/prov/v2/provenance.xsd"
+    else s"http://easy.dans.knaw.nl/schemas/md/ddm/ $path/prov/v1/provenance.xsd"
+  }
+
   /**
    * Creates the content for a <prov:migration> by comparing the direct child elements of each XML.
    * @param oldXml the original instance

@@ -44,10 +44,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     triedString
   }
 
-  private val provenance = new Provenance(
-    app = getClass.getSimpleName,
-    version = configuration.version
-  )
+  private val provenance = new Provenance(app = getClass.getSimpleName, version = configuration.version)
   implicit val charset: Charset = Charset.forName("UTF-8")
 
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])

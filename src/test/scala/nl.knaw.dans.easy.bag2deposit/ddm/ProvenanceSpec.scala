@@ -37,7 +37,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
   private val schemaLocation = s"http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ $schema"
 
   // FixedCurrentDateTimeSupport is not effective for a val
-  private def provenanceBuilder = Provenance("EasyConvertBagToDepositApp", "1.0.5", schemaRoot)
+  private def provenanceBuilder = Provenance("EasyConvertBagToDepositApp", "1.0.5")
 
   private def parseError(sample: String) = {
     validate(XML.loadString(sample)).asInstanceOf[Failure[_]].exception.toString
