@@ -25,7 +25,6 @@ import org.scalatest.matchers.should.Matchers
 
 import java.io.{ ByteArrayInputStream, File }
 import javax.xml.XMLConstants
-import javax.xml.transform.Source
 import javax.xml.transform.stream.StreamSource
 import javax.xml.validation.SchemaFactory
 import scala.xml.Elem

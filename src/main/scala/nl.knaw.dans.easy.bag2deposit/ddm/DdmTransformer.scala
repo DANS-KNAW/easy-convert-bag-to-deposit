@@ -17,11 +17,11 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.DdmVersion.{ DdmVersion, V1 }
-import nl.knaw.dans.easy.bag2deposit.{ InvalidBagException, XmlExtensions }
 import nl.knaw.dans.easy.bag2deposit.ddm.DdmTransformer.{ ddmV2Location, ddmV2namespace }
 import nl.knaw.dans.easy.bag2deposit.ddm.DistinctTitlesRewriteRule.distinctTitles
 import nl.knaw.dans.easy.bag2deposit.ddm.LanguageRewriteRule.logNotMappedLanguages
 import nl.knaw.dans.easy.bag2deposit.ddm.ReportRewriteRule.logBriefRapportTitles
+import nl.knaw.dans.easy.bag2deposit.{ InvalidBagException, XmlExtensions }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.lang.StringUtils.{ isBlank, isNotBlank }
 

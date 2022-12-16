@@ -16,7 +16,7 @@
 package nl.knaw.dans.easy.bag2deposit.ddm
 
 import scala.xml.transform.RewriteRule
-import scala.xml.{ Elem, Node, NodeSeq, Text }
+import scala.xml.{ Node, NodeSeq }
 
 case class ProfileRewriteRule(newNodes: NodeSeq) extends RewriteRule {
   override def transform(node: Node): Seq[Node] = {

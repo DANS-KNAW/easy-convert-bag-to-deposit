@@ -17,16 +17,11 @@ package nl.knaw.dans.easy.bag2deposit.ddm
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.Fixture._
-import nl.knaw.dans.easy.bag2deposit.{ AmdTransformer, XmlExtensions, loadXml }
+import nl.knaw.dans.easy.bag2deposit.{ AmdTransformer, loadXml }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.io.{ ByteArrayInputStream, FileInputStream }
-import javax.xml.XMLConstants
-import javax.xml.transform.Source
-import javax.xml.transform.stream.StreamSource
-import javax.xml.validation.SchemaFactory
 import scala.util.{ Failure, Success }
 import scala.xml.{ Utility, XML }
 
