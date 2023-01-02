@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import nl.knaw.dans.easy.bag2deposit.BagSource.BagSource
+import nl.knaw.dans.easy.bag2deposit.DdmVersion.DdmVersion
 import nl.knaw.dans.easy.bag2deposit.IdType.IdType
 import org.rogach.scallop.{ ScallopConf, ScallopOption, ValueConverter, singleArgConverter }
 
@@ -47,6 +48,7 @@ class CommandLineOptions(args: Array[String], version: String) extends ScallopCo
 
   implicit val fileConverter: ValueConverter[File] = singleArgConverter(File(_))
   implicit val idTypeConverter: ValueConverter[IdType] = singleArgConverter(IdType.withName)
+  implicit val namespaceTypeConverter: ValueConverter[DdmVersion] = singleArgConverter(DdmVersion.withName)
   implicit val bagSourceConverter: ValueConverter[BagSource] = singleArgConverter(BagSource.withName)
 
   val bagGrandParentDir: ScallopOption[File] = opt[Path]("dir", short = 'd',
@@ -54,7 +56,7 @@ class CommandLineOptions(args: Array[String], version: String) extends ScallopCo
   val bagParentDir: ScallopOption[File] = opt[Path]("uuid", short = 'u',
     descr = "directory with a bag. This directory MUST be a uuid.").map(File(_))
   val idType: ScallopOption[IdType] = opt[IdType]("dataverse-identifier-type", short = 't', required = true,
-    descr = "the field to be used as Dataverse identifier, either doi or urn:nbn")
+    descr = "the field to be used as Dataverse identifier: "+IdType.values.mkString(", "))
   val bagSource: ScallopOption[BagSource] = opt[BagSource]("source", short = 's', required = true,
     descr = "The source of the bags")
   val outputDir: ScallopOption[File] = opt(name = "output-dir", short = 'o', required = false,
@@ -63,6 +65,8 @@ class CommandLineOptions(args: Array[String], version: String) extends ScallopCo
     descr = s"Retrieve previous versions from the vault")
   val target: ScallopOption[String] = opt[String](name = "target", noshort = true, required = true,
     descr = s"Specifies a data-station alias a subdirectory in the cfg directory.")
+  val namespace: ScallopOption[DdmVersion] = opt[DdmVersion](name = "namespace", short = 'n', required = true,
+    descr = s"Namespace for DDM: "+DdmVersion.values.mkString(", "))
 
   requireOne(bagParentDir, bagGrandParentDir)
   validate(outputDir) { dir =>

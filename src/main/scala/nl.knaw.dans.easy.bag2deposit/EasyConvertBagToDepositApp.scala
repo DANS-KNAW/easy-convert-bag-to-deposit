@@ -20,7 +20,7 @@ import better.files.File.CopyOptions
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
 import nl.knaw.dans.easy.bag2deposit.FoXml.getAmd
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
-import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.compare
+import nl.knaw.dans.easy.bag2deposit.ddm.Provenance.{ compareAMD, compareDDM }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import java.io.{ FileNotFoundException, IOException }
@@ -44,10 +44,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     triedString
   }
 
-  private val provenance = new Provenance(
-    app = getClass.getSimpleName,
-    version = configuration.version
-  )
+  private val provenance = new Provenance(app = getClass.getSimpleName, version = configuration.version)
   implicit val charset: Charset = Charset.forName("UTF-8")
 
   private def addProps(depositPropertiesFactory: DepositPropertiesFactory, maybeOutputDir: Option[File])
@@ -73,19 +70,18 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       fromVault = depositProps.getString("deposit.origin") == "VAULT"
       datasetId = depositProps.getString("identifier.fedora", "")
       remarks <- configuration.remarksConverter.additionalDcmi(metadata / "emd.xml", datasetId, fromVault)
-      ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId, remarks)
-      oldDcmi = (ddmIn \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
-      newDcmi = (ddmOut \ "dcmiMetadata").headOption.getOrElse(<dcmiMetadata/>)
       amdFile = metadata / "amd.xml"
       amdIn <- getAmdXml(datasetId, amdFile)
+      hasSensitiveData = (amdIn \\ "containsPrivacySensitiveData").text
+      ddmOut <- configuration.ddmTransformer.transform(ddmIn, datasetId, remarks, hasSensitiveData)
       _ = if (bagDir.isHidden && (amdIn \\ "datasetState").text != "DELETED")
         throw InvalidBagException(s"Inactive bag does not have state DELETED: $amdFile")
       amdOut <- configuration.amdTransformer.transform(amdIn, ddmOut \ "profile" \ "created")
       agreementsFile = metadata / "depositor-info" / "agreements.xml"
       _ = checkAgreementsXml((amdOut \ "depositorId").text, agreementsFile)
       provenanceXml = provenance.collectChangesInXmls(Seq(
-        compare(amdIn, amdOut, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/"),
-        compare(oldDcmi, newDcmi, "http://easy.dans.knaw.nl/schemas/md/ddm/"),
+        compareAMD(amdIn, amdOut),
+        compareDDM(ddmIn, ddmOut),
         Provenance.fixedDdmEncoding(oldDdmChars, newDdmChars),
       ))
       _ = trace(bagInfo)

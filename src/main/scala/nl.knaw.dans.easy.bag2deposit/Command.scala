@@ -65,6 +65,7 @@ object Command extends App with DebugEnhancedLogging {
     maybeFedoraProvider = FedoraProvider(properties),
     cfgPath,
     commandLine.target(),
+    commandLine.namespace(),
   )
   private val propertiesFactory = DepositPropertiesFactory(
     configuration,

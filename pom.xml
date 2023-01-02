@@ -36,6 +36,7 @@
 
     <properties>
         <main-class>nl.knaw.dans.easy.bag2deposit.Command</main-class>
+        <dans.schema.version>0.6.0</dans.schema.version>
     </properties>
 
     <scm>
@@ -79,7 +80,12 @@
             <groupId>org.scalamock</groupId>
             <artifactId>scalamock_2.12</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>nl.knaw.dans</groupId>
+            <artifactId>dans-schema-lib</artifactId>
+            <version>${dans.schema.version}</version>
+            <scope>test</scope>
+        </dependency>
         <!-- Scala utils -->
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -178,6 +184,28 @@
             <plugin>
                 <groupId>org.scalatest</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>test-resources</id>
+                        <phase>generate-test-resources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>nl.knaw.dans</groupId>
+                                    <artifactId>dans-schema-lib</artifactId>
+                                    <version>${dans.schema.version}</version>
+                                    <outputDirectory>${project.build.directory}/dans-schema-lib</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
