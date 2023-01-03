@@ -301,7 +301,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     ) shouldBe Success("No fatal errors")
 
     val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
-    (movedBag / "data").list.map(_.name).toSet shouldBe Set("easy-migration", "foo.txt")
+    (movedBag / "data").list.map(_.name).toSet shouldBe Set("easy-migration.zip", "foo.txt")
     (movedBag / "manifest-sha1.txt").contentAsString should include("foo.txt")
   }
 
@@ -329,7 +329,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     ) shouldBe Success("No fatal errors")
 
     val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
-    (movedBag / "data").list.map(_.name).toSet shouldBe Set("easy-migration", "foo.txt")
+    (movedBag / "data").list.map(_.name).toSet shouldBe Set("easy-migration.zip", "foo.txt")
     (movedBag / "manifest-sha1.txt").contentAsString should include("foo.txt")
   }
 
@@ -351,18 +351,8 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
         <file filepath="data/leeg.txt">
           <dcterms:format>text/xml</dcterms:format>
         </file>
-        <file filepath="data/easy-migration/provenance.xml">
-          <dcterms:format>text/xml</dcterms:format>
-          <accessibleToRights>ANONYMOUS</accessibleToRights>
-          <visibleToRights>ANONYMOUS</visibleToRights>
-        </file>
-        <file filepath="data/easy-migration/dataset.xml">
-          <dcterms:format>text/xml</dcterms:format>
-          <accessibleToRights>ANONYMOUS</accessibleToRights>
-          <visibleToRights>ANONYMOUS</visibleToRights>
-        </file>
-        <file filepath="data/easy-migration/files.xml">
-          <dcterms:format>text/xml</dcterms:format>
+        <file filepath="data/easy-migration.zip">
+          <dcterms:format>application/zip</dcterms:format>
           <accessibleToRights>ANONYMOUS</accessibleToRights>
           <visibleToRights>ANONYMOUS</visibleToRights>
         </file>
@@ -398,23 +388,8 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
         <file filepath="data/leeg.txt">
           <dcterms:format>text/xml</dcterms:format>
         </file>
-        <file filepath="data/easy-migration/provenance.xml">
-          <dcterms:format>text/xml</dcterms:format>
-          <accessibleToRights>ANONYMOUS</accessibleToRights>
-          <visibleToRights>ANONYMOUS</visibleToRights>
-        </file>
-        <file filepath="data/easy-migration/dataset.xml">
-          <dcterms:format>text/xml</dcterms:format>
-          <accessibleToRights>ANONYMOUS</accessibleToRights>
-          <visibleToRights>ANONYMOUS</visibleToRights>
-        </file>
-        <file filepath="data/easy-migration/files.xml">
-          <dcterms:format>text/xml</dcterms:format>
-          <accessibleToRights>ANONYMOUS</accessibleToRights>
-          <visibleToRights>ANONYMOUS</visibleToRights>
-        </file>
-        <file filepath="data/easy-migration/emd.xml">
-          <dcterms:format>text/xml</dcterms:format>
+        <file filepath="data/easy-migration.zip">
+          <dcterms:format>application/zip</dcterms:format>
           <accessibleToRights>ANONYMOUS</accessibleToRights>
           <visibleToRights>ANONYMOUS</visibleToRights>
         </file>
@@ -475,23 +450,8 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
         <file filepath="data/leeg.txt">
           <dc:format>text/xml</dc:format>
         </file>
-        <file filepath="data/easy-migration/provenance.xml">
-          <dc:format>text/xml</dc:format>
-          <accessibleToRights>ANONYMOUS</accessibleToRights>
-          <visibleToRights>ANONYMOUS</visibleToRights>
-        </file>
-        <file filepath="data/easy-migration/dataset.xml">
-          <dc:format>text/xml</dc:format>
-          <accessibleToRights>ANONYMOUS</accessibleToRights>
-          <visibleToRights>ANONYMOUS</visibleToRights>
-        </file>
-        <file filepath="data/easy-migration/files.xml">
-          <dc:format>text/xml</dc:format>
-          <accessibleToRights>ANONYMOUS</accessibleToRights>
-          <visibleToRights>ANONYMOUS</visibleToRights>
-        </file>
-        <file filepath="data/easy-migration/emd.xml">
-          <dc:format>text/xml</dc:format>
+        <file filepath="data/easy-migration.zip">
+          <dc:format>application/zip</dc:format>
           <accessibleToRights>ANONYMOUS</accessibleToRights>
           <visibleToRights>ANONYMOUS</visibleToRights>
         </file>
@@ -534,23 +494,8 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
         <file filepath="data/leeg.txt">
           <dc:format>text/xml</dc:format>
         </file>
-        <file filepath="data/easy-migration/provenance.xml">
-          <dc:format>text/xml</dc:format>
-          <accessibleToRights>ANONYMOUS</accessibleToRights>
-          <visibleToRights>ANONYMOUS</visibleToRights>
-        </file>
-        <file filepath="data/easy-migration/dataset.xml">
-          <dc:format>text/xml</dc:format>
-          <accessibleToRights>ANONYMOUS</accessibleToRights>
-          <visibleToRights>ANONYMOUS</visibleToRights>
-        </file>
-        <file filepath="data/easy-migration/files.xml">
-          <dc:format>text/xml</dc:format>
-          <accessibleToRights>ANONYMOUS</accessibleToRights>
-          <visibleToRights>ANONYMOUS</visibleToRights>
-        </file>
-        <file filepath="data/easy-migration/emd.xml">
-          <dc:format>text/xml</dc:format>
+        <file filepath="data/easy-migration.zip">
+          <dc:format>application/zip</dc:format>
           <accessibleToRights>ANONYMOUS</accessibleToRights>
           <visibleToRights>ANONYMOUS</visibleToRights>
         </file>

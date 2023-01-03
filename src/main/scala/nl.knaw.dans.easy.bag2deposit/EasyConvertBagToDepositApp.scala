@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.bag2deposit
 
 import better.files.File
 import better.files.File.CopyOptions
+import net.lingala.zip4j.ZipFile
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
 import nl.knaw.dans.easy.bag2deposit.FoXml.getAmd
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
@@ -96,7 +97,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
       _ <- BagFacade.updateMetadata(bag)
       _ = trace("updating payload manifest")
       _ <- copyMigrationFiles(metadata, migration, fromVault)
-      _ <- BagFacade.updatePayloadManifests(bag, Paths.get("data/easy-migration"))
+      _ <- BagFacade.updatePayloadManifests(bag, Paths.get("data/easy-migration.zip"))
       _ = trace("writing payload manifests")
       _ <- BagFacade.writePayloadManifests(bag)
       _ = trace("updating tag manifest")
@@ -138,7 +139,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
         Failure(new FileNotFoundException(templateFile + " not found"))
       }
       else {
-        agreementsFile.parent.createIfNotExists(true)
+        agreementsFile.parent.createIfNotExists(asDirectory = true)
         templateFile.copyTo(agreementsFile)
       }
     }
@@ -151,12 +152,13 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     val migrationFiles = {if (fromVault) Seq("provenance.xml", "dataset.xml", "files.xml") else Seq("provenance.xml", "dataset.xml", "files.xml", "emd.xml")}
     val migrationDir = migration.createDirectories()
     migrationFiles.foreach(name => (metadata / name).copyTo(migrationDir / name))
-    addToXmlFile(filesXmlFile, migrationFiles)
-  }
-
-  private def addToXmlFile(filesXmlFile: String, filesToAdd: Seq[String]): Try[File] = Try {
+    val migrationZip = migration + ".zip"
+    val zipFile = new ZipFile(migrationZip)
+    zipFile.addFolder(migrationDir.toJava)
+    zipFile.close()
+    migration.delete()
     val oldFilesXml = XML.loadFile(filesXmlFile)
-    val newFilesXml = FilesXml(oldFilesXml, "data/easy-migration", filesToAdd, "text/xml")
+    val newFilesXml = FilesXml(oldFilesXml, "data", Seq("easy-migration.zip"), "application/zip")
     File(filesXmlFile).delete()
     // Notice: here we use PrettyPrinter to format the xml-file, to get all the new elements line up neatly.
     // However, generally we discourage its usage because PrettyPrinter removes white spaces and this may cause
