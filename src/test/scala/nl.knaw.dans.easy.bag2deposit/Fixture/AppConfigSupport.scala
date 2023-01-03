@@ -19,7 +19,7 @@ import better.files.File
 import nl.knaw.dans.easy.bag2deposit.collections.FedoraProvider
 import nl.knaw.dans.easy.bag2deposit.{ BagIndex, Configuration }
 
-trait AppConfigSupport extends BagIndexSupport with FedoraProviderSupport with PreStagedSupport {
+trait AppConfigSupport extends BagIndexSupport with FedoraProviderSupport {
   def testConfig(targetDataStation: String,
                  bagIndex: BagIndex = null,
                  fedoraProvider: Option[FedoraProvider] = null,
