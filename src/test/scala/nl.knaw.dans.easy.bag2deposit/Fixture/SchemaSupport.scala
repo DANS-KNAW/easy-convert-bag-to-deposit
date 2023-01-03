@@ -25,8 +25,8 @@ import javax.xml.XMLConstants
 import javax.xml.transform.Source
 import javax.xml.transform.stream.StreamSource
 import javax.xml.validation.SchemaFactory
-import scala.util.{ Failure, Success, Try }
-import scala.xml.{ Node, PrettyPrinter, SAXParseException, Utility }
+import scala.util.{ Failure, Try }
+import scala.xml.{ Node, Utility }
 
 trait SchemaSupport {
   val schema: String

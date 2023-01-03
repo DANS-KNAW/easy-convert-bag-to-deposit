@@ -301,7 +301,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     ) shouldBe Success("No fatal errors")
 
     val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
-    (movedBag / "data").list.toSeq.map(_.name) shouldBe Seq("easy-migration.zip", "foo.txt")
+    (movedBag / "data").list.map(_.name).toSet shouldBe Set("easy-migration.zip", "foo.txt")
     (movedBag / "manifest-sha1.txt").contentAsString should include("foo.txt")
   }
 
@@ -329,7 +329,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     ) shouldBe Success("No fatal errors")
 
     val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
-    (movedBag / "data").list.toSeq.map(_.name) shouldBe Seq("easy-migration.zip", "foo.txt")
+    (movedBag / "data").list.map(_.name).toSet shouldBe Set("easy-migration.zip", "foo.txt")
     (movedBag / "manifest-sha1.txt").contentAsString should include("foo.txt")
   }
 

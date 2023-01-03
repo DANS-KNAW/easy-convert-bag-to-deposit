@@ -27,9 +27,10 @@ ARGUMENTS
     Options:
 
          -b, --bag-sequence                       Retrieve previous versions from the vault
-         -t, --dataverse-identifier-type  <arg>   the field to be used as Dataverse identifier, either doi or urn:nbn
+         -t, --dataverse-identifier-type  <arg>   the field to be used as Dataverse identifier: URN, DOI
          -d, --dir  <arg>                         directory with the deposits. These deposit-dirs each MUST have the
                                                   uuid of the bag as directory name, and have one bag-dir each
+         -n, --namespace  <arg>                   Namespace for DDM: ddm-v1, ddm-v2
          -o, --output-dir  <arg>                  Optional. Directory that will receive completed deposits with
                                                   atomic moves.
          -s, --source  <arg>                      The source of the bags

@@ -28,13 +28,11 @@ import scala.xml.{ Utility, XML }
 class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport with AppConfigSupport {
   // use the raw github location while upgraded schema is not yet published, your own fork if not yet merged.
   private val schemaRoot = "https://easy.dans.knaw.nl/schemas"
-  override val schema: String = schemaRoot + "/bag/metadata/prov/provenance.xsd"
+  override val schema: String = schemaRoot + "provenance.xsd"
   private val schemaLocation = s"http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ $schema"
-  private val ddmSchema = "http://easy.dans.knaw.nl/schemas/md/ddm/"
-  private val amdSchema = "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/"
 
   // FixedCurrentDateTimeSupport is not effective for a val
-  private def provenanceBuilder = Provenance("EasyConvertBagToDepositApp", "1.0.5", schemaRoot)
+  private def provenanceBuilder = Provenance("EasyConvertBagToDepositApp", "1.0.5")
 
   private def parseError(sample: String) = {
     validate(XML.loadString(sample)).asInstanceOf[Failure[_]].exception.toString
@@ -58,8 +56,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
       .getOrElse(throw new IllegalArgumentException("could not load test data"))
     val provenance = provenanceBuilder.collectChangesInXmls(List(
         Provenance.fixedDdmEncoding(oldChars, newChars),
-        Provenance.compare((ddmIn \ "profile").head, (ddmOut \ "profile").head, ddmSchema),
-        Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, ddmSchema),
+        Provenance.compareDDM(ddmIn, ddmOut),
       ))
     val expected = Utility.trim(XML.loadFile("src/test/resources/encoding/provenance.xml"))
 
@@ -96,7 +93,13 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     }
 
     val ddmOut = {
-      <ddm>
+      <ddm:DDM xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xmlns:dc="http://purl.org/dc/elements/1.1/"
+               xmlns:dcterms="http://purl.org/dc/terms/"
+               xmlns:dcx-gml="http://easy.dans.knaw.nl/schemas/dcx/gml/"
+               xmlns:abr="http://www.den.nl/standaard/166/Archeologisch-Basisregister/"
+               xsi:schemaLocation=" http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd">
         <ddm:profile>
           <dc:title>Rapport 123</dc:title>
         </ddm:profile>
@@ -134,7 +137,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
           reportNo="123">Rapport 123</ddm:reportNumber>
           <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
         </ddm:dcmiMetadata>
-      </ddm>
+      </ddm:DDM>
     }
 
     val expectedNew = Utility.trim(
@@ -153,13 +156,16 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
                         |<dc:subject xsi:type="abr:ABRcomplex" xmlns:abr="http://www.den.nl/standaard/166/Archeologisch-Basisregister/" xmlns:dcx-gml="http://easy.dans.knaw.nl/schemas/dcx/gml/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">EGVW</dc:subject>
                         |<dcterms:subject xsi:type="abr:ABRcomplex" xmlns:abr="http://www.den.nl/standaard/166/Archeologisch-Basisregister/" xmlns:dcx-gml="http://easy.dans.knaw.nl/schemas/dcx/gml/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/">ELA</dcterms:subject>""".stripMargin.mkString("")
     val provenance = provenanceBuilder.collectChangesInXmls(List(
-      Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, ddmSchema)
+      Provenance.compareDDM(ddmIn, ddmOut)
     ))
     (provenance \\ "old").text shouldBe expectedOld // might break when attributes are serialized in different order
+
+    // replace is a hack for white space that should have been covered by normalized
     normalized((provenance \\ "new").head) shouldBe normalized(expectedNew)
 
     assume(schemaIsAvailable)
-    validate(provenance) shouldBe a[Success[_]]
+    val triedUnit = validate(provenance)
+    triedUnit shouldBe a[Success[_]]
   }
   it should "show dropped zero point" in {
     val ddmIn = {
@@ -194,7 +200,8 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     }
 
     val ddmOut = {
-      <ddm>
+      <ddm xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
+               xsi:schemaLocation=" http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd">
         <ddm:profile>
           <dc:title>blabla</dc:title>
         </ddm:profile>
@@ -216,7 +223,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     }
 
     val provenance = provenanceBuilder.collectChangesInXmls(List(
-      Provenance.compare((ddmIn \ "dcmiMetadata").head, (ddmOut \ "dcmiMetadata").head, ddmSchema)
+      Provenance.compareDDM(ddmIn, ddmOut)
     ))
     val expectedOld = """<dcx-gml:spatial srsName="http://www.opengis.net/def/crs/EPSG/0/28992" xmlns:dcx-gml="http://easy.dans.knaw.nl/schemas/dcx/gml/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"><Point xmlns="http://www.opengis.net/gml"><pos>0 0</pos></Point></dcx-gml:spatial>"""
     (provenance \\ "old").text shouldBe expectedOld // might break when attributes are serialized in different order
@@ -234,11 +241,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     val ddmOut = testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123")
       .getOrElse(fail("no DDM returned"))
 
-    Provenance.compare(
-      (ddmIn \ "dcmiMetadata").head,
-      (ddmOut \ "dcmiMetadata").head,
-      "http://easy.dans.knaw.nl/schemas/md/ddm/"
-    ) shouldBe None
+    Provenance.compareDDM(ddmIn, ddmOut) shouldBe None
 
     assume(schemaIsAvailable)
     validate(ddmIn) shouldBe Success(())
@@ -249,11 +252,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     val ddmOut = XML.loadFile("src/test/resources/funder/ddm-out.xml")
     val expected = XML.loadFile("src/test/resources/funder/provenance.xml")
 
-    val actual = provenanceBuilder.collectChangesInXmls(List(Provenance.compare(
-      (ddmIn \ "dcmiMetadata").head,
-      (ddmOut \ "dcmiMetadata").head,
-      ddmSchema
-    )))
+    val actual = provenanceBuilder.collectChangesInXmls(List(Provenance.compareDDM(ddmIn, ddmOut)))
 
     (Utility.trim(actual) \\ "old").text.replaceAll("\n","").replaceAll("><","> <") shouldBe
       (Utility.trim(expected) \\ "old").text // might break when attributes are serialized in different order
@@ -299,7 +298,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
     amdOut.text shouldNot include("2017-05-02T13:01:26.752+02:00")
     amdOut.text should include("2016-12-31")
     val provenance = provenanceBuilder.collectChangesInXmls(List(
-      Provenance.compare(amdIn, amdOut, "http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/")
+      Provenance.compareAMD(amdIn, amdOut)
     ))
     val expectedOld ="""<depositorId xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/">user001</depositorId>
                        |<damd:stateChangeDate xmlns:damd="http://easy.dans.knaw.nl/easy/dataset-administrative-metadata/"><fromState>SUBMITTED</fromState><toState>PUBLISHED</toState><changeDate>2017-05-02T13:01:26.752+02:00</changeDate></damd:stateChangeDate>"""
@@ -383,7 +382,7 @@ class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport 
 
     // post condition 2: added date is reported in provenance
     val provenance = provenanceBuilder.collectChangesInXmls(List(
-      Provenance.compare(amdIn, amdOut, amdSchema),
+      Provenance.compareAMD(amdIn, amdOut),
     ))
 
     (provenance \\ "old").text shouldBe (expected \\ "old").text // might break when attributes are serialized in different order
