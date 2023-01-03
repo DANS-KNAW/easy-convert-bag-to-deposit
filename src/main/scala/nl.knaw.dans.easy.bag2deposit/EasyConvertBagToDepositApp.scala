@@ -163,7 +163,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     zipFile.close()
     migration.delete()
     val oldFilesXml = XML.loadFile(filesXmlFile)
-    val newFilesXml = FilesXml(oldFilesXml, "data", Seq("easy-migration.zip"), "text/xml")
+    val newFilesXml = FilesXml(oldFilesXml, "data", Seq("easy-migration.zip"), "application/zip")
     File(filesXmlFile).delete()
     // Notice: here we use PrettyPrinter to format the xml-file, to get all the new elements line up neatly.
     // However, generally we discourage its usage because PrettyPrinter removes white spaces and this may cause

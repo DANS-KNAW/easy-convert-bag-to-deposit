@@ -352,7 +352,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
           <dcterms:format>text/xml</dcterms:format>
         </file>
         <file filepath="data/easy-migration.zip">
-          <dcterms:format>text/xml</dcterms:format>
+          <dcterms:format>application/zip</dcterms:format>
           <accessibleToRights>ANONYMOUS</accessibleToRights>
           <visibleToRights>ANONYMOUS</visibleToRights>
         </file>
@@ -389,7 +389,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
           <dcterms:format>text/xml</dcterms:format>
         </file>
         <file filepath="data/easy-migration.zip">
-          <dcterms:format>text/xml</dcterms:format>
+          <dcterms:format>application/zip</dcterms:format>
           <accessibleToRights>ANONYMOUS</accessibleToRights>
           <visibleToRights>ANONYMOUS</visibleToRights>
         </file>
@@ -451,7 +451,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
           <dc:format>text/xml</dc:format>
         </file>
         <file filepath="data/easy-migration.zip">
-          <dc:format>text/xml</dc:format>
+          <dc:format>application/zip</dc:format>
           <accessibleToRights>ANONYMOUS</accessibleToRights>
           <visibleToRights>ANONYMOUS</visibleToRights>
         </file>
@@ -495,7 +495,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
           <dc:format>text/xml</dc:format>
         </file>
         <file filepath="data/easy-migration.zip">
-          <dc:format>text/xml</dc:format>
+          <dc:format>application/zip</dc:format>
           <accessibleToRights>ANONYMOUS</accessibleToRights>
           <visibleToRights>ANONYMOUS</visibleToRights>
         </file>
