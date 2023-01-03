@@ -27,7 +27,6 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import java.io.{ FileNotFoundException, IOException }
 import java.nio.charset.Charset
 import java.nio.file.Paths
-import scala.reflect.io.Directory
 import scala.util.{ Failure, Success, Try }
 import scala.xml._
 
