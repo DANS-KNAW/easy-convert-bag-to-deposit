@@ -41,6 +41,7 @@ class FoXml {
   }
 
   def getAmd(foXml: Node): Try[Node] = getStream("AMD", "administrative-md", foXml)
+  def getEmd(foXml: Node): Try[Node] = getStream("EMD", "easymetadata", foXml)
 
   private def hasControlGroup(controlGroup: String)(streamRoot: Node): Boolean = {
     streamRoot.attribute("CONTROL_GROUP").map(_.text).contains(controlGroup)

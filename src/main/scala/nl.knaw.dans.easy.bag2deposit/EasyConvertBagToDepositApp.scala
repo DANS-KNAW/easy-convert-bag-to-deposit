@@ -128,6 +128,8 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     }
   }
 
+
+
   private def checkAgreementsXml(depositorId: String, agreementsFile: File) = {
     if (agreementsFile.exists) { //the agreementsfile is created by easy-fedora-to-bag for FEDORA datasets
       Success

@@ -35,7 +35,7 @@ object DdmTransformer {
 }
 class DdmTransformer(cfgDir: File,
                      target: String,
-                     collectionsMap: Map[String, Seq[Elem]] = Map.empty,
+                     collectionsMap: Map[String, Seq[Node]] = Map.empty,
                      ddmVersion:DdmVersion = V1,
                     ) extends DebugEnhancedLogging {
   trace(())
