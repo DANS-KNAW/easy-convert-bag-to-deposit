@@ -31,7 +31,7 @@ import scala.xml.transform.{ RewriteRule, RuleTransformer }
 
 object DdmTransformer {
   val ddmV2namespace = "http://schemas.dans.knaw.nl/dataset/ddm-v2/"
-  val ddmV2Location = "https://schemas.dans.knaw.nl/bag/metadata/prov/v2/provenance.xsd"
+  val ddmV2Location = "https://schemas.dans.knaw.nl/md/ddm/v2/ddm.xsd"
 }
 class DdmTransformer(cfgDir: File,
                      target: String,
