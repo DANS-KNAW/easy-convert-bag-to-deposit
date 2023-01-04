@@ -96,7 +96,7 @@ object Collection extends DebugEnhancedLogging {
   private def getCollectionEmdXml(datasetId: String, maybeFedoraProvider: Option[FedoraProvider]): Try[Node] = {
     maybeFedoraProvider.map { provider =>
       provider.loadFoXml(datasetId).flatMap(getEmd)
-    }.getOrElse(Failure(new IllegalStateException(s"no EMD for $datasetId and no fedora configured")))
+    }.getOrElse(Failure(new IllegalStateException(s"could not get EMD for $datasetId because no fedora is configured")))
   }
 
   private def readSeriesFile(seriesFile: File): Set[String] = {
