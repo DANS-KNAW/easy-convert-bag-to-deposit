@@ -34,7 +34,7 @@ case class Configuration(version: String,
 {
   private val targetCfgPath = cfgPath / targetDataStation
   val agreementsPath: File = cfgPath / "agreements"
-  val ddmTransformer = new DdmTransformer(cfgPath, targetDataStation, getCollectionsMap(targetCfgPath), ddmVersion)
+  val ddmTransformer = new DdmTransformer(cfgPath, targetDataStation, getCollectionsMap(targetCfgPath, maybeFedoraProvider), ddmVersion)
   val amdTransformer = new AmdTransformer(targetCfgPath / "account-substitutes.csv")
   val remarksConverter = new RemarksConverter(targetCfgPath)
 }

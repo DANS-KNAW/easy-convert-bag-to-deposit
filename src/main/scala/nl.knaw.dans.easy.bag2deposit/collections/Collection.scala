@@ -16,20 +16,17 @@
 package nl.knaw.dans.easy.bag2deposit.collections
 
 import better.files.File
-import com.yourmediashelf.fedora.client.FedoraClientException
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
-import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
-import net.ruippeixotog.scalascraper.dsl.DSL._
+import nl.knaw.dans.easy.bag2deposit.FoXml.getEmd
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.csv.CSVFormat.RFC4180
 import org.apache.commons.csv.{ CSVFormat, CSVParser, CSVRecord }
 import resource.managed
-
 import java.nio.charset.{ Charset, StandardCharsets }
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Try }
-import scala.xml.Elem
+import scala.xml.{ Elem, Node, Text }
 
 case class Collection(name: String, ids: Seq[String], collectionType: String, comment: String, members: Seq[String])
 
@@ -85,27 +82,53 @@ object Collection extends DebugEnhancedLogging {
         >{ r.get("prefLabel") }</ddm:inCollection>
   }
 
+   def getSeriesNode(collectionDatasetIds: Seq[String], maybeFedoraProvider: Option[FedoraProvider], seriesSet: Set[String]): Node = {
+    val firstCollectionDatasetId = collectionDatasetIds.head
+    if (seriesSet.contains(firstCollectionDatasetId)) {
+      val parentEmd = getCollectionEmdXml(firstCollectionDatasetId, maybeFedoraProvider)
+      val emdDescription = parentEmd.get \\ "description"
+      <ddm:description descriptionType="SeriesInformation">{ emdDescription.head.text  }</ddm:description>
+    }
+    else
+          Text("")
+  }
+
+  private def getCollectionEmdXml(datasetId: String, maybeFedoraProvider: Option[FedoraProvider]): Try[Node] = {
+    maybeFedoraProvider.map { provider =>
+      provider.loadFoXml(datasetId).flatMap(getEmd)
+    }.getOrElse(Failure(new IllegalStateException(s"could not get EMD for $datasetId because no fedora is configured")))
+  }
+
+  private def readSeriesFile(seriesFile: File): Set[String] = {
+    if (seriesFile.exists)
+      seriesFile.contentAsString.split("\n").toSet
+    else
+      Set()
+  }
+
   /** @return collection-member-dataset-id -> <ddm:inCollection> */
-  def getCollectionsMap(cfgDir: File): Map[String, Seq[Elem]] = {
+  def getCollectionsMap(cfgDir: File, maybeFedoraProvider: Option[FedoraProvider]): Map[String, Seq[Node]] = {
     val skosFile = cfgDir / "excel2skos-collecties.csv"
     val collectionsFile = cfgDir / "ThemathischeCollecties.csv"
+    val seriesFile = cfgDir / "seriesDatasetIds.txt"
 
-    trace(skosFile, collectionsFile)
+    trace(skosFile, collectionsFile, seriesFile)
     val tuples = {
       for {
         skosRecords <- parseCsv(skosFile, skosCsvFormat)
         collectionRecords <- parseCsv(collectionsFile, collectionCsvFormat)
         originalCollections = collectionRecords.toList.map(parseCollectionRecord)
         skosMap = skosRecords.map(parseSkosRecord).toMap
+        seriesSet = readSeriesFile(seriesFile)
       } yield originalCollections.flatMap { collection =>
-        memberToCollections(skosMap, collection)
+        memberToCollections(skosMap, collection, maybeFedoraProvider, seriesSet )
       }
     }.doIfFailure { case e => logger.error(s"could not build CollectionsMap: $cfgDir $e", e) }
       .getOrElse(List.empty)
-    tuples.groupBy(_._1).mapValues(_.map(_._2))
+    tuples.groupBy(_._1).mapValues(_.flatMap(_._2))
   }
 
-  private def memberToCollections(skosMap: Map[String, Elem], collection: Collection): Seq[(String, Elem)] = {
+  private def memberToCollections(skosMap: Map[String, Elem], collection: Collection, maybeFedoraProvider: Option[FedoraProvider], seriesSet: Set[String]): Seq[(String, List[Node])] = {
     val name = collection.name
     lazy val default = <notImplemented>
       {s"$name not found in collections skos"}
@@ -113,61 +136,7 @@ object Collection extends DebugEnhancedLogging {
     val elem = skosMap.getOrElse(name, default)
     if (elem.toString().contains("not found"))
       logger.error(s"$name not found in collections skos")
-    collection.members.map(id => id -> elem)
+    collection.members.map(id => id -> (elem +: getSeriesNode(collection.ids, maybeFedoraProvider, seriesSet)).toList)
   }
 
-  private def membersOf(fedoraProvider: FedoraProvider)(datasetId: String): Seq[String] = {
-    trace(datasetId)
-
-    def getMu(jumpoffId: String, streamId: String) = {
-      fedoraProvider
-        .disseminateDatastream(jumpoffId, streamId)
-        .map(browser.parseInputStream(_, StandardCharsets.UTF_8.name()))
-        .tried
-    }
-
-    def getMuAsHtmlDoc(jumpoffId: String) = {
-      getMu(jumpoffId, "HTML_MU")
-        .recoverWith {
-          case e: FedoraClientException if e.getStatus == 404 =>
-            logger.warn(s"no HTML_MU for $jumpoffId, trying TXT_MU")
-            getMu(jumpoffId, "TXT_MU")
-          case e =>
-            trace(e)
-            Failure(e)
-        }
-    }
-
-    // (?s) matches multiline values like https://github.com/DANS-KNAW/easy-convert-bag-to-deposit/blob/57e4ab9513d536c16121ad8916058d4102154138/src/test/resources/sample-jumpoff/3931-for-dataset-34359.html#L168-L169
-    // looking for links containing eiter of
-    //   doi.org.*dans
-    //   urn:nbn:nl:ui:13-
-    val regexp = "(?s).*(doi.org.*dans|urn:nbn:nl:ui:13-).*"
-    for {
-      maybeJumpoffId <- fedoraProvider.getJumpoff(datasetId)
-      jumpoffId = maybeJumpoffId.getOrElse(throw new Exception(s"no jumpoff for $datasetId"))
-      doc <- getMuAsHtmlDoc(jumpoffId)
-      items = doc >> elementList("a")
-      hrefs = items
-        .withFilter(_.hasAttr("href"))
-        .map(_.attr("href"))
-        .sortBy(identity)
-        .distinct
-      maybeIds = hrefs.withFilter(_.matches(regexp)).map(toDatasetId)
-    } yield maybeIds.withFilter(_.isDefined).map(_.get)
-  }.doIfFailure { case e => logger.error(s"could not find members of $datasetId: $e", e) }
-    .getOrElse(Seq.empty)
-
-  private def toDatasetId(str: String): Option[String] = {
-    val trimmed = str
-      .replaceAll(".*doi.org/", "")
-      .replaceAll(".*identifier=", "")
-      .trim
-    resolver.getDatasetId(trimmed)
-  }.doIfFailure { case e =>
-    logger.error(s"could not resolve $str: $e", e)
-  }.getOrElse {
-    logger.warn(s"resolver could not find $str")
-    None
-  }
 }
