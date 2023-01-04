@@ -46,7 +46,7 @@ class CollectionSpec extends AnyFlatSpec with DdmSupport with SchemaSupport with
         </foxml:datastream>
       </foxml:digitalObject>
 
-    val expected = <ddm:description descryptionType="SeriesInformation">
+    val expected = <ddm:description descriptionType="SeriesInformation">
                       Herinneringen van inwoners uit Vught en Cromvoirt aan het bestaan van een concentratiekamp in hun directe omgeving.
                     </ddm:description>
     val fedoraProvider = mock[MockFedoraProvider]

@@ -142,7 +142,7 @@ class DdmTransformer(cfgDir: File,
       else containsPrivacySensitiveData match {
         case "true" => <ddm:personalData present="Yes" />
         case "false" => <ddm:personalData present="No" />
-        case _ => <ddm:personalData present="unknown" />
+        case _ => <ddm:personalData present="Unknown" />
       }
     }
 

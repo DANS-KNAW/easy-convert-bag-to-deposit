@@ -87,7 +87,7 @@ object Collection extends DebugEnhancedLogging {
     if (seriesSet.contains(firstCollectionDatasetId)) {
       val parentEmd = getCollectionEmdXml(firstCollectionDatasetId, maybeFedoraProvider)
       val emdDescription = parentEmd.get \\ "description"
-      <ddm:description descryptionType="SeriesInformation">{ emdDescription.head.text  }</ddm:description>
+      <ddm:description descriptionType="SeriesInformation">{ emdDescription.head.text  }</ddm:description>
     }
     else
           Text("")
