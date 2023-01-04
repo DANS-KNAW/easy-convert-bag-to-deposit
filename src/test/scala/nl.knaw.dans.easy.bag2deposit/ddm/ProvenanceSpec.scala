@@ -28,7 +28,7 @@ import scala.xml.{ Utility, XML }
 class ProvenanceSpec extends AnyFlatSpec with FileSystemSupport with XmlSupport with Matchers with FixedCurrentDateTimeSupport with DebugEnhancedLogging with SchemaSupport with AppConfigSupport {
   // use the raw github location while upgraded schema is not yet published, your own fork if not yet merged.
   private val schemaRoot = "https://easy.dans.knaw.nl/schemas"
-  override val schema: String = schemaRoot + "provenance.xsd"
+  override val schema: String = schemaRoot + "bag/metadata/prov/provenance.xsd"
   private val schemaLocation = s"http://easy.dans.knaw.nl/schemas/bag/metadata/prov/ $schema"
 
   // FixedCurrentDateTimeSupport is not effective for a val
