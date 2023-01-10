@@ -18,6 +18,8 @@ package nl.knaw.dans.easy.bag2deposit
 import better.files.File
 import better.files.File.CopyOptions
 import net.lingala.zip4j.ZipFile
+import net.lingala.zip4j.model.ZipParameters
+import net.lingala.zip4j.model.enums.CompressionLevel
 import nl.knaw.dans.easy.bag2deposit.Command.FeedBackMessage
 import nl.knaw.dans.easy.bag2deposit.FoXml.getAmd
 import nl.knaw.dans.easy.bag2deposit.ddm.Provenance
@@ -156,7 +158,9 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     migrationFiles.foreach(name => (metadata / name).copyTo(migrationDir / name))
     val migrationZip = migration + ".zip"
     val zipFile = new ZipFile(migrationZip)
-    zipFile.addFolder(migrationDir.toJava)
+    val params = new ZipParameters()
+    //params.setCompressionLevel(CompressionLevel.NO_COMPRESSION)
+    zipFile.addFolder(migrationDir.toJava, params)
     zipFile.close()
     migration.delete()
     val oldFilesXml = XML.loadFile(filesXmlFile)
