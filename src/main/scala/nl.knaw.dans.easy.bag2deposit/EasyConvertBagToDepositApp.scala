@@ -159,7 +159,7 @@ class EasyConvertBagToDepositApp(configuration: Configuration) extends DebugEnha
     val migrationZip = migration + ".zip"
     val zipFile = new ZipFile(migrationZip)
     val params = new ZipParameters()
-    //params.setCompressionLevel(CompressionLevel.NO_COMPRESSION)
+    params.setCompressionLevel(CompressionLevel.NO_COMPRESSION)
     zipFile.addFolder(migrationDir.toJava, params)
     zipFile.close()
     migration.delete()

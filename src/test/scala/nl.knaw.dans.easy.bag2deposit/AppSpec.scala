@@ -303,7 +303,7 @@ class AppSpec extends AnyFlatSpec with XmlSupport with Matchers with AppConfigSu
     val movedBag = testDir / "ingest-dir" / validUUID / "bag-revision-1"
     (movedBag / "data").list.map(_.name).toSet shouldBe Set("easy-migration.zip", "foo.txt")
     (movedBag / "manifest-sha1.txt").contentAsString should include("foo.txt")
-    (movedBag / "data" / "easy-migration.zip").size shouldBe 2038
+    (movedBag / "data" / "easy-migration.zip").size shouldBe 5460 // uncompressed size
   }
 
   it should "search migration-info with seq nr 2 for SSH" in {
