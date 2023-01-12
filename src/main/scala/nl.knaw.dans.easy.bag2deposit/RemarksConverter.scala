@@ -19,6 +19,7 @@ import better.files.File
 import nl.knaw.dans.easy.bag2deposit.RemarksCategory.RemarksCategory
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.csv.CSVFormat.RFC4180
+import org.apache.commons.lang.StringUtils.isBlank
 
 import scala.util.{ Success, Try }
 import scala.xml.{ NodeSeq, XML }
@@ -44,7 +45,7 @@ class RemarksConverter(cfgDir: File) extends DebugEnhancedLogging {
     val cat = remarksMap.getOrElse(datasetId, RemarksCategory.description)
 
     def convert(remark: NodeSeq): NodeSeq = {
-      if (remark.isEmpty || remark.text == "")
+      if (remark.isEmpty || isBlank(remark.text))
         NodeSeq.Empty
       else {
         cat match {
