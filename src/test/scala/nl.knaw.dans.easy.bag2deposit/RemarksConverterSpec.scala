@@ -97,6 +97,12 @@ class RemarksConverterSpec extends AnyFlatSpec with XmlSupport with Matchers wit
     assume(schemaIsAvailable)
     validate(ddmOut) shouldBe a[Success[_]]
   }
+  it should "ignore empty remarks" in {
+    val ddmTransformer = configureDdmTransformer()
+    writeRemarksMappingCSV("funder")
+    val ddmOut = convert(ddmTransformer, emdContent = "<emd><eas:remark></eas:remark></emd>")
+    ddmOut.serialize shouldNot include("""<ddm:description""")
+  }
   it should "not add the remark to the DDM" in {
     val ddmTransformer = configureDdmTransformer()
     writeRemarksMappingCSV("ignore")
