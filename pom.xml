@@ -41,7 +41,7 @@
 
     <scm>
         <developerConnection>scm:git:ssh://github.com/DANS-KNAW/easy-convert-bag-to-deposit</developerConnection>
-        <tag>v1.2.2</tag>
+        <tag>v1.4.0</tag>
     </scm>
 
     <dependencies>
