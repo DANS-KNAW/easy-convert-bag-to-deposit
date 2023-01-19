@@ -66,12 +66,10 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
     val binding = NamespaceBinding("xsi", "http://www.w3.org/2001/XMLSchema-instance", node.scope)
     val maybeTypes = attributes.get("http://www.w3.org/2001/XMLSchema-instance", binding, "type")
     if ( maybeTypes.isEmpty ) return false
-    val types = maybeTypes.get
-    for(item <- types){
+    maybeTypes.exists(_.exists { item =>
       val text = item.text
       return xsiType == text || text.endsWith(":" + xsiType)
-    }
-    false
+    })
 
   }
   private def getLicenseUri(supportedLicenses: List[URI], variantToLicense: Map[String, String], licenseNode: Node): URI = {
