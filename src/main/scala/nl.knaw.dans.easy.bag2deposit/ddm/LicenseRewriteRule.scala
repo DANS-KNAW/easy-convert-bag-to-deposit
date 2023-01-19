@@ -106,15 +106,12 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
 
   private def normalizeScheme(supportedLicenses: List[URI], uri: URI): Option[URI] = {
     val schemes: Set[String] = Set("https", "http")
-    var result = Option.empty[URI]
-    for (license <- supportedLicenses) {
-      if (StringUtils.equals(license.getHost, uri.getHost)
-        && StringUtils.equals(license.getPath, uri.getPath)
-        && license.getPort == uri.getPort
-        && StringUtils.equals(license.getQuery, uri.getQuery)
-        && schemes.contains(uri.getScheme))
-        result = Option(license)
+    supportedLicenses.find { license =>
+      license.getHost == uri.getHost &&
+        license.getPath == uri.getPath &&
+        license.getPort == uri.getPort &&
+        license.getQuery == uri.getQuery &&
+        schemes.contains(uri.getScheme)
     }
-    result
   }
 }
