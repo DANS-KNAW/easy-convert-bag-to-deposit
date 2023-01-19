@@ -87,7 +87,7 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
       val licenseUriFinal = licenseUri
       val maybeLicenseUri = normalizeScheme(supportedLicenses, licenseUri)
       if(maybeLicenseUri.equals(Option.empty))
-        new IllegalArgumentException(String.format("Unsupported license: %s", licenseUriFinal))
+        throw new IllegalArgumentException(String.format("Unsupported license: %s", licenseUriFinal))
       licenseUri = maybeLicenseUri.get
       supportedLicenses.find(v => v == licenseUri).getOrElse(throw new IllegalArgumentException(String.format("Unsupported license: %s", licenseUri)))
     } catch {
