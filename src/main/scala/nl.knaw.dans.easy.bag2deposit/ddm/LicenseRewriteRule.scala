@@ -23,9 +23,8 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.StringUtils.isBlank
 
 import java.net.URI
-import java.util.Optional
 import scala.util.Try
-import scala.xml.{ Attribute, Elem, NamespaceBinding, Node }
+import scala.xml.{ NamespaceBinding, Node }
 import scala.xml.transform.RewriteRule
 
 case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhancedLogging {
@@ -79,7 +78,7 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
     val licenseText = Option(licenseNode)
       .map(_.text)
       .map(_.trim)
-      .map(removeTrailingSlash(_))
+      .map(removeTrailingSlash)
       .map(s => variantToLicense.getOrElse(s,s))
       .getOrElse(throw new IllegalArgumentException("License node is null"))
 
@@ -92,7 +91,7 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
       if(maybeLicenseUri.equals(Option.empty))
         new IllegalArgumentException(String.format("Unsupported license: %s", licenseUriFinal))
       licenseUri = maybeLicenseUri.get
-      supportedLicenses.filter(v => v== licenseUri).headOption.getOrElse(throw new IllegalArgumentException(String.format("Unsupported license: %s", licenseUri)))
+      supportedLicenses.find(v => v == licenseUri).getOrElse(throw new IllegalArgumentException(String.format("Unsupported license: %s", licenseUri)))
     } catch {
       case e: Exception =>
         logger.error("Invalid license URI: {}", licenseText, e)
