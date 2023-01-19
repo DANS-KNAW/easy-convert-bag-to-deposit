@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils.isBlank
 
 import java.net.URI
 import java.util.Optional
+import scala.util.Try
 import scala.xml.{ Attribute, Elem, NamespaceBinding, Node }
 import scala.xml.transform.RewriteRule
 
@@ -43,23 +44,20 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
   }
 
   override def transform(node: Node): Seq[Node] = {
-    if (! isLicenseUri(node)) node
-    val correctURI = getLicenseUri(supportedLicenses, variantToLicense, node)
-    <dct:license xsi:type="dct:URI">{ correctURI.toString }</dct:license>
+    if (! isLicenseUri(node))
+      node
+    else {
+      val correctURI = getLicenseUri(supportedLicenses, variantToLicense, node)
+      <dct:license xsi:type="dct:URI">{ correctURI.toString }</dct:license>
+    }
   }
 
   private def isLicenseUri(node: Node): Boolean = {
-    if (!("license" == node.label)) return false
-    if (!("http://purl.org/dc/terms/" == node.namespace)) return false
-    if (!hasXsiType(node, "URI")) return false
-    // validate it is a valid URI
-    try {
-      new URI(node.text.trim)
-      true
-    } catch {
-      case e: Exception =>
-        logger.error("Invalid URI: " + node.text, e)
-        false
+    if (!("license" == node.label) || !("http://purl.org/dc/terms/" == node.namespace) || !hasXsiType(node, "URI")) {
+      false
+    } else {
+      // validate it is a valid URI
+      Try(new URI(node.text.trim)).isSuccess
     }
   }
 
@@ -83,9 +81,7 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
       .map(_.trim)
       .map(removeTrailingSlash(_))
       .map(s => variantToLicense.getOrElse(s,s))
-      .getOrElse("")
-    if (isBlank(licenseText))
-      throw new IllegalArgumentException("License node is null")
+      .getOrElse(throw new IllegalArgumentException("License node is null"))
 
     try {
       if (!isLicenseUri(licenseNode))
@@ -96,8 +92,7 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
       if(maybeLicenseUri.equals(Option.empty))
         new IllegalArgumentException(String.format("Unsupported license: %s", licenseUriFinal))
       licenseUri = maybeLicenseUri.get
-      if (!supportedLicenses.contains(licenseUri)) throw new IllegalArgumentException(String.format("Unsupported license: %s", licenseUri))
-      licenseUri
+      supportedLicenses.filter(v => v== licenseUri).headOption.getOrElse(throw new IllegalArgumentException(String.format("Unsupported license: %s", licenseUri)))
     } catch {
       case e: Exception =>
         logger.error("Invalid license URI: {}", licenseText, e)
