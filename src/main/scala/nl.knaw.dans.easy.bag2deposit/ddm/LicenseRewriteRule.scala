@@ -56,12 +56,10 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
   }
 
   private def isLicenseUri(node: Node): Boolean = {
-    if (!("license" == node.label) || !("http://purl.org/dc/terms/" == node.namespace) || !hasXsiType(node, "URI")) {
-      false
-    } else {
-      // validate it is a valid URI
+    ("license" == node.label) &&
+      ("http://purl.org/dc/terms/" == node.namespace) &&
+      hasXsiType(node, "URI") &&
       Try(new URI(node.text.trim)).isSuccess
-    }
   }
 
   private def hasXsiType(node: Node, xsiType: String): Boolean = {
