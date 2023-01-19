@@ -46,8 +46,12 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
     if (! isLicenseUri(node))
       node
     else {
-      val correctURI = getLicenseUri(supportedLicenses, variantToLicense, node)
-      <dct:license xsi:type="dct:URI">{ correctURI.toString }</dct:license>
+      try {
+        val correctURI = getLicenseUri(supportedLicenses, variantToLicense, node)
+        <dct:license xsi:type="dct:URI">{ correctURI.toString }</dct:license>
+      } catch {
+        case e: IllegalArgumentException => <notImplemented>{ e.getMessage }</notImplemented>
+      }
     }
   }
 
@@ -72,6 +76,7 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
     })
 
   }
+
   private def getLicenseUri(supportedLicenses: List[URI], variantToLicense: Map[String, String], licenseNode: Node): URI = {
     val licenseText = Option(licenseNode)
       .map(_.text)
@@ -93,7 +98,7 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
     } catch {
       case e: Exception =>
         logger.error("Invalid license URI: {}", licenseText, e)
-        throw new IllegalArgumentException("Not a valid license URI", e)
+        throw e
     }
   }
 
