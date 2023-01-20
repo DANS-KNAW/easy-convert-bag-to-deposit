@@ -83,22 +83,18 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
       .map(s => variantToLicense.getOrElse(s,s))
       .getOrElse(throw new IllegalArgumentException("License node is null"))
 
-    try {
       if (!isLicenseUri(licenseNode))
         throw new IllegalArgumentException("Not a valid license node")
       var licenseUri = new URI(licenseText)
       val licenseUriFinal = licenseUri
       val maybeLicenseUri = normalizeScheme(supportedLicenses, licenseUri)
-      if(maybeLicenseUri.equals(Option.empty))
+      if (maybeLicenseUri.equals(Option.empty))
         throw new IllegalArgumentException(String.format("Unsupported license: %s", licenseUriFinal))
       licenseUri = maybeLicenseUri.get
-      supportedLicenses.find(v => v == licenseUri).getOrElse(throw new IllegalArgumentException(String.format("Unsupported license: %s", licenseUri)))
-    } catch {
-      case e: Exception =>
-        logger.error("Invalid license URI: {}", licenseText, e)
-        throw e
+      supportedLicenses.find(v => v == licenseUri).getOrElse(
+        throw new IllegalArgumentException(String.format("Unsupported license: %s", licenseUri)))
     }
-  }
+
 
   private def removeTrailingSlash(s: String): String = {
     if (s.endsWith("/")) return s.substring(0, s.length - 1)
