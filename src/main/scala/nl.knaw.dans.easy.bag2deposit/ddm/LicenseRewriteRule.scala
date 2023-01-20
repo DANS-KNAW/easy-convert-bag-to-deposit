@@ -46,18 +46,20 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
     if (! isLicenseUri(node))
       node
     else {
-      val correctURI = getLicenseUri(supportedLicenses, variantToLicense, node)
-      <dct:license xsi:type="dct:URI">{ correctURI.toString }</dct:license>
+      try {
+        val correctURI = getLicenseUri(supportedLicenses, variantToLicense, node)
+        <dct:license xsi:type="dct:URI">{ correctURI.toString }</dct:license>
+      } catch {
+        case e: IllegalArgumentException => <notImplemented>{ e.getMessage }</notImplemented>
+      }
     }
   }
 
   private def isLicenseUri(node: Node): Boolean = {
-    if (!("license" == node.label) || !("http://purl.org/dc/terms/" == node.namespace) || !hasXsiType(node, "URI")) {
-      false
-    } else {
-      // validate it is a valid URI
+    ("license" == node.label) &&
+      ("http://purl.org/dc/terms/" == node.namespace) &&
+      hasXsiType(node, "URI") &&
       Try(new URI(node.text.trim)).isSuccess
-    }
   }
 
   private def hasXsiType(node: Node, xsiType: String): Boolean = {
@@ -72,6 +74,7 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
     })
 
   }
+
   private def getLicenseUri(supportedLicenses: List[URI], variantToLicense: Map[String, String], licenseNode: Node): URI = {
     val licenseText = Option(licenseNode)
       .map(_.text)
@@ -80,22 +83,18 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
       .map(s => variantToLicense.getOrElse(s,s))
       .getOrElse(throw new IllegalArgumentException("License node is null"))
 
-    try {
       if (!isLicenseUri(licenseNode))
         throw new IllegalArgumentException("Not a valid license node")
       var licenseUri = new URI(licenseText)
       val licenseUriFinal = licenseUri
       val maybeLicenseUri = normalizeScheme(supportedLicenses, licenseUri)
-      if(maybeLicenseUri.equals(Option.empty))
+      if (maybeLicenseUri.equals(Option.empty))
         throw new IllegalArgumentException(String.format("Unsupported license: %s", licenseUriFinal))
       licenseUri = maybeLicenseUri.get
-      supportedLicenses.find(v => v == licenseUri).getOrElse(throw new IllegalArgumentException(String.format("Unsupported license: %s", licenseUri)))
-    } catch {
-      case e: Exception =>
-        logger.error("Invalid license URI: {}", licenseText, e)
-        throw new IllegalArgumentException("Not a valid license URI", e)
+      supportedLicenses.find(v => v == licenseUri).getOrElse(
+        throw new IllegalArgumentException(String.format("Unsupported license: %s", licenseUri)))
     }
-  }
+
 
   private def removeTrailingSlash(s: String): String = {
     if (s.endsWith("/")) return s.substring(0, s.length - 1)

@@ -58,6 +58,14 @@ class RemarksConverterSpec extends AnyFlatSpec with XmlSupport with Matchers wit
   private def configureDdmTransformer() = {
     cfgDir.delete(swallowIOExceptions = true)
     cfgDir.createDirectory()
+    (cfgDir / "supported-licenses.txt").writeText(
+      s"""http://creativecommons.org/publicdomain/zero/1.0
+         |https://doi.org/10.17026/fp39-0x58""".stripMargin
+    )
+    (cfgDir / "license-uri-variants.csv").writeText(
+      s"""Variant,Normalized
+         |http://www.gnu.org/licenses/gpl-3.0.en.html,http://www.gnu.org/licenses/gpl-3.0v""".stripMargin
+    )
     (cfgDir / "SSH").createDirectory()
     (cfgDir / "dataset-doi.csv").writeText(
       s"""datasetid,doi
