@@ -134,12 +134,12 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
       Failure(InvalidBagException("temporal rabarbera not found; subject barbapappa not found"))
   }
 
-  "relationRewriteRule" should "convert fedora-id to DOI" in {
+  "relationRewriteRule" should "convert encoded fedora-ids to DOI" in {
     //
     val ddmIn = ddm(title = "relation test", audience = "D37000", dcmi =
       <ddm:dcmiMetadata>
         <ddm:references
-          href="https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:48786">
+          href="https%3A%2F%2Feasy.dans.knaw.nl%2Fui%2Fdatasets%2Fid%2Feasy-dataset%3A48786">
           Plangebied Harinxmaland, gemeente Sneek. Archeologisch vooronderzoek: een inventariserend veldonderzoek (waarderend onderzoek)
         </ddm:references>
         <ddm:isReferencedBy
@@ -147,8 +147,8 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
         </ddm:isReferencedBy>
         <ddm:references>https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:48515</ddm:references>
         <dcterms:references>https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:56024</dcterms:references>
-        <dcterms:references>persistent-identifier.nl/?identifier=urn:nbn:nl:ui:13-08dh-73</dcterms:references>
-        <ddm:references href="urn:nbn:nl:ui:13-04r-39p">rabarbera</ddm:references>
+        <dcterms:references>persistent-identifier.nl/?identifier=urn%3Anbn%3Anl%3Aui%3A13-08dh-73</dcterms:references>
+        <ddm:references href="urn%3Anbn%3Anl%3Aui%3A13-04r-39p">rabarbera</ddm:references>
       </ddm:dcmiMetadata>
     )
     val expectedDDM = ddm(title = "relation test", audience = "D37000", dcmi =
