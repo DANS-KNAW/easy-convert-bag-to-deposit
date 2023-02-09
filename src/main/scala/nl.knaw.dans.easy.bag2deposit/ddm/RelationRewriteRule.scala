@@ -26,7 +26,13 @@ import scala.xml.transform.RewriteRule
 case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhancedLogging {
 
   private val easyRef = "https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:"
+  private val easyRefEncoded = "https%3A%2F%2Feasy.dans.knaw.nl%2Fui%2Fdatasets%2Fid%2Feasy-dataset%3A"
   private val urnRef = "urn:nbn:nl:ui:13"
+  private val urnRefEncoded = "urn%3Anbn%3Anl%3Aui%3A13"
+
+  private def decodeRef(text: String) = {
+    text.trim.replace(urnRefEncoded, urnRef).replace(easyRefEncoded, easyRef)
+  }
 
   private def isUrnRef(s: String) = {
     (s.contains(urnRef) && s.contains("persistent-identifier.nl")) || s.startsWith(urnRef)
@@ -52,8 +58,8 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
     if (!relations.contains(node.label))
       node
     else {
-      val txt = node.text.trim
-      val href = node.attribute("href").toSeq.flatten.text.trim
+      val txt = decodeRef(node.text)
+      val href = decodeRef(node.attribute("href").toSeq.flatten.text)
       val doi = if (href.startsWith(easyRef)) replaceEasyRefWithDoi(href)
                 else if (txt.startsWith(easyRef)) replaceEasyRefWithDoi(txt)
                      else if (isUrnRef(href)) replaceUrnNbnRefWithDoi(href)
