@@ -30,7 +30,7 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
   private val urnRef = "urn:nbn:nl:ui:13"
   private val urnRefEncoded = "urn%3Anbn%3Anl%3Aui%3A13"
 
-  private def decodeUrnRef(text: String) = {
+  private def decodeRef(text: String) = {
     text.trim.replace(urnRefEncoded, urnRef).replace(easyRefEncoded, easyRef)
   }
 
@@ -58,8 +58,8 @@ case class RelationRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhan
     if (!relations.contains(node.label))
       node
     else {
-      val txt = decodeUrnRef(node.text)
-      val href = decodeUrnRef(node.attribute("href").toSeq.flatten.text)
+      val txt = decodeRef(node.text)
+      val href = decodeRef(node.attribute("href").toSeq.flatten.text)
       val doi = if (href.startsWith(easyRef)) replaceEasyRefWithDoi(href)
                 else if (txt.startsWith(easyRef)) replaceEasyRefWithDoi(txt)
                      else if (isUrnRef(href)) replaceUrnNbnRefWithDoi(href)
