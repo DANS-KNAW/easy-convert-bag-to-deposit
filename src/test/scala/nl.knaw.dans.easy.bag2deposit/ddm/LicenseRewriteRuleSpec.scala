@@ -38,6 +38,22 @@ class LicenseRewriteRuleSpec extends AnyFlatSpec with Matchers {
    input.flatMap(rule.transform).text shouldBe "http://creativecommons.org/publicdomain/zero/1.0"
  }
 
+  it should "keep the same namespace, dcterms" in {
+    val input = Seq(
+        <dcterms:license xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dcterms="http://purl.org/dc/terms/" xsi:type="dcterms:URI">https://creativecommons.org/publicdomain/zero/1.0</dcterms:license>,
+    )
+    input.flatMap(rule.transform).head.prefix shouldBe "dcterms"
+    input.flatMap(rule.transform).text shouldBe "http://creativecommons.org/publicdomain/zero/1.0"
+  }
+
+  it should "keep the same namespace, dct" in {
+    val input = Seq(
+        <dct:license xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dct="http://purl.org/dc/terms/" xsi:type="dct:URI">https://creativecommons.org/publicdomain/zero/1.0</dct:license>,
+    )
+    input.flatMap(rule.transform).head.prefix shouldBe "dct"
+    input.flatMap(rule.transform).text shouldBe "http://creativecommons.org/publicdomain/zero/1.0"
+  }
+
   it should "be a variant" in {
     val input = Seq(
      <dct:license xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dct="http://purl.org/dc/terms/" xsi:type="dct:URI">http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html</dct:license>,
