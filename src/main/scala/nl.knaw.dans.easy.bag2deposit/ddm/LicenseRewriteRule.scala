@@ -19,12 +19,11 @@ import better.files.File
 import nl.knaw.dans.easy.bag2deposit.parseCsv
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.csv.CSVFormat
-import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.StringUtils.isBlank
 
 import java.net.URI
 import scala.util.Try
-import scala.xml.{ NamespaceBinding, Node }
+import scala.xml.{ Elem, NamespaceBinding, Node, Text }
 import scala.xml.transform.RewriteRule
 
 case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhancedLogging {
@@ -48,7 +47,7 @@ case class LicenseRewriteRule(cfgDir: File) extends RewriteRule with DebugEnhanc
     else {
       try {
         val correctURI = getLicenseUri(supportedLicenses, variantToLicense, node)
-        <dct:license xsi:type="dct:URI">{ correctURI.toString }</dct:license>
+        new Elem(node.prefix, node.label, node.attributes, node.scope, false, Text(correctURI.toString))
       } catch {
         case e: IllegalArgumentException => <notImplemented>{ e.getMessage }</notImplemented>
       }
