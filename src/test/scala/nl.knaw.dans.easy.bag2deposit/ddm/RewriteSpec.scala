@@ -737,7 +737,7 @@ class RewriteSpec extends AnyFlatSpec with XmlSupport with SchemaSupport with Ma
     testConfig("archaeology").ddmTransformer.transform(ddmIn, "easy-dataset:123").map(normalized) shouldBe Success(normalized(ddm(
       <ddm:profile><ddm:accessRights>REQUEST_PERMISSION</ddm:accessRights></ddm:profile>
           <ddm:dcmiMetadata>
-            <dcterms:license xsi:type="dcterms:URI">http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSLicence.pdf</dcterms:license>
+            <dcterms:license xsi:type="dcterms:URI">https://doi.org/10.17026/fp39-0x58</dcterms:license>
             <dcterms:rightsHolder>Unknown</dcterms:rightsHolder>
           </ddm:dcmiMetadata>
     )))

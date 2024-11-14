@@ -195,7 +195,7 @@ class DdmTransformer(cfgDir: File,
     else {
       (ddm \\ "accessRights").headOption.map(_.text match {
         case "OPEN_ACCESS_FOR_REGISTERED_USERS" | "REQUEST_PERMISSION" =>
-          <dcterms:license xsi:type="dcterms:URI">http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSLicence.pdf</dcterms:license>
+          <dcterms:license xsi:type="dcterms:URI">https://doi.org/10.17026/fp39-0x58</dcterms:license>
         case _ => Text("")
       }).getOrElse(Seq.empty)
     }
