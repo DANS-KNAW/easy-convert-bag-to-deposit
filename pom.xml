@@ -165,7 +165,31 @@
             </snapshots>
             <url>https://maven.dans.knaw.nl/snapshots/</url>
         </repository>
+
     </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>dans-releases</id>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <url>https://maven.dans.knaw.nl/releases/</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>dans-snapshots</id>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <url>https://maven.dans.knaw.nl/snapshots/</url>
+        </pluginRepository>
+    </pluginRepositories>
 
     <build>
         <plugins>
